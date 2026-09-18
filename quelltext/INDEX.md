@@ -1,6 +1,6 @@
 # Quelltext-Verzeichnis
 
-Lesefassung von `formwert_app.html` (Version 250), erzeugt von
+Lesefassung von `formwert_app.html` (Version 251), erzeugt von
 `werkzeug/zerlegen.py`. **Diese Dateien werden nicht ausgefuehrt.**
 Die App selbst ist und bleibt die eine Datei `formwert_app.html`.
 
@@ -8,7 +8,7 @@ Sehr lange eingebettete Datenbloecke (3D-Modell, Koerperbilder,
 Schriften) sind durch `"__DATEN_ENTFERNT..."` ersetzt - sonst waere
 die Lesefassung genauso unlesbar wie das Original.
 
-Ersetzt wurden 12 Datenbloecke mit zusammen 11.6 MB.
+Ersetzt wurden 13 Datenbloecke mit zusammen 11.7 MB.
 
 ## Dateien
 
@@ -267,9 +267,10 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `maskZone()` | `code/c02.js` | 351 |
 | `mergeDuplicateCustomEx()` | `code/c04.js` | 1255 |
 | `MIN_TILT` | `code/c04.js` | 863 |
+| `MOB_ICON_B64` | `code/c02.js` | 495 |
 | `MOB_KINDS` | `code/c02.js` | 138 |
 | `MOB_REGION` | `code/c02.js` | 322 |
-| `mobBandIcon()` | `code/c02.js` | 1240 |
+| `mobBandIcon()` | `code/c02.js` | 890 |
 | `mobKindLabel()` | `code/c02.js` | 84 |
 | `movementGroups()` | `code/c01.js` | 212 |
 | `MUS_EN` | `code/c04.js` | 1479 |

@@ -1065,26 +1065,28 @@ function cardioTreadmillIcon(){
   return sv;
 }
 
+// Bild der Mobilitaets-Kachel: das vom Nutzer vorgegebene Foto eines Gummibandsatzes.
+// Vorgehen wie beim Laufband, damit die beiden Sonderkacheln zusammenpassen: Hintergrund
+// freigestellt (die zusammenhaengende helle Flaeche vom Rand her entfernt, danach den Saum
+// um zwei Pixel abgetragen - sonst bleibt auf dunklem Grund ein heller Hof stehen), auf den
+// Inhalt zugeschnitten, auf 340 Pixel Breite verkleinert, 128 Farben.
+var MOB_ICON_B64="__DATEN_ENTFERNT__base64__78440_ZEICHEN__";
+
 function mobBandIcon(){
   var NS="http://www.w3.org/2000/svg";
   var sv=document.createElementNS(NS,"svg");
   // Gleiches Seitenverhaeltnis wie die uebrigen Kacheln (200x250).
   sv.setAttribute("viewBox","0 0 200 250");
   sv.setAttribute("role","img");sv.setAttribute("aria-label","Mobilität");
-  // Verdrehtes Gummiband als geschlossene Acht - die uebliche Form eines Loop-Bands.
-  // Farbverlauf laengs des Bandes, damit es nicht wie ein flacher Strich wirkt.
-  sv.innerHTML=
-    '<defs>'+
-    '<linearGradient id="fwMobBand" x1="0" y1="0" x2="0" y2="1">'+
-    '<stop offset="0" stop-color="#9B7FDB"/><stop offset="1" stop-color="#553A96"/>'+
-    '</linearGradient>'+
-    '</defs>'+
-    '<g transform="translate(0,22) rotate(-10 100 105)">'+
-    '<path d="M42,105 C42,56 86,56 100,105 C114,154 158,154 158,105 C158,56 114,56 100,105 C86,154 42,154 42,105 Z" '+
-      'fill="none" stroke="url(#fwMobBand)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>'+
-    '<path d="M42,105 C42,56 86,56 100,105 C114,154 158,154 158,105 C158,56 114,56 100,105 C86,154 42,154 42,105 Z" '+
-      'fill="none" stroke="rgba(255,255,255,.26)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'+
-    '</g>';
+  var im=document.createElementNS(NS,"image");
+  // Bild ist 340x342 - vollstaendig einpassen, nichts abschneiden.
+  // Skalierung = min(200/340, 250/342) = 0,588 -> Breite 200, Hoehe 201,2, Rand oben/unten 24,4.
+  im.setAttribute("x","0");im.setAttribute("y","24.4");
+  im.setAttribute("width","200");im.setAttribute("height","201.2");
+  im.setAttribute("preserveAspectRatio","xMidYMid meet");
+  im.setAttribute("href","data:image/png;base64,"+MOB_ICON_B64);
+  im.setAttributeNS("http://www.w3.org/1999/xlink","href","data:image/png;base64,"+MOB_ICON_B64);
+  sv.appendChild(im);
   return sv;
 }
 
