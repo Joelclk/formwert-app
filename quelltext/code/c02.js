@@ -850,12 +850,9 @@ var CARDIO_REGION={name:"Cardio",cardio:true,
 
 
 // Mobilitaet bekommt aus demselben Grund wie Cardio eine eigene Kachel: es ist kein
-// Koerperteil, sondern eine Art zu trainieren. Gefiltert wird hier NICHT ueber die ids,
-// sondern ueber ex.mob - die ids dienen nur der Figur auf der Kachel. Deshalb stehen dort
-// bewusst nur ein paar typisch gedehnte Bereiche und nicht alle 30 beteiligten Muskeln:
-// sonst waere die ganze Figur rot und man saehe gar nichts mehr.
-var MOB_REGION={name:"Mobilität",mobility:true,
-  ids:["tg_brust_mitte","tg_huefte","tg_adduktoren","tg_quadrizeps","tg_wade_gastro"]}
+// Koerperteil, sondern eine Art zu trainieren. Gefiltert wird ueber ex.mob und die gewaehlte
+// Art (statisch/dynamisch), nicht ueber Muskeln - deshalb bleibt die Liste hier leer.
+var MOB_REGION={name:"Mobilität",mobility:true,ids:[]}
 ;
 
 /* ================= Entdecken (Übungskatalog zum Durchstöbern) ================= */
@@ -961,7 +958,7 @@ function fw3dPutImage(svg,url,crop){
 
 function fillRegionFig(svg){
   if(svg.getAttribute("data-filled"))return;
-  var name=svg.getAttribute("data-region"),region=REGIONS.concat([MOB_REGION]).find(function(r){return (r.key||r.name)===name;});
+  var name=svg.getAttribute("data-region"),region=REGIONS.find(function(r){return (r.key||r.name)===name;});
   if(!region)return;
   svg.setAttribute("data-filled","1");
   var crop=regionCropCache[name]||CROP_DEFAULT;
@@ -1068,6 +1065,29 @@ function cardioTreadmillIcon(){
   return sv;
 }
 
+function mobBandIcon(){
+  var NS="http://www.w3.org/2000/svg";
+  var sv=document.createElementNS(NS,"svg");
+  // Gleiches Seitenverhaeltnis wie die uebrigen Kacheln (200x250).
+  sv.setAttribute("viewBox","0 0 200 250");
+  sv.setAttribute("role","img");sv.setAttribute("aria-label","Mobilität");
+  // Verdrehtes Gummiband als geschlossene Acht - die uebliche Form eines Loop-Bands.
+  // Farbverlauf laengs des Bandes, damit es nicht wie ein flacher Strich wirkt.
+  sv.innerHTML=
+    '<defs>'+
+    '<linearGradient id="fwMobBand" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="#9B7FDB"/><stop offset="1" stop-color="#553A96"/>'+
+    '</linearGradient>'+
+    '</defs>'+
+    '<g transform="translate(0,22) rotate(-10 100 105)">'+
+    '<path d="M42,105 C42,56 86,56 100,105 C114,154 158,154 158,105 C158,56 114,56 100,105 C86,154 42,154 42,105 Z" '+
+      'fill="none" stroke="url(#fwMobBand)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<path d="M42,105 C42,56 86,56 100,105 C114,154 158,154 158,105 C158,56 114,56 100,105 C86,154 42,154 42,105 Z" '+
+      'fill="none" stroke="rgba(255,255,255,.26)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '</g>';
+  return sv;
+}
+
 function renderDiscMuscleGrid(){
   var mgrid=$("disc-mgrid");mgrid.innerHTML="";
   REGIONS.concat([CARDIO_REGION,MOB_REGION]).forEach(function(rg){
@@ -1075,6 +1095,8 @@ function renderDiscMuscleGrid(){
     card.setAttribute("aria-pressed",String(discRegion===rg));
     if(rg.cardio){
       card.appendChild(cardioTreadmillIcon());
+    }else if(rg.mobility){
+      card.appendChild(mobBandIcon());
     }else{
       var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
       sv.setAttribute("viewBox",regionCropCache[rg.key||rg.name]||CROP_DEFAULT);

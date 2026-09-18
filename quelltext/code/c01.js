@@ -1263,6 +1263,8 @@ function exPicker(b,kinds,onPick,opts){
       card.setAttribute("aria-pressed",String(reg===rg));
       if(rg.cardio){
         card.appendChild(cardioTreadmillIcon());
+      }else if(rg.mobility){
+        card.appendChild(mobBandIcon());
       }else{
         var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
         sv.setAttribute("viewBox",regionCropCache[rg.key||rg.name]||CROP_DEFAULT);

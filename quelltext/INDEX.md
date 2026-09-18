@@ -1,6 +1,6 @@
 # Quelltext-Verzeichnis
 
-Lesefassung von `formwert_app.html` (Version 249), erzeugt von
+Lesefassung von `formwert_app.html` (Version 250), erzeugt von
 `werkzeug/zerlegen.py`. **Diese Dateien werden nicht ausgefuehrt.**
 Die App selbst ist und bleibt die eine Datei `formwert_app.html`.
 
@@ -20,7 +20,7 @@ Ersetzt wurden 12 Datenbloecke mit zusammen 11.6 MB.
 | `daten/d02.js` | 38 KB | FINE bis (Anweisung) |
 | `daten/d03.js` | 77 KB | FIGMASKS |
 | `code/c01.js` | 108 KB | (Anweisung) bis BRACHIALIS_FRONT_F |
-| `code/c02.js` | 98 KB | NOTCH_TRAP_DELT bis addWorkoutCardio() |
+| `code/c02.js` | 100 KB | NOTCH_TRAP_DELT bis addWorkoutCardio() |
 | `code/c03.js` | 107 KB | EX_PCT bis routineChangeSummary() |
 | `code/c04.js` | 107 KB | finishWorkout() bis (Anweisung) |
 
@@ -161,7 +161,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `exPctInv()` | `code/c03.js` | 184 |
 | `exPctStep()` | `code/c03.js` | 181 |
 | `expGroup` | `code/c01.js` | 276 |
-| `exPicker()` | `code/c01.js` | 6069 |
+| `exPicker()` | `code/c01.js` | 6139 |
 | `exPrimaryRegionLabel()` | `code/c02.js` | 418 |
 | `exSetsByDay()` | `code/c01.js` | 425 |
 | `exSetWeights()` | `code/c01.js` | 287 |
@@ -176,7 +176,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `FIGW` | `daten/d02.js` | 20 |
 | `fillDayFig()` | `code/c03.js` | 598 |
 | `fillExFig()` | `code/c03.js` | 701 |
-| `fillRegionFig()` | `code/c02.js` | 1563 |
+| `fillRegionFig()` | `code/c02.js` | 1542 |
 | `fillWorkoutFig()` | `code/c03.js` | 423 |
 | `FINE` | `daten/d02.js` | 36005 |
 | `FINE_EN_FIX` | `code/c04.js` | 138 |
@@ -268,7 +268,8 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `mergeDuplicateCustomEx()` | `code/c04.js` | 1255 |
 | `MIN_TILT` | `code/c04.js` | 863 |
 | `MOB_KINDS` | `code/c02.js` | 138 |
-| `MOB_REGION` | `code/c02.js` | 556 |
+| `MOB_REGION` | `code/c02.js` | 322 |
+| `mobBandIcon()` | `code/c02.js` | 1240 |
 | `mobKindLabel()` | `code/c02.js` | 84 |
 | `movementGroups()` | `code/c01.js` | 212 |
 | `MUS_EN` | `code/c04.js` | 1479 |
@@ -338,7 +339,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `renderCardio()` | `code/c02.js` | 1319 |
 | `renderDiscEquipChips()` | `code/c02.js` | 580 |
 | `renderDiscExGrid()` | `code/c02.js` | 1711 |
-| `renderDiscMuscleGrid()` | `code/c02.js` | 933 |
+| `renderDiscMuscleGrid()` | `code/c02.js` | 999 |
 | `renderDiscSubChips()` | `code/c02.js` | 1436 |
 | `renderEntdecken()` | `code/c02.js` | 115 |
 | `renderFigure()` | `code/c02.js` | 2252 |
