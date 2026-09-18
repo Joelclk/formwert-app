@@ -1,6 +1,6 @@
 # Quelltext-Verzeichnis
 
-Lesefassung von `formwert_app.html` (Version 251), erzeugt von
+Lesefassung von `formwert_app.html` (Version 252), erzeugt von
 `werkzeug/zerlegen.py`. **Diese Dateien werden nicht ausgefuehrt.**
 Die App selbst ist und bleibt die eine Datei `formwert_app.html`.
 
@@ -15,14 +15,15 @@ Ersetzt wurden 13 Datenbloecke mit zusammen 11.7 MB.
 | Datei | Groesse | Inhalt |
 |---|---:|---|
 | `00_grundgeruest.html` | 8 KB | HTML-Grundgeruest: Tab-Leiste, Seiten, Overlays |
-| `01_gestaltung.css` | 71 KB | Farben, Schriften, alle Bausteine der Oberflaeche |
+| `01_gestaltung.css` | 72 KB | Farben, Schriften, alle Bausteine der Oberflaeche |
 | `daten/d01.js` | 78 KB | GROUPS bis (Anweisung) |
 | `daten/d02.js` | 38 KB | FINE bis (Anweisung) |
 | `daten/d03.js` | 77 KB | FIGMASKS |
 | `code/c01.js` | 108 KB | (Anweisung) bis BRACHIALIS_FRONT_F |
 | `code/c02.js` | 100 KB | NOTCH_TRAP_DELT bis addWorkoutCardio() |
-| `code/c03.js` | 107 KB | EX_PCT bis routineChangeSummary() |
-| `code/c04.js` | 107 KB | finishWorkout() bis (Anweisung) |
+| `code/c03.js` | 95 KB | EX_PCT bis woAddPage() |
+| `code/c04.js` | 108 KB | renderSessionInner() bis MIN_TILT |
+| `code/c05.js` | 25 KB | FW3D_VIEW_TILT bis (Anweisung) |
 
 ## Wo steht was
 
@@ -90,7 +91,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `closeSheet()` | `code/c01.js` | 460 |
 | `closeSheet2()` | `code/c01.js` | 123 |
 | `compute()` | `code/c01.js` | 3002 |
-| `confirmDeleteWorkout()` | `code/c03.js` | 297 |
+| `confirmDeleteWorkout()` | `code/c04.js` | 297 |
 | `connect()` | `code/c04.js` | 2615 |
 | `connectTries` | `code/c04.js` | 20 |
 | `CORE_MUSCLES` | `code/c01.js` | 277 |
@@ -101,13 +102,13 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `customExInUse()` | `code/c01.js` | 281 |
 | `cutMaskTop()` | `code/c02.js` | 915 |
 | `day()` | `code/c01.js` | 139 |
-| `dayFigs()` | `code/c03.js` | 835 |
+| `dayFigs()` | `code/c04.js` | 835 |
 | `dayInvolve()` | `code/c03.js` | 755 |
 | `daysBetween()` | `code/c01.js` | 82 |
 | `deDate()` | `code/c01.js` | 127 |
 | `defaultSet()` | `code/c02.js` | 263 |
-| `deleteDay()` | `code/c03.js` | 154 |
-| `deleteWorkout()` | `code/c03.js` | 378 |
+| `deleteDay()` | `code/c04.js` | 154 |
+| `deleteWorkout()` | `code/c04.js` | 378 |
 | `DELT_LINE_BACK` | `code/c01.js` | 465 |
 | `DELT_LINE_FRONT` | `code/c01.js` | 787 |
 | `detectBlobs()` | `code/c02.js` | 858 |
@@ -117,7 +118,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `discLazyObserve()` | `code/c02.js` | 687 |
 | `discRegion` | `code/c02.js` | 645 |
 | `document.addEventListener` | `code/c02.js` | 483 |
-| `document.documentElement.setAttribute` | `code/c04.js` | 51 |
+| `document.documentElement.setAttribute` | `code/c05.js` | 51 |
 | `drawMini()` | `code/c04.js` | 329 |
 | `drawOb()` | `code/c04.js` | 10737 |
 | `e1rm()` | `code/c01.js` | 512 |
@@ -139,10 +140,12 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `EX_PCT` | `code/c03.js` | 48245 |
 | `EX_PCT_HOT` | `code/c03.js` | 641 |
 | `EX_PCT_STEPS` | `code/c03.js` | 409 |
+| `EX_PLUS` | `code/c03.js` | 8689 |
 | `exBestByDay()` | `code/c01.js` | 385 |
 | `exById()` | `code/c01.js` | 76 |
 | `exDetailHistory()` | `code/c03.js` | 966 |
-| `exDetailInfo()` | `code/c03.js` | 278 |
+| `exDetailInfo()` | `code/c03.js` | 184 |
+| `exDetailPlus()` | `code/c03.js` | 816 |
 | `exDetailProgress()` | `code/c03.js` | 1106 |
 | `exDetailRecords()` | `code/c03.js` | 1962 |
 | `exerciseForm()` | `code/c01.js` | 6322 |
@@ -162,6 +165,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `exPctStep()` | `code/c03.js` | 181 |
 | `expGroup` | `code/c01.js` | 276 |
 | `exPicker()` | `code/c01.js` | 6139 |
+| `exPlusList()` | `code/c03.js` | 118 |
 | `exPrimaryRegionLabel()` | `code/c02.js` | 418 |
 | `exSetsByDay()` | `code/c01.js` | 425 |
 | `exSetWeights()` | `code/c01.js` | 287 |
@@ -177,7 +181,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `fillDayFig()` | `code/c03.js` | 598 |
 | `fillExFig()` | `code/c03.js` | 701 |
 | `fillRegionFig()` | `code/c02.js` | 1542 |
-| `fillWorkoutFig()` | `code/c03.js` | 423 |
+| `fillWorkoutFig()` | `code/c04.js` | 423 |
 | `FINE` | `daten/d02.js` | 36005 |
 | `FINE_EN_FIX` | `code/c04.js` | 138 |
 | `fineGroups()` | `code/c02.js` | 194 |
@@ -195,36 +199,36 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `focusPanel()` | `code/c04.js` | 3290 |
 | `FT_SESSION` | `code/c01.js` | 612 |
 | `FW3D_DUAL` | `code/c04.js` | 134 |
-| `FW3D_FINE_PROXY` | `code/c04.js` | 469 |
-| `FW3D_FORCE_FRONT_FINE` | `code/c04.js` | 45 |
-| `FW3D_FORCE_FRONT_GROUPS` | `code/c04.js` | 869 |
-| `FW3D_FORCE_TRANSPARENT` | `code/c04.js` | 1446 |
-| `FW3D_FORCE_TRANSPARENT_GROUPS` | `code/c04.js` | 1705 |
-| `FW3D_FT_OVERRIDE_SEL` | `code/c04.js` | 1214 |
+| `FW3D_FINE_PROXY` | `code/c05.js` | 469 |
+| `FW3D_FORCE_FRONT_FINE` | `code/c05.js` | 45 |
+| `FW3D_FORCE_FRONT_GROUPS` | `code/c05.js` | 869 |
+| `FW3D_FORCE_TRANSPARENT` | `code/c05.js` | 1446 |
+| `FW3D_FORCE_TRANSPARENT_GROUPS` | `code/c05.js` | 1705 |
+| `FW3D_FT_OVERRIDE_SEL` | `code/c05.js` | 1214 |
 | `FW3D_HTML_B64` | `code/c04.js` | 66 |
 | `FW3D_MESH2FINE` | `code/c04.js` | 10551 |
 | `FW3D_MESH2GROUP` | `code/c04.js` | 23 |
-| `FW3D_NOFADE` | `code/c04.js` | 210 |
-| `FW3D_VIEW_TILT` | `code/c04.js` | 1720 |
-| `fw3dColorForGroup()` | `code/c04.js` | 378 |
-| `fw3dColorsForInvolve()` | `code/c04.js` | 1530 |
-| `fw3dEnsureFrame()` | `code/c04.js` | 483 |
-| `fw3dForceTransparentForInv()` | `code/c04.js` | 2041 |
-| `fw3dHandleSelect()` | `code/c04.js` | 1276 |
+| `FW3D_NOFADE` | `code/c05.js` | 210 |
+| `FW3D_VIEW_TILT` | `code/c05.js` | 1720 |
+| `fw3dColorForGroup()` | `code/c05.js` | 378 |
+| `fw3dColorsForInvolve()` | `code/c05.js` | 1530 |
+| `fw3dEnsureFrame()` | `code/c05.js` | 483 |
+| `fw3dForceTransparentForInv()` | `code/c05.js` | 2041 |
+| `fw3dHandleSelect()` | `code/c05.js` | 1276 |
 | `fw3dHotCenter()` | `code/c02.js` | 834 |
 | `fw3dInvKey()` | `code/c04.js` | 252 |
 | `fw3dPutImage()` | `code/c02.js` | 578 |
-| `fw3dReady` | `code/c04.js` | 21 |
-| `fw3dRevealFrame()` | `code/c04.js` | 95 |
-| `fw3dSnapEnsure()` | `code/c04.js` | 719 |
-| `fw3dSnapFrame` | `code/c04.js` | 646 |
-| `fw3dSnapInto()` | `code/c04.js` | 1075 |
-| `fw3dSnapPump()` | `code/c04.js` | 824 |
-| `fw3dSnapRequest()` | `code/c04.js` | 654 |
-| `fw3dSnapResult()` | `code/c04.js` | 794 |
-| `fw3dSnapTO` | `code/c04.js` | 18 |
-| `fw3dSyncColors()` | `code/c04.js` | 3229 |
-| `fw3dTiltFor()` | `code/c04.js` | 420 |
+| `fw3dReady` | `code/c05.js` | 21 |
+| `fw3dRevealFrame()` | `code/c05.js` | 95 |
+| `fw3dSnapEnsure()` | `code/c05.js` | 719 |
+| `fw3dSnapFrame` | `code/c05.js` | 646 |
+| `fw3dSnapInto()` | `code/c05.js` | 1075 |
+| `fw3dSnapPump()` | `code/c05.js` | 824 |
+| `fw3dSnapRequest()` | `code/c05.js` | 654 |
+| `fw3dSnapResult()` | `code/c05.js` | 794 |
+| `fw3dSnapTO` | `code/c05.js` | 18 |
+| `fw3dSyncColors()` | `code/c05.js` | 3229 |
+| `fw3dTiltFor()` | `code/c05.js` | 420 |
 | `fw_syncPullExtras()` | `code/c04.js` | 991 |
 | `fwBoot()` | `code/c04.js` | 597 |
 | `fwBootReady()` | `code/c04.js` | 293 |
@@ -309,7 +313,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `placeCallout()` | `code/c01.js` | 1105 |
 | `polyAreaAbs()` | `code/c02.js` | 155 |
 | `preview()` | `code/c04.js` | 533 |
-| `prevSetsFor()` | `code/c03.js` | 267 |
+| `prevSetsFor()` | `code/c04.js` | 267 |
 | `queueSave()` | `code/c04.js` | 88 |
 | `rawKg()` | `code/c01.js` | 260 |
 | `rcGoto()` | `code/c02.js` | 196 |
@@ -332,7 +336,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `reizPct()` | `code/c01.js` | 59 |
 | `relinkCardio()` | `code/c02.js` | 1348 |
 | `removeCustomExercise()` | `code/c01.js` | 268 |
-| `removeRec()` | `code/c03.js` | 172 |
+| `removeRec()` | `code/c04.js` | 172 |
 | `renderAll()` | `code/c04.js` | 986 |
 | `renderBanner()` | `code/c03.js` | 505 |
 | `renderBody()` | `code/c02.js` | 2723 |
@@ -354,7 +358,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `renderRoutines()` | `code/c02.js` | 3367 |
 | `renderSection()` | `code/c04.js` | 681 |
 | `renderSession()` | `code/c03.js` | 866 |
-| `renderSessionInner()` | `code/c03.js` | 13703 |
+| `renderSessionInner()` | `code/c04.js` | 13703 |
 | `renderSettings()` | `code/c02.js` | 378 |
 | `renderSkills()` | `code/c02.js` | 1563 |
 | `renderSpark()` | `code/c02.js` | 1053 |
@@ -368,11 +372,11 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `rirFactor()` | `code/c01.js` | 195 |
 | `rirField()` | `code/c01.js` | 1150 |
 | `rirLabel()` | `code/c01.js` | 113 |
-| `routineChangeSummary()` | `code/c03.js` | 1276 |
-| `routineDiffers()` | `code/c03.js` | 316 |
+| `routineChangeSummary()` | `code/c04.js` | 1276 |
+| `routineDiffers()` | `code/c04.js` | 316 |
 | `routineFocus()` | `code/c04.js` | 496 |
 | `routineFocusPaint()` | `code/c04.js` | 810 |
-| `routineItemsFromWorkout()` | `code/c03.js` | 512 |
+| `routineItemsFromWorkout()` | `code/c04.js` | 512 |
 | `saveBackup()` | `code/c02.js` | 521 |
 | `saveFailWarned` | `code/c01.js` | 26 |
 | `saveLocal()` | `code/c01.js` | 218 |
@@ -416,16 +420,16 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `sheetAddSet()` | `code/c01.js` | 3249 |
 | `sheetCardio()` | `code/c01.js` | 2295 |
 | `sheetCreateExercise()` | `code/c01.js` | 742 |
-| `sheetDay()` | `code/c03.js` | 2926 |
+| `sheetDay()` | `code/c04.js` | 2926 |
 | `sheetEditExercise()` | `code/c01.js` | 1584 |
 | `sheetEditLoggedSet()` | `code/c01.js` | 2121 |
 | `sheetEditor()` | `code/c04.js` | 4458 |
-| `sheetExerciseDetail()` | `code/c01.js` | 2889 |
+| `sheetExerciseDetail()` | `code/c01.js` | 2967 |
 | `sheetKraftCat()` | `code/c02.js` | 2895 |
 | `sheetNote()` | `code/c01.js` | 542 |
 | `sheetRestore()` | `code/c02.js` | 1094 |
 | `sheetTitle()` | `code/c01.js` | 222 |
-| `sheetWorkoutDetail()` | `code/c03.js` | 2952 |
+| `sheetWorkoutDetail()` | `code/c04.js` | 2952 |
 | `shiftDays()` | `code/c01.js` | 83 |
 | `shiftHeuteDate()` | `code/c04.js` | 718 |
 | `shortDate()` | `code/c01.js` | 94 |
@@ -441,6 +445,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `startTick()` | `code/c02.js` | 77 |
 | `startWorkout()` | `code/c02.js` | 619 |
 | `state` | `code/c01.js` | 98 |
+| `STRUCT` | `code/c03.js` | 4435 |
 | `stTimer` | `code/c04.js` | 18 |
 | `SUBREGIONS` | `code/c02.js` | 346 |
 | `subsOf()` | `code/c02.js` | 75 |
@@ -463,7 +468,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `touch()` | `code/c04.js` | 106 |
 | `trText()` | `code/c04.js` | 484 |
 | `UI_DE` | `code/c04.js` | 577 |
-| `UI_EN` | `code/c04.js` | 5233 |
+| `UI_EN` | `code/c04.js` | 5274 |
 | `UI_RX` | `code/c04.js` | 3289 |
 | `unionRect()` | `code/c02.js` | 265 |
 | `uniqueExId()` | `code/c01.js` | 82 |
@@ -490,8 +495,8 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `warnSaveFailed()` | `code/c01.js` | 565 |
 | `WD` | `code/c01.js` | 45 |
 | `WIN_STATE` | `code/c01.js` | 18 |
-| `window.addEventListener` | `code/c04.js` | 822 |
-| `window.fw3dSnapIdle()` | `code/c04.js` | 137 |
+| `window.addEventListener` | `code/c05.js` | 822 |
+| `window.fw3dSnapIdle()` | `code/c05.js` | 137 |
 | `windowDays()` | `code/c01.js` | 138 |
 | `woAddPage()` | `code/c03.js` | 1072 |
 | `woAlign()` | `code/c03.js` | 403 |
@@ -511,10 +516,10 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `woPctNote()` | `code/c03.js` | 380 |
 | `woPctScale()` | `code/c03.js` | 923 |
 | `workout` | `code/c02.js` | 75 |
-| `workoutFigs()` | `code/c03.js` | 593 |
-| `workoutInvolve()` | `code/c03.js` | 588 |
-| `workoutRoutine()` | `code/c03.js` | 757 |
-| `workoutSetCount()` | `code/c03.js` | 427 |
+| `workoutFigs()` | `code/c04.js` | 593 |
+| `workoutInvolve()` | `code/c04.js` | 588 |
+| `workoutRoutine()` | `code/c04.js` | 757 |
+| `workoutSetCount()` | `code/c04.js` | 427 |
 | `woShapeKey()` | `code/c03.js` | 210 |
 | `woUpdate()` | `code/c03.js` | 1409 |
 | `wtInfoText()` | `code/c01.js` | 1162 |

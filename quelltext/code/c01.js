@@ -1473,6 +1473,8 @@ function sheetExerciseDetail(ex){
     // Bei Mobilitaetsuebungen ist die Aussage eine andere: rot heisst nicht "trainiert",
     // sondern "wird gedehnt" - bei den dynamischen "wird bewegt".
     section(ex.mob?(ex.mk==="dyn"?"Wird bewegt":"Wird gedehnt"):"Beanspruchte Muskeln",exDetailInfo(ex));
+    var plus=exDetailPlus(ex);
+    if(plus)section("Stärkt zusätzlich",plus);
     section("Verlauf",exDetailHistory(ex,redraw));
     section("Fortschritt",exDetailProgress(ex));
     section("Rekorde",exDetailRecords(ex));

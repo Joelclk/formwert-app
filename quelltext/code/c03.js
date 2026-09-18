@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: EX_PCT bis routineChangeSummary()
+   Enthaelt: EX_PCT bis woAddPage()
 */
 
 /* Anteil einer Übung an den einzelnen Muskeln – dieselbe Gewichtung, mit der die Sätze auch in
@@ -1513,7 +1513,237 @@ function woMus(ex,figsEl){
   return box;
 }
 
+/* ================= Was eine Uebung ausser Muskeln noch staerkt =================
+   Sehnen, Baender, Faszien, Gelenke, Knochen und Faehigkeiten. Bewusst getrennt von
+   den Muskeln gehalten: diese Strukturen lassen sich nicht in Saetzen pro Woche
+   messen, und sie gehen NICHT ins Trainingsvolumen ein. Die Angabe ist eine
+   Einordnung, keine Dosierung - deshalb steht bei jedem Eintrag, worum es geht,
+   statt einer Zahl. */
+var STRUCT={
+ griff:{n:"Griffkraft",k:"Fähigkeit",t:"Wie lange und wie fest du etwas halten kannst. Bei Zug- und Hebeübungen oft das erste, was nachgibt - und damit die Grenze, bevor der Zielmuskel wirklich ausbelastet ist."},
+ achilles:{n:"Achillessehne",k:"Sehne",t:"Die kräftigste Sehne des Körpers. Sie passt sich an Zug an, aber deutlich langsamer als der Muskel - nach langer Pause ist der Sprung in die alte Belastung der häufigste Auslöser für Beschwerden."},
+ patella:{n:"Patellasehne",k:"Sehne",t:"Verbindet Kniescheibe und Schienbein. Regelmäßige Beugung unter Last macht sie belastbarer; plötzlich viel Sprung- und Landearbeit reizt sie."},
+ tractus:{n:"Tractus iliotibialis",k:"Faszie",t:"Sehnenplatte an der Oberschenkelaußenseite, vom Becken bis unters Knie. Sie wird nicht selbst trainiert, sondern über die Muskeln, die an ihr ziehen - Gesäß und Hüftabspreizer. Schwache Hüftstabilität zeigt sich häufig hier."},
+ rotator_sehnen:{n:"Rotatorenmanschette",k:"Sehne",t:"Vier Sehnen, die den Oberarmkopf in der Pfanne zentrieren. Sie arbeiten bei jedem Drücken und Ziehen mit, ohne dass man sie spürt - und sind der Grund, warum saubere Technik über Kopf wichtiger ist als Gewicht."},
+ bizepssehne:{n:"Lange Bizepssehne",k:"Sehne",t:"Läuft durch das Schultergelenk hindurch. Sie wird bei tiefen Stützpositionen mit gestreckter Schulter stark auf Zug genommen."},
+ ellbogen:{n:"Sehnenansätze am Ellbogen",k:"Sehne",t:"Ursprung der Unterarmmuskeln an den Knochenvorsprüngen innen und außen - die Stellen, an denen Tennis- und Golferellenbogen entstehen. Sie profitieren von langsamen, kontrollierten Wiederholungen."},
+ adduktorensehnen:{n:"Adduktorensehnen",k:"Sehne",t:"Ansatz an der Schambeinregion. Häufige Beschwerdestelle bei Sportarten mit schnellen Richtungswechseln - gezielte Kräftigung beugt vor."},
+ rueckenfaszie:{n:"Rückenfaszie",k:"Faszie",t:"Große Bindegewebsplatte im unteren Rücken, an der Gesäß, Latissimus und Bauchmuskeln zusammenlaufen. Sie überträgt Kraft zwischen Ober- und Unterkörper."},
+ plantar:{n:"Plantarfaszie",k:"Faszie",t:"Spannt das Längsgewölbe des Fußes und federt bei jedem Schritt."},
+ g_sprunggelenk:{n:"Sprunggelenk",k:"Gelenk",t:"Beweglichkeit und Stabilität hier entscheiden mit, wie tief du hocken kannst und wie sicher du landest."},
+ g_knie:{n:"Kniegelenk",k:"Gelenk",t:"Kräftige Muskeln rundherum halten das Gelenk zusammen - das Training wirkt mehr über die Führung als über das Gelenk selbst."},
+ g_huefte:{n:"Hüftgelenk",k:"Gelenk",t:"Das beweglichste große Gelenk. Seitliche Stabilität hier bestimmt, ob das Knie bei Belastung nach innen fällt."},
+ g_schulter:{n:"Schultergelenk",k:"Gelenk",t:"Viel Bewegungsumfang, wenig knöcherne Führung - die Stabilität kommt fast ausschließlich aus Muskeln und Sehnen."},
+ g_handgelenk:{n:"Handgelenk",k:"Gelenk",t:"Wird bei Stützpositionen in Streckung belastet. Mit der Zeit gewöhnt es sich daran; von null auf viel ist der übliche Fehler."},
+ g_wirbelsaeule:{n:"Wirbelsäule",k:"Gelenk",t:"Nicht ein Gelenk, sondern viele. Sie hält Last aus, wenn die Rumpfmuskulatur sie in Position hält - genau das wird hier mittrainiert."},
+ knochen:{n:"Knochendichte",k:"Knochen",t:"Knochen bauen auf Druck und Zug auf. Schweres Heben und Belastung mit dem eigenen Körpergewicht wirken dabei deutlich besser als gelenkschonende Ausdauerformen."},
+ rumpf:{n:"Rumpfspannung",k:"Fähigkeit",t:"Die Fähigkeit, den Oberkörper unter Last stabil zu halten. Sie begrenzt bei vielen Übungen, wie viel Gewicht sinnvoll bewegt werden kann."},
+ balance:{n:"Gleichgewicht",k:"Fähigkeit",t:"Einbeinige und freie Übungen fordern laufende Korrekturen aus Fuß, Hüfte und Rumpf - das trainiert man nicht an der Maschine."},
+ beweglichkeit:{n:"Beweglichkeit",k:"Fähigkeit",t:"Wie weit ein Gelenk bewegt werden kann, ohne auszuweichen. Wächst durch regelmäßige, nicht durch lange Einheiten."},
+ kondition:{n:"Herz-Kreislauf",k:"Fähigkeit",t:"Ausdauerleistung und Erholungsfähigkeit. Zeigt sich im Alltag oft früher als Kraftzuwachs."}
+}
+;
+
+var EX_PLUS={"bench":["rotator_sehnen", "g_schulter"],
+  "bench_db":["rotator_sehnen", "g_schulter"],
+  "bench_inc":["rotator_sehnen", "g_schulter"],
+  "bench_inc_db":["rotator_sehnen", "g_schulter"],
+  "bench_dec":["rotator_sehnen", "g_schulter"],
+  "machine_press":["rotator_sehnen", "g_schulter"],
+  "machine_press_lying":["rotator_sehnen", "g_schulter"],
+  "pushup":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_diamond":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_arch":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_dec":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "dips":["rotator_sehnen", "bizepssehne", "g_schulter", "g_handgelenk"],
+  "fly_db":["rotator_sehnen", "g_schulter"],
+  "cable_fly":["rotator_sehnen", "g_schulter"],
+  "fly_machine":["rotator_sehnen", "g_schulter"],
+  "pullover":["rotator_sehnen", "g_schulter"],
+  "ohp":["rotator_sehnen", "g_schulter", "rumpf"],
+  "ohp_db":["rotator_sehnen", "g_schulter", "rumpf"],
+  "push_press":["rotator_sehnen", "g_schulter", "rumpf"],
+  "arnold":["rotator_sehnen", "g_schulter", "rumpf"],
+  "pike_pushup":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "hspu":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "handstand":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "pullup":["griff", "ellbogen", "g_schulter"],
+  "chinup":["griff", "ellbogen", "g_schulter"],
+  "pullup_wide":["griff", "ellbogen", "g_schulter"],
+  "pullup_weight":["griff", "ellbogen", "g_schulter"],
+  "latpull":["griff", "ellbogen", "g_schulter"],
+  "latpull_close":["griff", "ellbogen", "g_schulter"],
+  "pullup_neg":["griff", "ellbogen", "g_schulter"],
+  "deadhang":["griff", "ellbogen", "g_handgelenk"],
+  "row_bb":["griff", "g_schulter", "rumpf"],
+  "row_db":["griff", "g_schulter", "rumpf", "balance"],
+  "row_pendlay":["griff", "g_schulter", "rumpf"],
+  "row_tbar":["griff", "g_schulter", "rumpf"],
+  "row_cable":["g_schulter", "rumpf"],
+  "row_machine":["g_schulter", "rumpf"],
+  "row_inv":["g_schulter", "rumpf"],
+  "row_band":["g_schulter", "rumpf"],
+  "facepull":["g_schulter", "rumpf"],
+  "shrug":["griff", "g_schulter", "rumpf"],
+  "shrug_db":["griff", "g_schulter", "rumpf"],
+  "squat":["patella", "g_knie", "knochen", "rumpf"],
+  "squat_front":["patella", "g_knie", "knochen", "rumpf"],
+  "squat_goblet":["patella", "g_knie", "rumpf"],
+  "squat_bw":["patella", "g_knie", "rumpf"],
+  "squat_pistol":["patella", "g_knie", "g_huefte", "rumpf"],
+  "squat_bulg":["patella", "g_knie", "g_huefte", "rumpf"],
+  "legpress":["patella", "g_knie", "knochen", "rumpf"],
+  "hacksquat":["patella", "g_knie", "knochen", "rumpf"],
+  "lunge":["patella", "g_knie", "g_huefte", "rumpf"],
+  "lunge_walk":["patella", "g_knie", "g_huefte", "rumpf"],
+  "stepup":["patella", "g_knie", "g_huefte", "rumpf"],
+  "stepup_bw":["patella", "g_knie", "g_huefte", "rumpf"],
+  "legext":["patella", "g_knie", "knochen", "rumpf"],
+  "sissy":["patella", "g_knie", "rumpf"],
+  "wallsit":["patella", "g_knie", "rumpf"],
+  "balance_sl":["patella", "g_knie", "g_huefte", "rumpf"],
+  "deadlift":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_rdl":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_sumo":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_sl":["griff", "rueckenfaszie", "g_huefte", "g_wirbelsaeule"],
+  "hipthrust":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "gluteBridge":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "goodmorning":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "backext":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "legcurl":["g_knie"],
+  "nordic":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "kb_swing":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "plank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "lsit":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "sideplank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "hollow":["g_wirbelsaeule", "rumpf"],
+  "legraise":["griff", "g_wirbelsaeule", "rumpf"],
+  "kneeraise":["griff", "g_wirbelsaeule", "rumpf"],
+  "crunch":["g_wirbelsaeule", "rumpf"],
+  "situp":["g_wirbelsaeule", "rumpf"],
+  "russian":["g_wirbelsaeule", "rumpf"],
+  "abwheel":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "cablecrunch":["g_wirbelsaeule", "rumpf"],
+  "deadbug":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "birddog":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "pallof":["g_wirbelsaeule", "rumpf"],
+  "torso_rot":["g_wirbelsaeule", "rumpf"],
+  "dragonflag":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "lateral":["g_schulter"],
+  "lateral_cable":["g_schulter", "balance"],
+  "frontraise":["g_schulter"],
+  "reversefly":["g_schulter"],
+  "upright_row":["g_schulter"],
+  "cuban":["g_schulter"],
+  "bandpullapart":["g_schulter"],
+  "rot_internal":["rotator_sehnen", "g_schulter", "balance"],
+  "emptycan":["rotator_sehnen", "g_schulter"],
+  "curl_bb":["ellbogen"],
+  "curl_db":["ellbogen"],
+  "curl_hammer":["griff", "ellbogen", "g_handgelenk"],
+  "curl_incline":["ellbogen"],
+  "curl_preacher":["ellbogen"],
+  "curl_preacher_machine":["ellbogen"],
+  "curl_cable":["ellbogen"],
+  "curl_cable_lying":["ellbogen"],
+  "tri_push":["ellbogen"],
+  "tri_skull":["ellbogen"],
+  "tri_over":["ellbogen"],
+  "tri_kick":["ellbogen", "balance"],
+  "dips_bench":["ellbogen", "bizepssehne"],
+  "wrist_curl":["griff", "ellbogen", "g_handgelenk"],
+  "wrist_curl_rev":["griff", "ellbogen", "g_handgelenk"],
+  "farmers":["griff", "ellbogen", "g_handgelenk"],
+  "ricebucket":["griff", "ellbogen", "g_handgelenk"],
+  "fatgripz":["griff", "ellbogen", "g_handgelenk"],
+  "calf_stand":["achilles", "g_sprunggelenk"],
+  "calf_seat":["achilles", "g_sprunggelenk"],
+  "calf_bw":["achilles", "g_sprunggelenk"],
+  "adduct":["adduktorensehnen", "g_huefte"],
+  "hipflex_cable":["balance"],
+  "clamshell":["tractus", "g_huefte"],
+  "sidelying_raise":["tractus", "g_huefte"],
+  "bandwalk_lat":["tractus", "g_huefte"],
+  "abduct":["tractus", "g_huefte"],
+  "copenhagen":["adduktorensehnen", "g_huefte"],
+  "neck_curl":["g_wirbelsaeule"],
+  "neck_ext_bw":["g_wirbelsaeule"],
+  "neck_flex_bw":["g_wirbelsaeule"],
+  "neck_side_bw":["g_wirbelsaeule"],
+  "neck_harness":["g_wirbelsaeule"],
+  "neck_bridge":["g_wirbelsaeule"],
+  "run":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "run_interval":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "bike":["kondition"],
+  "row_erg":["kondition", "griff", "rueckenfaszie"],
+  "swim":["kondition", "rotator_sehnen", "g_schulter"],
+  "jumprope":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "walk":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "hike":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "stairs":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "burpee":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "elliptical":["kondition"],
+  "football":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "mob_hip":["beweglichkeit", "g_huefte"],
+  "mob_shoulder":["beweglichkeit", "g_schulter", "g_wirbelsaeule"],
+  "mob_thoracic":["beweglichkeit", "g_wirbelsaeule"],
+  "mob_hamstring":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_ankle":["beweglichkeit", "g_sprunggelenk"],
+  "mob_couch":["beweglichkeit", "g_huefte"],
+  "mob_deadhang":["beweglichkeit", "griff", "g_schulter", "g_handgelenk"],
+  "mob_pancake":["beweglichkeit", "g_huefte"],
+  "mob_chest":["beweglichkeit", "g_schulter"],
+  "mob_biceps":["beweglichkeit", "g_schulter", "g_handgelenk"],
+  "mob_cobra":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_reardelt":["beweglichkeit", "g_schulter"],
+  "mob_triceps":["beweglichkeit", "g_schulter"],
+  "mob_neck":["beweglichkeit"],
+  "mob_lat":["beweglichkeit", "g_schulter"],
+  "mob_knee2chest":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_twist":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_wrist_flex":["beweglichkeit", "g_handgelenk"],
+  "mob_wrist_ext":["beweglichkeit", "g_handgelenk"],
+  "mob_hipflex":["beweglichkeit", "g_huefte"],
+  "mob_pigeon":["beweglichkeit", "g_huefte"],
+  "mob_glutemed":["beweglichkeit", "g_huefte"],
+  "mob_quad":["beweglichkeit", "g_huefte"],
+  "mob_frog":["beweglichkeit", "g_huefte"],
+  "mob_calf_straight":["beweglichkeit", "g_sprunggelenk", "g_huefte"],
+  "mob_calf_bent":["beweglichkeit", "g_sprunggelenk"],
+  "mob_tibialis":["beweglichkeit", "g_sprunggelenk"],
+  "mob_catcow":["beweglichkeit", "g_wirbelsaeule"],
+  "mob_wgs":["beweglichkeit", "g_sprunggelenk", "g_huefte", "g_wirbelsaeule"],
+  "mob_legswing":["beweglichkeit", "g_huefte"],
+  "mob_9090":["beweglichkeit", "g_huefte"],
+  "mob_wrist_circ":["beweglichkeit", "g_handgelenk"]}
+;
+
+function exPlusList(ex){
+  var ids=EX_PLUS[ex&&ex.id]||[];
+  return ids.filter(function(id){return !!STRUCT[id];});
+}
+
 /* ================= Übungsdetail: Tabs Info/Verlauf/Fortschritt/Rekorde ================= */
+function exDetailPlus(ex){
+  var ids=exPlusList(ex);
+  if(!ids.length)return null;
+  var wrap=el("div","pluslist");
+  ids.forEach(function(id){
+    var st=STRUCT[id];
+    var row=el("div","plusrow");
+    var head=el("div","plushead");
+    head.appendChild(el("b",null,st.n));
+    head.appendChild(el("span","pluskind",st.k));
+    row.appendChild(head);
+    row.appendChild(el("p",null,st.t));
+    wrap.appendChild(row);
+  });
+  var note=el("p","note pluslead",
+    "Zählt nicht ins Trainingsvolumen - diese Strukturen lassen sich nicht in Sätzen pro Woche messen. Sie werden trotzdem mitbelastet und brauchen meist länger, um sich anzupassen, als der Muskel.");
+  wrap.insertBefore(note,wrap.firstChild);
+  return wrap;
+}
+
 function exDetailInfo(ex){
   var wrap=el("div");
   var figs=woFigs(ex);figs.classList.add("exdetail-figs");wrap.appendChild(figs);
@@ -1703,476 +1933,4 @@ function woAddPage(){
   pg.appendChild(b);
   pg.appendChild(el("p",null,workout.exercises.length?"Tipp auf das Plus für die nächste Übung.":"Tipp auf das Plus und füge deine erste Übung hinzu."));
   return pg;
-}
-
-function renderSessionInner(){
-  startTick();
-  var box=$("session-body");box.innerHTML="";
-  // Kopf: Name, Uhr, Pause
-  var head=el("div","wo-head");
-  var nm=document.createElement("input");nm.type="text";nm.value=workout.name;nm.className="wo-name";nm.setAttribute("aria-label","Name des Trainings");
-  nm.onchange=function(){workout.name=nm.value.trim()||"Training";saveWorkout();};
-  head.appendChild(nm);
-  var tm=el("div","wo-timer"+(workout.paused?" paused":""));
-  tm.innerHTML='<b id="wo-timer" class="num">'+fmtDur(woElapsed())+'</b>'+(workout.paused?'<span>pausiert</span>':'');
-  head.appendChild(tm);
-  var pb=el("button","iconbtn");pb.setAttribute("aria-label",workout.paused?"Training fortsetzen":"Training pausieren");
-  pb.innerHTML=workout.paused?svgIcon("M7 4.5v15l13-7.5z",1.9):svgIcon("M9 5v14M15 5v14",2.2);
-  pb.onclick=function(){if(workout.paused){workout.pausedMs+=Date.now()-workout.pauseStart;workout.paused=false;}else{workout.paused=true;workout.pauseStart=Date.now();}saveWorkout();renderSession();};
-  head.appendChild(pb);
-  // Fortschritt und Beenden wandern in die Kopfzeile – so bleibt unten kein Balken stehen
-  // und die Satztabelle behält ihren Platz.
-  var pr=el("span","wo-prog num");pr.id="wo-prog";head.appendChild(pr);
-  var endB=el("button","btn primary small","Beenden");endB.onclick=finishWorkout;head.appendChild(endB);
-  box.appendChild(head);
-
-  var dots=el("div","wo-dots");dots.id="wo-dots";box.appendChild(dots);
-  var pager=el("div","wo-pager");pager.id="wo-pager";
-  workout.exercises.forEach(function(we,ei){
-    var ex=exById(we.ex);if(!ex)return;
-    var w=el("article","wo-page");w.setAttribute("data-i",String(ei));
-    var isCardio=ex.t==="cardio";
-    var h=el("div","wo-pagehead");
-    var title=el("div","main");title.appendChild(el("b",null,ex.n));
-    if(isCardio){
-      title.appendChild(el("span",null,"Übung "+(ei+1)+" von "+workout.exercises.length+" · Ausdauer"));
-    }else{
-      var best=bestFor(ex.id,TODAY,WIN_STRENGTH);
-      title.appendChild(el("span",null,"Übung "+(ei+1)+" von "+workout.exercises.length+" · "+(best.best!=null?"Best "+fmtVal(best.best,ex.t):"neu")+" · Pause "+we.restSec+" s"));
-    }
-    h.appendChild(title);
-    var infoBoxS=exInfoBlock(ex);
-    h.appendChild(exInfoBtn(infoBoxS));
-    // Reihenfolge aendern - nur sinnvoll, wenn es ueberhaupt etwas zu sortieren gibt.
-    if(workout.exercises.length>1){
-      var ord=el("button","iconbtn");ord.title="Reihenfolge";ord.setAttribute("aria-label","Reihenfolge der Übungen ändern");
-      ord.innerHTML=svgIcon("M7 20V4M4 7l3-3 3 3M17 4v16M14 17l3 3 3-3",2.1);
-      ord.onclick=openReorderSheet;
-      h.appendChild(ord);
-    }
-    if(!isCardio){
-      var rs=el("button","iconbtn");rs.title="Pausenzeit";rs.setAttribute("aria-label","Pausenzeit ändern");
-      rs.innerHTML=svgIcon("M12 8v4l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z");
-      rs.onclick=function(){askNumber("Pause nach jedem Satz",we.restSec,"15",0,600,"Sekunden",function(v){we.restSec=Math.round(v);saveWorkout();renderSession();});};
-      h.appendChild(rs);
-    }
-    var del=el("button","iconbtn");del.setAttribute("aria-label","Übung entfernen");del.innerHTML=svgIcon(IC_TRASH);
-    del.onclick=function(){
-      function doIt(){
-        if(isCardio){var ck=cardioDayOf(we.cardioRec);
-          if(ck){var lst=state.days[ck].cardio;lst.splice(lst.indexOf(we.cardioRec),1);touch(ck);}}
-        else we.sets.forEach(function(st){if(st.rec)removeRec(st.rec);});
-        workout.exercises.splice(ei,1);
-        if(woPage>workout.exercises.length)woPage=workout.exercises.length;
-        saveWorkout();renderLight();}
-      var hasData=isCardio?(we.cardioRec.min>0):we.sets.some(function(x){return x.done;});
-      if(hasData)askConfirm("Übung entfernen?",isCardio?"Der eingetragene Ausdauer-Datensatz wird mit gelöscht.":"Die bereits abgehakten Sätze werden mit gelöscht.","Entfernen",doIt);else doIt();};
-    h.appendChild(del);w.appendChild(h);
-    w.appendChild(infoBoxS);
-    if(isCardio){
-      var grid=el("div","grid2");grid.style.marginTop="4px";
-      // Sollte der Datensatz nicht (mehr) in einem Tag stehen - etwa weil der Tag
-      // zwischendurch aus der Cloud neu geschrieben wurde -, wieder eintragen: sonst
-      // laufen die Minuten ins Leere und zaehlen auf kein Wochenziel.
-      if(!cardioDayOf(we.cardioRec)){day(TODAY).cardio.push(we.cardioRec);touch(TODAY);}
-      var touchCardio=function(){touch(cardioDayOf(we.cardioRec)||TODAY);};
-      var minF=numField("Minuten",we.cardioRec.min,"5",0),kmF=numField("Kilometer (optional)",we.cardioRec.km,"0.5",0);
-      grid.appendChild(minF);grid.appendChild(kmF);w.appendChild(grid);
-      var cout=el("div","calcout");w.appendChild(cout);
-      function updCardioOut(){
-        var f2=INTENS[ex.intens||"mittel"];
-        cout.innerHTML="Zählt als <b>"+Math.round(we.cardioRec.min*f2)+" Äquivalentminuten</b> auf dein Wochenziel von "+state.profile.goals.cardio+" min.";
-      }
-      minF.input.addEventListener("input",function(){we.cardioRec.min=parseFloat(minF.input.value)||0;touchCardio();saveWorkoutSoon();updCardioOut();});
-      kmF.input.addEventListener("input",function(){we.cardioRec.km=parseFloat(kmF.input.value)||0;touchCardio();saveWorkoutSoon();});
-      updCardioOut();
-      var wfigsC=woFigs(ex);
-      wfigsC.classList.add("tap");
-      wfigsC.setAttribute("role","button");wfigsC.setAttribute("tabindex","0");
-      wfigsC.setAttribute("aria-label","Beanspruchte Muskeln von "+ex.n+" gross anzeigen");
-      wfigsC.onclick=function(){pageExMuscles(ex);};
-      w.appendChild(wfigsC);
-      w.appendChild(woMusLive(ex,wfigsC));
-      pager.appendChild(w);
-      return;
-    }
-    // Tabelle
-    var tblCls="wo-table";
-    if(ex.uni)tblCls+=ex.t==="load"?" uni-load":" uni-plain";
-    else if(ex.t==="load")tblCls+=" has-kg";
-    var tbl=el("div",tblCls);
-    var unitLab2=ex.t==="sec"?"Sek.":"Wdh.";
-    var hd=el("div","wo-row head");
-    hd.appendChild(el("span",null,"Satz"));hd.appendChild(el("span",null,"Vorher"));
-    if(ex.t==="load")hd.appendChild(el("span",null,"kg"));
-    if(ex.uni){hd.appendChild(el("span",null,unitLab2+" L"));hd.appendChild(el("span",null,unitLab2+" R"));}
-    else hd.appendChild(el("span",null,unitLab2));
-    hd.appendChild(el("span",null,"Reserve"));
-    hd.appendChild(el("span",null,""));
-    tbl.appendChild(hd);
-    var prevSets=prevSetsFor(ex.id);
-    function rirText(v){return v!=null?rirLabel(v):"–";}
-    we.sets.forEach(function(st,si){
-      var r=el("div","wo-row"+(st.done?" done":""));r.setAttribute("data-s",String(si));
-      r.appendChild(el("span","wo-n",String(si+1)));
-      var pv=prevSets[si],pvUni=(ex.uni&&pv&&pv.repsL!=null&&pv.repsR!=null)?(pv.repsL+"/"+pv.repsR):null;
-      r.appendChild(el("span","wo-prev",pv?(ex.t==="load"?pv.kg+"×"+(pvUni||pv.reps):(pvUni||pv.reps)+(ex.t==="sec"?" s":"")):"–"));
-      var kgI=null;
-      if(ex.t==="load"){kgI=document.createElement("input");kgI.type="number";kgI.inputMode="decimal";kgI.step="2.5";kgI.value=st.kg;kgI.disabled=st.done;kgI.dataset.k=ei+":"+si+":kg";kgI.setAttribute("data-f","kg");
-        kgI.oninput=function(){st.kg=parseFloat(String(kgI.value).replace(",","."))||0;saveWorkoutSoon();};r.appendChild(kgI);}
-      var rpI=null,rpLI=null,rpRI=null;
-      function syncUniReps(){st.reps=Math.min(parseInt(rpLI.value,10)||0,parseInt(rpRI.value,10)||0);saveWorkoutSoon();}
-      if(ex.uni){
-        rpLI=document.createElement("input");rpLI.type="number";rpLI.inputMode="numeric";rpLI.step="1";rpLI.value=st.repsL!=null?st.repsL:st.reps;rpLI.disabled=st.done;rpLI.dataset.k=ei+":"+si+":repsL";rpLI.setAttribute("data-f","repsL");
-        rpLI.oninput=function(){st.repsL=parseInt(rpLI.value,10)||0;syncUniReps();};r.appendChild(rpLI);
-        rpRI=document.createElement("input");rpRI.type="number";rpRI.inputMode="numeric";rpRI.step="1";rpRI.value=st.repsR!=null?st.repsR:st.reps;rpRI.disabled=st.done;rpRI.dataset.k=ei+":"+si+":repsR";rpRI.setAttribute("data-f","repsR");
-        rpRI.oninput=function(){st.repsR=parseInt(rpRI.value,10)||0;syncUniReps();};r.appendChild(rpRI);
-      } else {
-        rpI=document.createElement("input");rpI.type="number";rpI.inputMode="numeric";rpI.step="1";rpI.value=st.reps;rpI.disabled=st.done;rpI.dataset.k=ei+":"+si+":reps";rpI.setAttribute("data-f","reps");
-        rpI.oninput=function(){st.reps=parseInt(rpI.value,10)||0;saveWorkoutSoon();};r.appendChild(rpI);
-      }
-      var rirBtn=el("button","wo-rir"+(st.done?" done":""));rirBtn.type="button";
-      rirBtn.innerHTML='<b>'+rirText(st.rir!=null?st.rir:null)+'</b>';
-      rirBtn.setAttribute("aria-label","Wiederholungen in Reserve für diesen Satz");
-      if(st.done){
-        rirBtn.disabled=true;
-      }else{
-        rirBtn.onclick=function(ev){
-          ev.preventDefault();ev.stopPropagation();
-          var cur=st.rir!=null?st.rir:null;
-          st.rir=(cur==null)?0:(cur>=5?null:cur+1);
-          saveWorkoutSoon();
-          rirBtn.querySelector("b").textContent=rirText(st.rir);
-        };
-      }
-      r.appendChild(rirBtn);
-      var ck=el("button","wo-check"+(st.done?" on":""));ck.type="button";ck.setAttribute("aria-label",st.done?"Satz zurücknehmen":"Satz abhaken");
-      ck.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5 6 12l7.5-8"/></svg>';
-      ck.onclick=function(ev){
-        if(ev&&ev.preventDefault)ev.preventDefault();
-        // Schutz gegen doppelt ausgelöste Tap-Events auf manchen Touchscreens/Webviews (z. B.
-        // ghost click + echtes click-Event auf denselben Button) – ohne diese Sperre kann ein
-        // einzelnes Antippen den Satz zweimal umschalten und Häkchen/Zähler auseinanderlaufen lassen.
-        if(ck.dataset.busy)return;ck.dataset.busy="1";setTimeout(function(){ck.dataset.busy="";},400);
-        try{var ae=document.activeElement;if(ae&&ae.tagName==="INPUT")ae.blur();}catch(e){}
-        if(st.done){st.done=false;if(st.rec){removeRec(st.rec);st.rec=null;}ck.classList.remove("on");
-          rirBtn.disabled=false;rirBtn.classList.remove("done");
-          saveWorkout();renderLight();return;}
-        var kg=kgI?(parseFloat(String(kgI.value).replace(",","."))||0):0;
-        var repsL=ex.uni?(parseInt(rpLI.value,10)||0):null,repsR=ex.uni?(parseInt(rpRI.value,10)||0):null;
-        var reps=ex.uni?Math.min(repsL,repsR):(parseInt(rpI.value,10)||0);
-        if(reps<=0){toast(ex.t==="sec"?"Sekunden eintragen":"Wiederholungen eintragen");try{(ex.uni?rpLI:rpI).focus();}catch(e){}return;}
-        ck.classList.add("on");
-        st.kg=kg;st.reps=reps;st.done=true;if(ex.uni){st.repsL=repsL;st.repsR=repsR;}
-        var rec={ex:ex.id,kg:kg,reps:reps,wid:workout.id,ts:Date.now()};if(ex.uni){rec.repsL=repsL;rec.repsR=repsR;}
-        // Die Reserve steht schon vorher pro Satz fest (eigene Spalte) - beim Abhaken wird sie
-        // nur noch in den gespeicherten Datensatz uebernommen, nicht mehr neu gesetzt.
-        if(st.rir!=null)rec.rir=st.rir;
-        rirBtn.disabled=true;rirBtn.classList.add("done");
-        st.rec=rec;day(TODAY).sets.push(rec);touch(TODAY);
-        if(we.restSec>0){workout.rest.endAt=Date.now()+we.restSec*1000;workout.rest.len=we.restSec;}
-        saveWorkout();renderLight();tickWorkout();
-      };
-      r.appendChild(ck);tbl.appendChild(r);
-    });
-    w.appendChild(tbl);
-    var btns=el("div","wo-setbtns");
-    var rem=el("button","btn ghost","− Satz");
-    rem.disabled=we.sets.length<2;
-    rem.onclick=function(){
-      var last=we.sets[we.sets.length-1];
-      function doIt(){if(last&&last.done&&last.rec)removeRec(last.rec);
-        we.sets.pop();saveWorkout();renderLight();}
-      // Ein bereits abgehakter (gespeicherter) Satz enthält echte Trainingsdaten – der
-      // versehentliche Verlust genau solcher Daten war der häufigste Kritikpunkt an
-      // Konkurrenz-Apps. Ein leerer/offener letzter Satz kann dagegen gefahrlos sofort
-      // entfernt werden, das braucht keine Rückfrage.
-      if(last&&last.done)askConfirm("Letzten Satz entfernen?","Dieser Satz ist bereits abgehakt und gespeichert. Er wird unwiderruflich gelöscht.","Entfernen",doIt,true);
-      else doIt();};
-    var add=el("button","btn primary","+ Satz");
-    add.onclick=function(){var last=we.sets[we.sets.length-1];
-      var ns={kg:last?last.kg:0,reps:last?last.reps:8,done:false,rir:last&&last.rir!=null?last.rir:null};
-      if(ex.uni){ns.repsL=last&&last.repsL!=null?last.repsL:ns.reps;ns.repsR=last&&last.repsR!=null?last.repsR:ns.reps;}
-      we.sets.push(ns);saveWorkout();renderSession();};
-    btns.appendChild(rem);btns.appendChild(add);w.appendChild(btns);
-    // Was diese Übung trainiert – Figur plus Anteil je Muskel
-    var wfigs=woFigs(ex);
-    wfigs.classList.add("tap");
-    wfigs.setAttribute("role","button");
-    wfigs.setAttribute("tabindex","0");
-    wfigs.setAttribute("aria-label","Beanspruchte Muskeln von "+ex.n+" gross anzeigen");
-    wfigs.onclick=function(){pageExMuscles(ex);};
-    w.appendChild(wfigs);
-    w.appendChild(woMusLive(ex,wfigs));
-    pager.appendChild(w);
-  });
-  pager.appendChild(woAddPage());
-  box.appendChild(pager);
-
-  if(woPage>workout.exercises.length)woPage=workout.exercises.length;
-  if(woPage<0)woPage=0;
-  var sT=null;
-  pager.addEventListener("scroll",function(){
-    woScrollT=Date.now();
-    if(sT)return;
-    sT=setTimeout(function(){sT=null;
-      var wdt=pager.clientWidth||1,i=Math.round(pager.scrollLeft/wdt);
-      if(i!==woPage){woPage=i;woDots();}
-      woFillFigs();
-    },90);
-  },{passive:true});
-  woGoto(woPage,false);woDots();woUpdate();
-  requestAnimationFrame(function(){woGoto(woPage,false);woFillFigs();});
-}
-
-function prevSetsFor(exid){
-  var days=Object.keys(state.days).filter(function(d){return d<TODAY;}).sort().reverse();
-  for(var i=0;i<days.length;i++){var s=(state.days[days[i]].sets||[]).filter(function(x){return x.ex===exid;});if(s.length)return s;}
-  return [];
-}
-
-/* ---- Trainings löschen ----
-   Ein abgeschlossenes Training besteht aus dem Eintrag in day.workouts und den Sätzen,
-   die während des Trainings geloggt wurden (sie tragen dessen wid). Beides wird entfernt –
-   auch Sätze, die nach Mitternacht auf dem Folgetag gelandet sind. */
-function workoutSetCount(wo){var n=0;for(var k in state.days){(state.days[k].sets||[]).forEach(function(st){if(st.wid===wo.id)n++;});}return n;}
-
-function deleteWorkout(dateKey,wo){
-  for(var k in state.days){var dd=state.days[k],before=(dd.sets||[]).length;
-    dd.sets=(dd.sets||[]).filter(function(st){return st.wid!==wo.id;});
-    if(dd.sets.length!==before)touch(k);}
-  var d=day(dateKey);d.workouts=(d.workouts||[]).filter(function(w){return w.id!==wo.id;});touch(dateKey);
-  renderAll();toast("Training gelöscht");
-}
-
-function confirmDeleteWorkout(dateKey,wo){
-  var n=workoutSetCount(wo);
-  askConfirm("Training löschen?","„"+wo.name+"“ vom "+deDate(dateKey)+(n?" samt "+(n===1?"einem geloggten Satz":n+" geloggten Sätzen"):"")+" wird dauerhaft entfernt.","Löschen",function(){deleteWorkout(dateKey,wo);},true);
-}
-
-function deleteDay(dateKey){
-  var d=day(dateKey);d.sets=[];d.cardio=[];d.workouts=[];d.mobility=false;touch(dateKey);renderAll();toast("Tag geleert");
-}
-
-// Vorne/Hinten-Figur mit den an diesem Tag tatsächlich trainierten Muskeln (Primär kräftig,
-// Sekundär heller) – dieselbe Einfärbung wie bei einer einzelnen Übung, nur über den ganzen Tag
-// summiert. Nur sinnvoll, wenn an dem Tag überhaupt eine (nicht-Cardio-)Übung geloggt ist.
-function dayFigs(dateKey){
-  var wrap=el("div","day-figs");
-  [["front","Vorne"],["back","Hinten"]].forEach(function(v){
-    var col=el("div","day-fig");
-    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-day",dateKey);sv.setAttribute("data-view",v[0]);
-    sv.setAttribute("role","img");sv.setAttribute("aria-label","Trainierte Muskeln, "+v[1]);
-    col.appendChild(sv);col.appendChild(el("span",null,v[1]));
-    wrap.appendChild(col);
-  });
-  return wrap;
-}
-
-/* Trainings-Detailseite: eigene Vollbildseite (dieselbe wie für Übungen), zeigt nur die Sätze
-   EINES bestimmten Trainings mit kleiner Kennzahlen-Übersicht ("HUD") und Muskelfigur. */
-function workoutInvolve(dateKey,wid){
-  var inv={},d=state.days[dateKey];if(!d)return inv;
-  var seen={};
-  (d.sets||[]).forEach(function(s){if(s.wid===wid)seen[s.ex]=true;});
-  Object.keys(seen).forEach(function(exid){
-    var ex=exById(exid);if(!ex||ex.t==="cardio")return;
-    var i2=exInvolve(ex);
-    Object.keys(i2).forEach(function(g){if((inv[g]||0)<i2[g])inv[g]=i2[g];});
-  });
-  return inv;
-}
-
-function fillWorkoutFig(svg){
-  if(svg.getAttribute("data-filled"))return;
-  var dateKey=svg.getAttribute("data-day"),wid=svg.getAttribute("data-wid"),view=svg.getAttribute("data-view");
-  if(!dateKey||!wid)return;
-  var winv=setsInvolve(((state.days[dateKey]||{}).sets||[]).filter(function(s){return s.wid===wid;}));
-  fw3dSnapInto(svg,"wo:"+dateKey+":"+wid+"|"+fw3dInvKey(winv),winv,view,false,null,"step",FT_SESSION);
-}
-
-function workoutFigs(dateKey,wid){
-  var wrap=el("div","day-figs");
-  [["front","Vorne"],["back","Hinten"]].forEach(function(v){
-    var col=el("div","day-fig");
-    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-day",dateKey);sv.setAttribute("data-wid",wid);sv.setAttribute("data-view",v[0]);
-    sv.setAttribute("role","img");sv.setAttribute("aria-label","Trainierte Muskeln, "+v[1]);
-    col.appendChild(sv);col.appendChild(el("span",null,v[1]));
-    wrap.appendChild(col);
-  });
-  return wrap;
-}
-
-function sheetWorkoutDetail(dateKey,wo){
-  closeSheet(); // ersetzt den Bildschirm statt sich draufzustapeln, wie bei der Übungsdetailseite
-  var page=$("exdpage");page.hidden=false;syncScrollLock();
-  var head=$("exdpage-head");head.innerHTML="";
-  var back=el("button","iconbtn");back.type="button";back.setAttribute("aria-label","Zurück");
-  back.innerHTML=svgIcon(IC_CHEVLEFT,2.1);back.onclick=closeExPage;
-  head.appendChild(back);
-  head.appendChild(el("div","exdpage-title",wo.name));
-  var hdel=el("button","iconbtn");hdel.setAttribute("aria-label","Training löschen");hdel.innerHTML=svgIcon(IC_TRASH,1.6);
-  hdel.onclick=function(){closeExPage();confirmDeleteWorkout(dateKey,wo);};
-  head.appendChild(hdel);
-  var body=$("exdpage-body");body.innerHTML="";
-  body.appendChild(el("p","note exd-meta",deDate(dateKey)));
-  var g=el("div","wo-sum");
-  [["Dauer",fmtDur(wo.dur)],["Übungen",wo.exs],["Sätze",wo.sets],["Volumen",(wo.vol||0)+" kg"]].forEach(function(pp){
-    var c=el("div");c.innerHTML='<b class="num">'+pp[1]+'</b><span>'+pp[0]+'</span>';g.appendChild(c);
-  });
-  body.appendChild(g);
-  var d=day(dateKey);
-  var hasStrength=(d.sets||[]).some(function(s){return s.wid===wo.id&&exById(s.ex)&&exById(s.ex).t!=="cardio";});
-  if(hasStrength){
-    var figs=workoutFigs(dateKey,wo.id);
-    body.appendChild(figs);
-    Array.prototype.forEach.call(figs.querySelectorAll("svg[data-wid]"),fillWorkoutFig);
-  }
-  var list=el("div","card flush");
-  var groups={},order=[];
-  d.sets.forEach(function(s,i){if(s.wid!==wo.id)return;if(!groups[s.ex]){groups[s.ex]=[];order.push(s.ex);}groups[s.ex].push({s:s,i:i});});
-  order.forEach(function(exid){
-    var ex=exById(exid);if(!ex)return;
-    var arr=groups[exid],r=el("div","row"),m=el("div","main");
-    m.appendChild(el("b",null,ex.n));
-    var line=el("div","exd-hsets");
-    arr.forEach(function(o){
-      var chip=el("button","exd-hset",setLabel(ex,o.s));chip.type="button";
-      chip.setAttribute("aria-label","Satz bearbeiten");
-      chip.onclick=function(ev){ev.stopPropagation();
-        sheetEditLoggedSet(ex,dateKey,o.i,function(){setTimeout(function(){sheetWorkoutDetail(dateKey,wo);},180);});
-      };
-      line.appendChild(chip);
-    });
-    m.appendChild(line);r.appendChild(m);
-    var best=bestFor(exid,dateKey,WIN_STRENGTH);
-    var tb=Math.max.apply(null,arr.map(function(o){return setValue(ex,o.s);}));
-    if(best.best!=null&&tb>=best.best-0.01)r.appendChild(el("span","pill pr","Best"));
-    list.appendChild(r);
-  });
-  (d.cardio||[]).forEach(function(c){if(c.wid!==wo.id)return;
-    var ex=exById(c.ex),r=el("div","row"),m=el("div","main");
-    m.appendChild(el("b",null,ex?ex.n:c.ex));m.appendChild(el("span",null,c.min+" Minuten"+(c.km?" · "+c.km+" km":"")));
-    r.appendChild(m);list.appendChild(r);
-  });
-  if(!list.children.length)list.appendChild(el("div","empty","Keine Sätze."));
-  body.appendChild(list);
-  page.querySelector(".exdpage-scroll").scrollTop=0;
-}
-
-/* Tages-Detail aus der Verlaufsliste: zeigt Trainings und Sätze des Tages, mit Löschen. */
-function sheetDay(dateKey){
-  openSheet(function(b){
-    var d=day(dateKey);
-    sheetTitle(b,dateKey===TODAY?"Heute":deDate(dateKey));
-    var hasStrength=(d.sets||[]).some(function(s){var ex=exById(s.ex);return ex&&ex.t!=="cardio";});
-    if(hasStrength){
-      b.appendChild(dayFigs(dateKey));
-      Array.prototype.forEach.call(b.querySelectorAll("svg[data-day]"),fillDayFig);
-    }
-    var list=el("div","card flush");list.style.margin="0 -16px";
-    (d.workouts||[]).forEach(function(wo){
-      var r=el("div","row"),m=el("div","main");
-      m.appendChild(el("b",null,wo.name));m.appendChild(el("span",null,fmtDur(wo.dur)+" · "+wo.exs+" Übungen · "+wo.sets+" Sätze"+(wo.vol?" · "+wo.vol+" kg":"")));
-      r.appendChild(m);
-      var del=el("button","iconbtn");del.setAttribute("aria-label","Training löschen");del.innerHTML=svgIcon(IC_TRASH,1.6);
-      del.onclick=function(){closeSheet();confirmDeleteWorkout(dateKey,wo);};r.appendChild(del);list.appendChild(r);
-    });
-    var groups={},order=[];
-    (d.sets||[]).forEach(function(st){if(!groups[st.ex]){groups[st.ex]=[];order.push(st.ex);}groups[st.ex].push(st);});
-    // Jeder Satz ist antippbar – so lassen sich Gewicht/Wdh. auch für vergangene Trainingstage
-    // direkt hier nachträglich korrigieren, ohne über den Übungskatalog gehen zu müssen.
-    order.forEach(function(exid){var ex=exById(exid);if(!ex)return;
-      var r=el("div","row"),m=el("div","main");m.appendChild(el("b",null,ex.n));
-      var line=el("div","exd-hsets");
-      groups[exid].forEach(function(st){
-        var idx=(d.sets||[]).indexOf(st);
-        var chip=el("button","exd-hset",setLabel(ex,st));chip.type="button";
-        chip.setAttribute("aria-label","Satz bearbeiten");
-        chip.onclick=function(ev){ev.stopPropagation();
-          sheetEditLoggedSet(ex,dateKey,idx,function(){setTimeout(function(){sheetDay(dateKey);},180);});
-        };
-        line.appendChild(chip);
-      });
-      m.appendChild(line);
-      r.appendChild(m);list.appendChild(r);});
-    (d.cardio||[]).forEach(function(c){var ex=exById(c.ex),r=el("div","row"),m=el("div","main");
-      m.appendChild(el("b",null,ex?ex.n:c.ex));m.appendChild(el("span",null,c.min+" Minuten"+(c.km?" · "+c.km+" km":"")));r.appendChild(m);list.appendChild(r);});
-    if(!list.children.length)list.appendChild(el("div","empty","Keine Einträge."));
-    b.appendChild(list);
-    if((d.sets||[]).length||(d.cardio||[]).length||(d.workouts||[]).length){
-      var all=el("button","btn ghost block","Alle Einträge dieses Tages löschen");all.style.marginTop="14px";
-      all.onclick=function(){closeSheet();askConfirm("Tag leeren?","Alle Sätze, Ausdauer-Einträge und Trainings vom "+deDate(dateKey)+" werden entfernt. Die Notiz bleibt.","Alles löschen",function(){deleteDay(dateKey);},true);};
-      b.appendChild(all);
-    }
-  });
-}
-
-function removeRec(rec){var sets=day(TODAY).sets;for(var k=sets.length-1;k>=0;k--){if(sets[k]===rec||(rec.ts&&sets[k].ts===rec.ts)){sets.splice(k,1);break;}}touch(TODAY);}
-
-/* Die Vorlage so beschreiben, wie das Training tatsaechlich gelaufen ist: Reihenfolge und
-   Uebungen aus dem Training, Saetze aus der Anzahl der Zeilen, Wiederholungen/Gewicht aus
-   dem zuletzt abgehakten Satz (sonst aus dem letzten eingetragenen). Ausdauer bleibt aussen
-   vor - eine Vorlage kennt nur Uebung/Saetze/Wdh./kg. */
-function workoutRoutine(){
-  if(!workout||!state.routines)return null;
-  if(workout.routineId&&state.routines[workout.routineId])return state.routines[workout.routineId];
-  var nm=String(workout.name||"").trim().toLowerCase();
-  if(!nm)return null;
-  for(var k in state.routines){
-    var r=state.routines[k];
-    if(r&&String(r.name||"").trim().toLowerCase()===nm){workout.routineId=r.id||k;return r;}
-  }
-  return null;
-}
-
-function routineItemsFromWorkout(){
-  var items=[];
-  workout.exercises.forEach(function(we){
-    if(!we.sets||!we.sets.length)return;
-    var ex=exById(we.ex);if(!ex)return;
-    var src=null;
-    for(var i=we.sets.length-1;i>=0&&!src;i--)if(we.sets[i].done)src=we.sets[i];
-    if(!src)src=we.sets[we.sets.length-1];
-    items.push({ex:we.ex,
-      sets:clamp(we.sets.length,1,12),
-      reps:Math.max(1,Math.round(src.reps||(ex.t==="sec"?30:8))),
-      kg:ex.t==="load"?(src.kg||0):0});
-  });
-  return items;
-}
-
-function routineDiffers(r,items){
-  if(!r||!Array.isArray(r.items)||r.items.length!==items.length)return true;
-  for(var i=0;i<items.length;i++){
-    var a=r.items[i],b=items[i];
-    if(!a||a.ex!==b.ex||(a.sets|0)!==(b.sets|0)||(a.reps|0)!==(b.reps|0)||(+(a.kg||0))!==(+(b.kg||0)))return true;
-  }
-  return false;
-}
-
-/* Kurz benennen, was sich geaendert hat - ohne das muesste man die Vorlage erst oeffnen,
-   um zu sehen, worauf man sich da einlaesst. */
-function routineChangeSummary(r,items){
-  var out=[],oldIds=r.items.map(function(i){return i.ex;}),newIds=items.map(function(i){return i.ex;});
-  var added=newIds.filter(function(x){return oldIds.indexOf(x)<0;}).length;
-  var removed=oldIds.filter(function(x){return newIds.indexOf(x)<0;}).length;
-  if(added)out.push(added===1?"1 Übung dazu":added+" Übungen dazu");
-  if(removed)out.push(removed===1?"1 Übung weniger":removed+" Übungen weniger");
-  var keptOld=oldIds.filter(function(x){return newIds.indexOf(x)>=0;}).join(",");
-  var keptNew=newIds.filter(function(x){return oldIds.indexOf(x)>=0;}).join(",");
-  if(keptOld!==keptNew)out.push("andere Reihenfolge");
-  var nSets=0,nVals=0;
-  items.forEach(function(it){
-    var o=null;
-    for(var i=0;i<r.items.length&&!o;i++)if(r.items[i].ex===it.ex)o=r.items[i];
-    if(!o)return;
-    if((o.sets|0)!==(it.sets|0))nSets++;
-    if((o.reps|0)!==(it.reps|0)||(+(o.kg||0))!==(+(it.kg||0)))nVals++;
-  });
-  if(nSets)out.push(nSets===1?"1× andere Satzzahl":nSets+"× andere Satzzahl");
-  if(nVals)out.push(nVals===1?"1× andere Vorgabe":nVals+"× andere Vorgaben");
-  return out.join(" · ");
 }

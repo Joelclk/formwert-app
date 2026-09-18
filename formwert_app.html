@@ -438,6 +438,18 @@ textarea{font-family:var(--f-body);resize:vertical;min-height:88px}
 .chipbar.wrap .fchip{padding:7px 12px;font-size:12.5px;min-height:32px}
 .exlist .grouplab{margin:0;padding:10px 16px 5px;background:var(--surface-2);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:1}
 .chipbar.sub{padding-top:0;padding-bottom:8px}
+/* "Staerkt zusaetzlich": Sehnen, Gelenke, Faehigkeiten. Bewusst als Text mit kurzer
+   Erklaerung statt als Chips - eine Zahl gibt es hier nicht, und ohne Erklaerung waere
+   "Tractus iliotibialis" fuer die meisten nur ein Wort. */
+.pluslist{display:flex;flex-direction:column;gap:10px}
+.pluslead{margin:0 0 2px}
+.plusrow{background:var(--surface-2);border-radius:var(--r-sm);padding:11px 13px}
+.plushead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.plushead b{font-family:var(--f-cond);font-weight:700;font-size:15px}
+.pluskind{font-family:var(--f-cond);font-weight:600;font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);background:var(--surface);border-radius:99px;
+  padding:2px 8px;box-shadow:inset 0 0 0 1px var(--rule)}
+.plusrow p{margin:5px 0 0;font-size:13px;line-height:1.45;color:var(--ink-2)}
 .pctlist{display:flex;flex-direction:column;gap:2px}
 .pctrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule)}
 .pctrow:last-child{border-bottom:0}
@@ -2775,6 +2787,8 @@ function sheetExerciseDetail(ex){
     // Bei Mobilitaetsuebungen ist die Aussage eine andere: rot heisst nicht "trainiert",
     // sondern "wird gedehnt" - bei den dynamischen "wird bewegt".
     section(ex.mob?(ex.mk==="dyn"?"Wird bewegt":"Wird gedehnt"):"Beanspruchte Muskeln",exDetailInfo(ex));
+    var plus=exDetailPlus(ex);
+    if(plus)section("Stärkt zusätzlich",plus);
     section("Verlauf",exDetailHistory(ex,redraw));
     section("Fortschritt",exDetailProgress(ex));
     section("Rekorde",exDetailRecords(ex));
@@ -6624,7 +6638,231 @@ function woMus(ex,figsEl){
   if(sec.length)box.appendChild(line(" s","Sekundär",sec));
   return box;
 }
+/* ================= Was eine Uebung ausser Muskeln noch staerkt =================
+   Sehnen, Baender, Faszien, Gelenke, Knochen und Faehigkeiten. Bewusst getrennt von
+   den Muskeln gehalten: diese Strukturen lassen sich nicht in Saetzen pro Woche
+   messen, und sie gehen NICHT ins Trainingsvolumen ein. Die Angabe ist eine
+   Einordnung, keine Dosierung - deshalb steht bei jedem Eintrag, worum es geht,
+   statt einer Zahl. */
+var STRUCT={
+ griff:{n:"Griffkraft",k:"Fähigkeit",t:"Wie lange und wie fest du etwas halten kannst. Bei Zug- und Hebeübungen oft das erste, was nachgibt - und damit die Grenze, bevor der Zielmuskel wirklich ausbelastet ist."},
+ achilles:{n:"Achillessehne",k:"Sehne",t:"Die kräftigste Sehne des Körpers. Sie passt sich an Zug an, aber deutlich langsamer als der Muskel - nach langer Pause ist der Sprung in die alte Belastung der häufigste Auslöser für Beschwerden."},
+ patella:{n:"Patellasehne",k:"Sehne",t:"Verbindet Kniescheibe und Schienbein. Regelmäßige Beugung unter Last macht sie belastbarer; plötzlich viel Sprung- und Landearbeit reizt sie."},
+ tractus:{n:"Tractus iliotibialis",k:"Faszie",t:"Sehnenplatte an der Oberschenkelaußenseite, vom Becken bis unters Knie. Sie wird nicht selbst trainiert, sondern über die Muskeln, die an ihr ziehen - Gesäß und Hüftabspreizer. Schwache Hüftstabilität zeigt sich häufig hier."},
+ rotator_sehnen:{n:"Rotatorenmanschette",k:"Sehne",t:"Vier Sehnen, die den Oberarmkopf in der Pfanne zentrieren. Sie arbeiten bei jedem Drücken und Ziehen mit, ohne dass man sie spürt - und sind der Grund, warum saubere Technik über Kopf wichtiger ist als Gewicht."},
+ bizepssehne:{n:"Lange Bizepssehne",k:"Sehne",t:"Läuft durch das Schultergelenk hindurch. Sie wird bei tiefen Stützpositionen mit gestreckter Schulter stark auf Zug genommen."},
+ ellbogen:{n:"Sehnenansätze am Ellbogen",k:"Sehne",t:"Ursprung der Unterarmmuskeln an den Knochenvorsprüngen innen und außen - die Stellen, an denen Tennis- und Golferellenbogen entstehen. Sie profitieren von langsamen, kontrollierten Wiederholungen."},
+ adduktorensehnen:{n:"Adduktorensehnen",k:"Sehne",t:"Ansatz an der Schambeinregion. Häufige Beschwerdestelle bei Sportarten mit schnellen Richtungswechseln - gezielte Kräftigung beugt vor."},
+ rueckenfaszie:{n:"Rückenfaszie",k:"Faszie",t:"Große Bindegewebsplatte im unteren Rücken, an der Gesäß, Latissimus und Bauchmuskeln zusammenlaufen. Sie überträgt Kraft zwischen Ober- und Unterkörper."},
+ plantar:{n:"Plantarfaszie",k:"Faszie",t:"Spannt das Längsgewölbe des Fußes und federt bei jedem Schritt."},
+ g_sprunggelenk:{n:"Sprunggelenk",k:"Gelenk",t:"Beweglichkeit und Stabilität hier entscheiden mit, wie tief du hocken kannst und wie sicher du landest."},
+ g_knie:{n:"Kniegelenk",k:"Gelenk",t:"Kräftige Muskeln rundherum halten das Gelenk zusammen - das Training wirkt mehr über die Führung als über das Gelenk selbst."},
+ g_huefte:{n:"Hüftgelenk",k:"Gelenk",t:"Das beweglichste große Gelenk. Seitliche Stabilität hier bestimmt, ob das Knie bei Belastung nach innen fällt."},
+ g_schulter:{n:"Schultergelenk",k:"Gelenk",t:"Viel Bewegungsumfang, wenig knöcherne Führung - die Stabilität kommt fast ausschließlich aus Muskeln und Sehnen."},
+ g_handgelenk:{n:"Handgelenk",k:"Gelenk",t:"Wird bei Stützpositionen in Streckung belastet. Mit der Zeit gewöhnt es sich daran; von null auf viel ist der übliche Fehler."},
+ g_wirbelsaeule:{n:"Wirbelsäule",k:"Gelenk",t:"Nicht ein Gelenk, sondern viele. Sie hält Last aus, wenn die Rumpfmuskulatur sie in Position hält - genau das wird hier mittrainiert."},
+ knochen:{n:"Knochendichte",k:"Knochen",t:"Knochen bauen auf Druck und Zug auf. Schweres Heben und Belastung mit dem eigenen Körpergewicht wirken dabei deutlich besser als gelenkschonende Ausdauerformen."},
+ rumpf:{n:"Rumpfspannung",k:"Fähigkeit",t:"Die Fähigkeit, den Oberkörper unter Last stabil zu halten. Sie begrenzt bei vielen Übungen, wie viel Gewicht sinnvoll bewegt werden kann."},
+ balance:{n:"Gleichgewicht",k:"Fähigkeit",t:"Einbeinige und freie Übungen fordern laufende Korrekturen aus Fuß, Hüfte und Rumpf - das trainiert man nicht an der Maschine."},
+ beweglichkeit:{n:"Beweglichkeit",k:"Fähigkeit",t:"Wie weit ein Gelenk bewegt werden kann, ohne auszuweichen. Wächst durch regelmäßige, nicht durch lange Einheiten."},
+ kondition:{n:"Herz-Kreislauf",k:"Fähigkeit",t:"Ausdauerleistung und Erholungsfähigkeit. Zeigt sich im Alltag oft früher als Kraftzuwachs."}
+};
+var EX_PLUS={"bench":["rotator_sehnen", "g_schulter"],
+  "bench_db":["rotator_sehnen", "g_schulter"],
+  "bench_inc":["rotator_sehnen", "g_schulter"],
+  "bench_inc_db":["rotator_sehnen", "g_schulter"],
+  "bench_dec":["rotator_sehnen", "g_schulter"],
+  "machine_press":["rotator_sehnen", "g_schulter"],
+  "machine_press_lying":["rotator_sehnen", "g_schulter"],
+  "pushup":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_diamond":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_arch":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "pushup_dec":["rotator_sehnen", "g_schulter", "g_handgelenk"],
+  "dips":["rotator_sehnen", "bizepssehne", "g_schulter", "g_handgelenk"],
+  "fly_db":["rotator_sehnen", "g_schulter"],
+  "cable_fly":["rotator_sehnen", "g_schulter"],
+  "fly_machine":["rotator_sehnen", "g_schulter"],
+  "pullover":["rotator_sehnen", "g_schulter"],
+  "ohp":["rotator_sehnen", "g_schulter", "rumpf"],
+  "ohp_db":["rotator_sehnen", "g_schulter", "rumpf"],
+  "push_press":["rotator_sehnen", "g_schulter", "rumpf"],
+  "arnold":["rotator_sehnen", "g_schulter", "rumpf"],
+  "pike_pushup":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "hspu":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "handstand":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
+  "pullup":["griff", "ellbogen", "g_schulter"],
+  "chinup":["griff", "ellbogen", "g_schulter"],
+  "pullup_wide":["griff", "ellbogen", "g_schulter"],
+  "pullup_weight":["griff", "ellbogen", "g_schulter"],
+  "latpull":["griff", "ellbogen", "g_schulter"],
+  "latpull_close":["griff", "ellbogen", "g_schulter"],
+  "pullup_neg":["griff", "ellbogen", "g_schulter"],
+  "deadhang":["griff", "ellbogen", "g_handgelenk"],
+  "row_bb":["griff", "g_schulter", "rumpf"],
+  "row_db":["griff", "g_schulter", "rumpf", "balance"],
+  "row_pendlay":["griff", "g_schulter", "rumpf"],
+  "row_tbar":["griff", "g_schulter", "rumpf"],
+  "row_cable":["g_schulter", "rumpf"],
+  "row_machine":["g_schulter", "rumpf"],
+  "row_inv":["g_schulter", "rumpf"],
+  "row_band":["g_schulter", "rumpf"],
+  "facepull":["g_schulter", "rumpf"],
+  "shrug":["griff", "g_schulter", "rumpf"],
+  "shrug_db":["griff", "g_schulter", "rumpf"],
+  "squat":["patella", "g_knie", "knochen", "rumpf"],
+  "squat_front":["patella", "g_knie", "knochen", "rumpf"],
+  "squat_goblet":["patella", "g_knie", "rumpf"],
+  "squat_bw":["patella", "g_knie", "rumpf"],
+  "squat_pistol":["patella", "g_knie", "g_huefte", "rumpf"],
+  "squat_bulg":["patella", "g_knie", "g_huefte", "rumpf"],
+  "legpress":["patella", "g_knie", "knochen", "rumpf"],
+  "hacksquat":["patella", "g_knie", "knochen", "rumpf"],
+  "lunge":["patella", "g_knie", "g_huefte", "rumpf"],
+  "lunge_walk":["patella", "g_knie", "g_huefte", "rumpf"],
+  "stepup":["patella", "g_knie", "g_huefte", "rumpf"],
+  "stepup_bw":["patella", "g_knie", "g_huefte", "rumpf"],
+  "legext":["patella", "g_knie", "knochen", "rumpf"],
+  "sissy":["patella", "g_knie", "rumpf"],
+  "wallsit":["patella", "g_knie", "rumpf"],
+  "balance_sl":["patella", "g_knie", "g_huefte", "rumpf"],
+  "deadlift":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_rdl":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_sumo":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "deadlift_sl":["griff", "rueckenfaszie", "g_huefte", "g_wirbelsaeule"],
+  "hipthrust":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "gluteBridge":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "goodmorning":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "backext":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "legcurl":["g_knie"],
+  "nordic":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "kb_swing":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
+  "plank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "lsit":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "sideplank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "hollow":["g_wirbelsaeule", "rumpf"],
+  "legraise":["griff", "g_wirbelsaeule", "rumpf"],
+  "kneeraise":["griff", "g_wirbelsaeule", "rumpf"],
+  "crunch":["g_wirbelsaeule", "rumpf"],
+  "situp":["g_wirbelsaeule", "rumpf"],
+  "russian":["g_wirbelsaeule", "rumpf"],
+  "abwheel":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "cablecrunch":["g_wirbelsaeule", "rumpf"],
+  "deadbug":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "birddog":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "pallof":["g_wirbelsaeule", "rumpf"],
+  "torso_rot":["g_wirbelsaeule", "rumpf"],
+  "dragonflag":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
+  "lateral":["g_schulter"],
+  "lateral_cable":["g_schulter", "balance"],
+  "frontraise":["g_schulter"],
+  "reversefly":["g_schulter"],
+  "upright_row":["g_schulter"],
+  "cuban":["g_schulter"],
+  "bandpullapart":["g_schulter"],
+  "rot_internal":["rotator_sehnen", "g_schulter", "balance"],
+  "emptycan":["rotator_sehnen", "g_schulter"],
+  "curl_bb":["ellbogen"],
+  "curl_db":["ellbogen"],
+  "curl_hammer":["griff", "ellbogen", "g_handgelenk"],
+  "curl_incline":["ellbogen"],
+  "curl_preacher":["ellbogen"],
+  "curl_preacher_machine":["ellbogen"],
+  "curl_cable":["ellbogen"],
+  "curl_cable_lying":["ellbogen"],
+  "tri_push":["ellbogen"],
+  "tri_skull":["ellbogen"],
+  "tri_over":["ellbogen"],
+  "tri_kick":["ellbogen", "balance"],
+  "dips_bench":["ellbogen", "bizepssehne"],
+  "wrist_curl":["griff", "ellbogen", "g_handgelenk"],
+  "wrist_curl_rev":["griff", "ellbogen", "g_handgelenk"],
+  "farmers":["griff", "ellbogen", "g_handgelenk"],
+  "ricebucket":["griff", "ellbogen", "g_handgelenk"],
+  "fatgripz":["griff", "ellbogen", "g_handgelenk"],
+  "calf_stand":["achilles", "g_sprunggelenk"],
+  "calf_seat":["achilles", "g_sprunggelenk"],
+  "calf_bw":["achilles", "g_sprunggelenk"],
+  "adduct":["adduktorensehnen", "g_huefte"],
+  "hipflex_cable":["balance"],
+  "clamshell":["tractus", "g_huefte"],
+  "sidelying_raise":["tractus", "g_huefte"],
+  "bandwalk_lat":["tractus", "g_huefte"],
+  "abduct":["tractus", "g_huefte"],
+  "copenhagen":["adduktorensehnen", "g_huefte"],
+  "neck_curl":["g_wirbelsaeule"],
+  "neck_ext_bw":["g_wirbelsaeule"],
+  "neck_flex_bw":["g_wirbelsaeule"],
+  "neck_side_bw":["g_wirbelsaeule"],
+  "neck_harness":["g_wirbelsaeule"],
+  "neck_bridge":["g_wirbelsaeule"],
+  "run":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "run_interval":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "bike":["kondition"],
+  "row_erg":["kondition", "griff", "rueckenfaszie"],
+  "swim":["kondition", "rotator_sehnen", "g_schulter"],
+  "jumprope":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "walk":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "hike":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "stairs":["kondition", "achilles", "tractus", "g_sprunggelenk"],
+  "burpee":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "elliptical":["kondition"],
+  "football":["kondition", "achilles", "g_sprunggelenk", "knochen"],
+  "mob_hip":["beweglichkeit", "g_huefte"],
+  "mob_shoulder":["beweglichkeit", "g_schulter", "g_wirbelsaeule"],
+  "mob_thoracic":["beweglichkeit", "g_wirbelsaeule"],
+  "mob_hamstring":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_ankle":["beweglichkeit", "g_sprunggelenk"],
+  "mob_couch":["beweglichkeit", "g_huefte"],
+  "mob_deadhang":["beweglichkeit", "griff", "g_schulter", "g_handgelenk"],
+  "mob_pancake":["beweglichkeit", "g_huefte"],
+  "mob_chest":["beweglichkeit", "g_schulter"],
+  "mob_biceps":["beweglichkeit", "g_schulter", "g_handgelenk"],
+  "mob_cobra":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_reardelt":["beweglichkeit", "g_schulter"],
+  "mob_triceps":["beweglichkeit", "g_schulter"],
+  "mob_neck":["beweglichkeit"],
+  "mob_lat":["beweglichkeit", "g_schulter"],
+  "mob_knee2chest":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_twist":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
+  "mob_wrist_flex":["beweglichkeit", "g_handgelenk"],
+  "mob_wrist_ext":["beweglichkeit", "g_handgelenk"],
+  "mob_hipflex":["beweglichkeit", "g_huefte"],
+  "mob_pigeon":["beweglichkeit", "g_huefte"],
+  "mob_glutemed":["beweglichkeit", "g_huefte"],
+  "mob_quad":["beweglichkeit", "g_huefte"],
+  "mob_frog":["beweglichkeit", "g_huefte"],
+  "mob_calf_straight":["beweglichkeit", "g_sprunggelenk", "g_huefte"],
+  "mob_calf_bent":["beweglichkeit", "g_sprunggelenk"],
+  "mob_tibialis":["beweglichkeit", "g_sprunggelenk"],
+  "mob_catcow":["beweglichkeit", "g_wirbelsaeule"],
+  "mob_wgs":["beweglichkeit", "g_sprunggelenk", "g_huefte", "g_wirbelsaeule"],
+  "mob_legswing":["beweglichkeit", "g_huefte"],
+  "mob_9090":["beweglichkeit", "g_huefte"],
+  "mob_wrist_circ":["beweglichkeit", "g_handgelenk"]};
+function exPlusList(ex){
+  var ids=EX_PLUS[ex&&ex.id]||[];
+  return ids.filter(function(id){return !!STRUCT[id];});
+}
 /* ================= Übungsdetail: Tabs Info/Verlauf/Fortschritt/Rekorde ================= */
+function exDetailPlus(ex){
+  var ids=exPlusList(ex);
+  if(!ids.length)return null;
+  var wrap=el("div","pluslist");
+  ids.forEach(function(id){
+    var st=STRUCT[id];
+    var row=el("div","plusrow");
+    var head=el("div","plushead");
+    head.appendChild(el("b",null,st.n));
+    head.appendChild(el("span","pluskind",st.k));
+    row.appendChild(head);
+    row.appendChild(el("p",null,st.t));
+    wrap.appendChild(row);
+  });
+  var note=el("p","note pluslead",
+    "Zählt nicht ins Trainingsvolumen - diese Strukturen lassen sich nicht in Sätzen pro Woche messen. Sie werden trotzdem mitbelastet und brauchen meist länger, um sich anzupassen, als der Muskel.");
+  wrap.insertBefore(note,wrap.firstChild);
+  return wrap;
+}
 function exDetailInfo(ex){
   var wrap=el("div");
   var figs=woFigs(ex);figs.classList.add("exdetail-figs");wrap.appendChild(figs);
@@ -7575,7 +7813,7 @@ var I18N={
    Original bleibt unter einem Unterstrich-Feld liegen und wird beim Zurueckschalten
    wiederhergestellt. Die englischen Namen der Feinmuskeln stehen schon im 3D-Modell: dessen
    Schluessel SIND die englischen Bezeichnungen, nur mit Unterstrichen. */
-var UI_EN={"Heute": "Today", "Entdecken": "Explore", "Training": "Training", "Körper": "Body", "Werte": "Stats", "Alle": "All", "Alle Übungen": "All exercises", "Alter": "Age", "Anmeldung & Sync": "Sign-in & sync", "Arme": "Arms", "Beine": "Legs", "Assessment neu machen": "Redo assessment", "Ausdauer": "Endurance", "Ausdauerminuten pro Woche": "Cardio minutes per week", "Backup einspielen": "Restore backup", "Backup speichern": "Save backup", "Beenden": "Finish", "Belastungsäquivalent": "Load equivalent", "Cooper-Test": "Cooper test", "Datei/Text": "File/text", "Deutsch": "German", "Englisch": "English", "Eigene Einheit zusammenstellen": "Build your own session", "Einstellungen": "Settings", "Eintragen": "Log", "Erholung": "Recovery", "Geschlecht": "Sex", "Grenze": "Limit", "Konstanz": "Consistency", "Konto & Daten": "Account & data", "Korridor für dich": "Your range", "Korridor · Sätze pro Woche": "Range · sets per week", "Kraftstufen": "Strength levels", "Körperdaten": "Body data", "Körpergewicht": "Body weight", "Körperillustration:": "Body illustration:", "Letzte Tage": "Recent days", "Maximalkraft": "Max strength", "Meine Einheiten": "My sessions", "Minimum": "Minimum", "Optimum": "Optimum", "Minuten pro Woche": "Minutes per week", "Mobilität": "Mobility", "Mobilität pro Woche": "Mobility sessions per week", "Muskelabdeckung": "Muscle coverage", "Muskelgruppen": "Muscle groups", "Nach Körperregion": "By body region", "Nach Übungen suchen…": "Search exercises…", "Neue Einheit": "New session", "Neues Training starten": "Start new workout", "Notiz": "Note", "Rechenweg": "How it is calculated", "Ruhepuls": "Resting heart rate", "Sprache": "Language", "Standard": "Standard", "Teilwerte": "Sub-scores", "Verlauf": "History", "Was noch mehr bringt": "What more would add", "Weiter": "Continue", "Wochenziele": "Weekly goals", "Woche vor": "Next week", "Woche zurück": "Previous week", "Zurück": "Back", "Ziele, Körperdaten, Sprache, Konto": "Goals, body data, language, account", "Trainingstage pro Woche": "Training days per week", "Tipp eine Muskelgruppe an.": "Tap a muscle group.", "Tipp einen Muskel an – oder wähl oben eine Region.": "Tap a muscle — or pick a region above.", "Tipp einen Muskel an – oder oben eine Region wie „Brust“, dann werden alle zugehörigen Muskeln markiert.": "Tap a muscle — or a region above such as “Chest” to highlight every muscle in it.", "Ziehen = drehen · Tippen = Muskel auswählen": "Drag = rotate · Tap = select muscle", "Die Richtwerte sind Gruppenmittelwerte mit großer Streuung. Wenn du für diesen Muskel erkennbar mehr oder weniger brauchst, verschieb den Korridor hier.": "These guide values are group averages with wide spread. If this muscle clearly needs more or less for you, shift the range here.", "Die Namen von Regionen, Muskeln und Übungen wechseln mit. Erklärtexte sind noch nicht vollständig übersetzt.": "Region, muscle and exercise names switch along. Explanatory texts are not fully translated yet.", "3D-Modell wird geladen…": "Loading 3D model…", "3D-Modell konnte nicht geladen werden.": "3D model could not be loaded.", "deutlich mehr": "much more", "deutlich weniger": "much less", "mehr": "more", "weniger": "less", "im Korridor": "in range", "zu wenig": "too little", "über Limit": "over limit", "männlich": "male", "weiblich": "female", "nicht gemacht": "not done", "nichts": "none", "noch nichts notiert": "nothing noted yet", "noch offen": "still open", "offen": "open", "nur dieses Gerät": "this device only", "verfallen": "expired", "unter F": "below F", "+ Erstellen": "+ Create", ", MIT-Lizenz.": ", MIT licence.", "Mo": "Mon", "Di": "Tue", "Mi": "Wed", "Do": "Thu", "Fr": "Fri", "Sa": "Sat", "So": "Sun", "Knorrenmuskel": "Anconeus", "Beanspruchte Muskeln": "Muscles worked", "Wird gedehnt": "Stretched", "Wird bewegt": "Mobilised", "Statisch": "Static", "Dynamisch": "Dynamic", "Alles": "All", "Mobilität · Statisch": "Mobility · Static", "Mobilität · Dynamisch": "Mobility · Dynamic",
+var UI_EN={"Heute": "Today", "Entdecken": "Explore", "Training": "Training", "Körper": "Body", "Werte": "Stats", "Alle": "All", "Alle Übungen": "All exercises", "Alter": "Age", "Anmeldung & Sync": "Sign-in & sync", "Arme": "Arms", "Beine": "Legs", "Assessment neu machen": "Redo assessment", "Ausdauer": "Endurance", "Ausdauerminuten pro Woche": "Cardio minutes per week", "Backup einspielen": "Restore backup", "Backup speichern": "Save backup", "Beenden": "Finish", "Belastungsäquivalent": "Load equivalent", "Cooper-Test": "Cooper test", "Datei/Text": "File/text", "Deutsch": "German", "Englisch": "English", "Eigene Einheit zusammenstellen": "Build your own session", "Einstellungen": "Settings", "Eintragen": "Log", "Erholung": "Recovery", "Geschlecht": "Sex", "Grenze": "Limit", "Konstanz": "Consistency", "Konto & Daten": "Account & data", "Korridor für dich": "Your range", "Korridor · Sätze pro Woche": "Range · sets per week", "Kraftstufen": "Strength levels", "Körperdaten": "Body data", "Körpergewicht": "Body weight", "Körperillustration:": "Body illustration:", "Letzte Tage": "Recent days", "Maximalkraft": "Max strength", "Meine Einheiten": "My sessions", "Minimum": "Minimum", "Optimum": "Optimum", "Minuten pro Woche": "Minutes per week", "Mobilität": "Mobility", "Mobilität pro Woche": "Mobility sessions per week", "Muskelabdeckung": "Muscle coverage", "Muskelgruppen": "Muscle groups", "Nach Körperregion": "By body region", "Nach Übungen suchen…": "Search exercises…", "Neue Einheit": "New session", "Neues Training starten": "Start new workout", "Notiz": "Note", "Rechenweg": "How it is calculated", "Ruhepuls": "Resting heart rate", "Sprache": "Language", "Standard": "Standard", "Teilwerte": "Sub-scores", "Verlauf": "History", "Was noch mehr bringt": "What more would add", "Weiter": "Continue", "Wochenziele": "Weekly goals", "Woche vor": "Next week", "Woche zurück": "Previous week", "Zurück": "Back", "Ziele, Körperdaten, Sprache, Konto": "Goals, body data, language, account", "Trainingstage pro Woche": "Training days per week", "Tipp eine Muskelgruppe an.": "Tap a muscle group.", "Tipp einen Muskel an – oder wähl oben eine Region.": "Tap a muscle — or pick a region above.", "Tipp einen Muskel an – oder oben eine Region wie „Brust“, dann werden alle zugehörigen Muskeln markiert.": "Tap a muscle — or a region above such as “Chest” to highlight every muscle in it.", "Ziehen = drehen · Tippen = Muskel auswählen": "Drag = rotate · Tap = select muscle", "Die Richtwerte sind Gruppenmittelwerte mit großer Streuung. Wenn du für diesen Muskel erkennbar mehr oder weniger brauchst, verschieb den Korridor hier.": "These guide values are group averages with wide spread. If this muscle clearly needs more or less for you, shift the range here.", "Die Namen von Regionen, Muskeln und Übungen wechseln mit. Erklärtexte sind noch nicht vollständig übersetzt.": "Region, muscle and exercise names switch along. Explanatory texts are not fully translated yet.", "3D-Modell wird geladen…": "Loading 3D model…", "3D-Modell konnte nicht geladen werden.": "3D model could not be loaded.", "deutlich mehr": "much more", "deutlich weniger": "much less", "mehr": "more", "weniger": "less", "im Korridor": "in range", "zu wenig": "too little", "über Limit": "over limit", "männlich": "male", "weiblich": "female", "nicht gemacht": "not done", "nichts": "none", "noch nichts notiert": "nothing noted yet", "noch offen": "still open", "offen": "open", "nur dieses Gerät": "this device only", "verfallen": "expired", "unter F": "below F", "+ Erstellen": "+ Create", ", MIT-Lizenz.": ", MIT licence.", "Mo": "Mon", "Di": "Tue", "Mi": "Wed", "Do": "Thu", "Fr": "Fri", "Sa": "Sat", "So": "Sun", "Knorrenmuskel": "Anconeus", "Beanspruchte Muskeln": "Muscles worked", "Stärkt zusätzlich": "Also strengthens", "Wird gedehnt": "Stretched", "Wird bewegt": "Mobilised", "Statisch": "Static", "Dynamisch": "Dynamic", "Alles": "All", "Mobilität · Statisch": "Mobility · Static", "Mobilität · Dynamisch": "Mobility · Dynamic",
 "Neue Übung":"New exercise","Vorschau":"Preview","keine gewählt":"none selected",
 "Primärmuskeln":"Primary muscles","Sekundärmuskeln (halber Satz)":"Secondary muscles (half a set)","Übung anlegen":"Create exercise","Übung wählen":"Choose exercise",
 "Übung angelegt":"Exercise created","Bitte einen Namen eingeben.":"Please enter a name.",

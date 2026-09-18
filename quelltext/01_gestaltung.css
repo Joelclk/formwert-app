@@ -432,6 +432,18 @@ textarea{font-family:var(--f-body);resize:vertical;min-height:88px}
 .chipbar.wrap .fchip{padding:7px 12px;font-size:12.5px;min-height:32px}
 .exlist .grouplab{margin:0;padding:10px 16px 5px;background:var(--surface-2);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:1}
 .chipbar.sub{padding-top:0;padding-bottom:8px}
+/* "Staerkt zusaetzlich": Sehnen, Gelenke, Faehigkeiten. Bewusst als Text mit kurzer
+   Erklaerung statt als Chips - eine Zahl gibt es hier nicht, und ohne Erklaerung waere
+   "Tractus iliotibialis" fuer die meisten nur ein Wort. */
+.pluslist{display:flex;flex-direction:column;gap:10px}
+.pluslead{margin:0 0 2px}
+.plusrow{background:var(--surface-2);border-radius:var(--r-sm);padding:11px 13px}
+.plushead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.plushead b{font-family:var(--f-cond);font-weight:700;font-size:15px}
+.pluskind{font-family:var(--f-cond);font-weight:600;font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);background:var(--surface);border-radius:99px;
+  padding:2px 8px;box-shadow:inset 0 0 0 1px var(--rule)}
+.plusrow p{margin:5px 0 0;font-size:13px;line-height:1.45;color:var(--ink-2)}
 .pctlist{display:flex;flex-direction:column;gap:2px}
 .pctrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule)}
 .pctrow:last-child{border-bottom:0}
