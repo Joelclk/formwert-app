@@ -1,6 +1,6 @@
 # Quelltext-Verzeichnis
 
-Lesefassung von `formwert_app.html` (Version 248), erzeugt von
+Lesefassung von `formwert_app.html` (Version 249), erzeugt von
 `werkzeug/zerlegen.py`. **Diese Dateien werden nicht ausgefuehrt.**
 Die App selbst ist und bleibt die eine Datei `formwert_app.html`.
 
@@ -16,12 +16,13 @@ Ersetzt wurden 12 Datenbloecke mit zusammen 11.6 MB.
 |---|---:|---|
 | `00_grundgeruest.html` | 8 KB | HTML-Grundgeruest: Tab-Leiste, Seiten, Overlays |
 | `01_gestaltung.css` | 71 KB | Farben, Schriften, alle Bausteine der Oberflaeche |
-| `daten/d01.js` | 106 KB | GROUPS bis (Anweisung) |
-| `daten/d02.js` | 77 KB | FIGMASKS |
-| `code/c01.js` | 108 KB | (Anweisung) bis NOTCH_TRAP_DELT |
-| `code/c02.js` | 96 KB | NOTCH_TRAP_DELT_SHOULDER bis addWorkoutCardio() |
+| `daten/d01.js` | 78 KB | GROUPS bis (Anweisung) |
+| `daten/d02.js` | 38 KB | FINE bis (Anweisung) |
+| `daten/d03.js` | 77 KB | FIGMASKS |
+| `code/c01.js` | 108 KB | (Anweisung) bis BRACHIALIS_FRONT_F |
+| `code/c02.js` | 98 KB | NOTCH_TRAP_DELT bis addWorkoutCardio() |
 | `code/c03.js` | 107 KB | EX_PCT bis routineChangeSummary() |
-| `code/c04.js` | 106 KB | finishWorkout() bis (Anweisung) |
+| `code/c04.js` | 107 KB | finishWorkout() bis (Anweisung) |
 
 ## Wo steht was
 
@@ -112,9 +113,9 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `detectBlobs()` | `code/c02.js` | 858 |
 | `detectLang()` | `code/c04.js` | 232 |
 | `discExCard()` | `code/c02.js` | 777 |
-| `discExList()` | `code/c02.js` | 527 |
+| `discExList()` | `code/c02.js` | 857 |
 | `discLazyObserve()` | `code/c02.js` | 687 |
-| `discRegion` | `code/c02.js` | 474 |
+| `discRegion` | `code/c02.js` | 645 |
 | `document.addEventListener` | `code/c02.js` | 483 |
 | `document.documentElement.setAttribute` | `code/c04.js` | 51 |
 | `drawMini()` | `code/c04.js` | 329 |
@@ -131,10 +132,10 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `EQUIP_ICONS` | `code/c01.js` | 1134 |
 | `equipIcon()` | `code/c01.js` | 246 |
 | `equipOptions()` | `code/c01.js` | 495 |
-| `EX` | `daten/d01.js` | 55383 |
+| `EX` | `daten/d01.js` | 64932 |
 | `EX_BASE` | `daten/d01.js` | 259 |
 | `EX_BY_ID` | `code/c01.js` | 579 |
-| `EX_EN` | `code/c04.js` | 4457 |
+| `EX_EN` | `code/c04.js` | 5346 |
 | `EX_PCT` | `code/c03.js` | 48245 |
 | `EX_PCT_HOT` | `code/c03.js` | 641 |
 | `EX_PCT_STEPS` | `code/c03.js` | 409 |
@@ -160,24 +161,24 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `exPctInv()` | `code/c03.js` | 184 |
 | `exPctStep()` | `code/c03.js` | 181 |
 | `expGroup` | `code/c01.js` | 276 |
-| `exPicker()` | `code/c01.js` | 5536 |
+| `exPicker()` | `code/c01.js` | 6069 |
 | `exPrimaryRegionLabel()` | `code/c02.js` | 418 |
 | `exSetsByDay()` | `code/c01.js` | 425 |
 | `exSetWeights()` | `code/c01.js` | 287 |
 | `exsOfCat()` | `code/c02.js` | 188 |
 | `FIGCROP` | `code/c03.js` | 267 |
 | `figImages()` | `code/c02.js` | 371 |
-| `FIGIMG` | `daten/d01.js` | 553 |
-| `FIGMASKS` | `daten/d02.js` | 78921 |
+| `FIGIMG` | `daten/d02.js` | 553 |
+| `FIGMASKS` | `daten/d03.js` | 78921 |
 | `figSex()` | `code/c01.js` | 84 |
-| `FIGVB` | `daten/d01.js` | 1562 |
+| `FIGVB` | `daten/d02.js` | 1562 |
 | `figViewBoxTight()` | `code/c03.js` | 168 |
-| `FIGW` | `daten/d01.js` | 20 |
+| `FIGW` | `daten/d02.js` | 20 |
 | `fillDayFig()` | `code/c03.js` | 598 |
 | `fillExFig()` | `code/c03.js` | 701 |
-| `fillRegionFig()` | `code/c02.js` | 1542 |
+| `fillRegionFig()` | `code/c02.js` | 1563 |
 | `fillWorkoutFig()` | `code/c03.js` | 423 |
-| `FINE` | `daten/d01.js` | 36005 |
+| `FINE` | `daten/d02.js` | 36005 |
 | `FINE_EN_FIX` | `code/c04.js` | 138 |
 | `fineGroups()` | `code/c02.js` | 194 |
 | `fineIdsOfGroups()` | `code/c01.js` | 188 |
@@ -266,6 +267,9 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `maskZone()` | `code/c02.js` | 351 |
 | `mergeDuplicateCustomEx()` | `code/c04.js` | 1255 |
 | `MIN_TILT` | `code/c04.js` | 863 |
+| `MOB_KINDS` | `code/c02.js` | 138 |
+| `MOB_REGION` | `code/c02.js` | 556 |
+| `mobKindLabel()` | `code/c02.js` | 84 |
 | `movementGroups()` | `code/c01.js` | 212 |
 | `MUS_EN` | `code/c04.js` | 1479 |
 | `muscleById()` | `code/c01.js` | 111 |
@@ -278,7 +282,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `normInv()` | `code/c01.js` | 173 |
 | `NOTCH_LAT_TOP` | `code/c02.js` | 614 |
 | `NOTCH_LAT_TOP_F` | `code/c02.js` | 516 |
-| `NOTCH_TRAP_DELT` | `code/c01.js` | 474 |
+| `NOTCH_TRAP_DELT` | `code/c02.js` | 474 |
 | `NOTCH_TRAP_DELT_SHOULDER` | `code/c02.js` | 663 |
 | `numField()` | `code/c01.js` | 768 |
 | `ob` | `code/c04.js` | 67 |
@@ -333,9 +337,9 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `renderBodySel()` | `code/c01.js` | 72 |
 | `renderCardio()` | `code/c02.js` | 1319 |
 | `renderDiscEquipChips()` | `code/c02.js` | 580 |
-| `renderDiscExGrid()` | `code/c02.js` | 1576 |
-| `renderDiscMuscleGrid()` | `code/c02.js` | 910 |
-| `renderDiscSubChips()` | `code/c02.js` | 861 |
+| `renderDiscExGrid()` | `code/c02.js` | 1711 |
+| `renderDiscMuscleGrid()` | `code/c02.js` | 933 |
+| `renderDiscSubChips()` | `code/c02.js` | 1436 |
 | `renderEntdecken()` | `code/c02.js` | 115 |
 | `renderFigure()` | `code/c02.js` | 2252 |
 | `renderFormula()` | `code/c02.js` | 970 |
@@ -414,7 +418,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `sheetEditExercise()` | `code/c01.js` | 1584 |
 | `sheetEditLoggedSet()` | `code/c01.js` | 2121 |
 | `sheetEditor()` | `code/c04.js` | 4458 |
-| `sheetExerciseDetail()` | `code/c01.js` | 2680 |
+| `sheetExerciseDetail()` | `code/c01.js` | 2889 |
 | `sheetKraftCat()` | `code/c02.js` | 2895 |
 | `sheetNote()` | `code/c01.js` | 542 |
 | `sheetRestore()` | `code/c02.js` | 1094 |
@@ -457,7 +461,7 @@ Alphabetisch nach Name. Die Zahl ist die Groesse in Zeichen.
 | `touch()` | `code/c04.js` | 106 |
 | `trText()` | `code/c04.js` | 484 |
 | `UI_DE` | `code/c04.js` | 577 |
-| `UI_EN` | `code/c04.js` | 5022 |
+| `UI_EN` | `code/c04.js` | 5233 |
 | `UI_RX` | `code/c04.js` | 3289 |
 | `unionRect()` | `code/c02.js` | 265 |
 | `uniqueExId()` | `code/c01.js` | 82 |

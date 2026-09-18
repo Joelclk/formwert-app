@@ -1333,14 +1333,38 @@ var EX=[
 {id:"football",    n:"Fußball / Ballsport",      t:"cardio", pat:"cardio", e:"—", p:["tg_quadrizeps","tg_wade_gastro"], s:["tg_kniesehnen","tg_gesaess_haupt"], intens:"hoch", how:"Ballsportliche Belastung mit wechselndem Tempo (Sprints, Stopps, Richtungswechsel) über die Spieldauer."},
 
 /* --- Mobilität --- */
-{id:"mob_hip",     n:"Hüftöffner",               t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_gesaess_haupt"], mob:true, how:"Dynamische oder gehaltene Dehn-/Mobilisationsübungen für die Hüfte (z. B. 90/90-Position, Hüftkreisen), die die Beweglichkeit in mehrere Richtungen verbessern."},
-{id:"mob_shoulder",n:"Schultermobilität",        t:"sec",  pat:"mob", e:"Band",       p:["tg_schulter_hint"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_schulter_rot_infra","tg_schulter_rot_teres_min"], mob:true, how:"Mobilisationsübungen für die Schulter mit dem Band oder Körpergewicht (z. B. Schulterkreisen, Band-Pass-throughs), um den Bewegungsradius der Schulter zu vergrößern."},
-{id:"mob_thoracic",n:"Brustwirbelsäule",         t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_rueck_rhomb","tg_rueck_trapez_mit"], s:["tg_rueck_strecker"], mob:true, how:"Übungen zur Mobilisation der Brustwirbelsäule (z. B. Rotationen im Vierfüßlerstand oder über eine Schaumstoffrolle), um die Rotations- und Streckfähigkeit im oberen Rücken zu verbessern."},
-{id:"mob_hamstring",n:"Beinrückseite dehnen",    t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_kniesehnen"], s:["tg_rueck_strecker"], mob:true, how:"Gehaltenes oder dynamisches Dehnen der hinteren Oberschenkelmuskulatur, z. B. im Sitzen oder Stehen mit gestrecktem Bein sanft nach vorne beugen, bis eine Dehnung spürbar ist."},
-{id:"mob_ankle",   n:"Sprunggelenk",             t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_wade_gastro"], s:[], mob:true, how:"Mobilisationsübungen für das Sprunggelenk (z. B. Knie-zur-Wand-Dehnung), um die Beugefähigkeit des Sprunggelenks zu verbessern."},
-{id:"mob_couch",   n:"Couch Stretch",            t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_quadrizeps"], s:["tg_gesaess_haupt"], mob:true, how:"Ein Knie auf dem Boden, der Unterschenkel senkrecht an einer Wand oder Couch abgestützt, das andere Bein vorne aufgestellt. Oberkörper aufrichten und das Becken leicht nach vorne schieben, bis eine Dehnung im Hüftbeuger/Quadrizeps spürbar ist."},
-{id:"mob_deadhang",n:"Hängen zur Dekompression", t:"sec",  pat:"mob", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_unterarm_beug","tg_rueck_trapez_unt","tg_rueck_teres_major"], mob:true, how:"Entspannt an der Stange hängen und die Wirbelsäule und Schultern dabei bewusst dekomprimieren lassen, ähnlich wie beim reinen Hängen, hier mit Fokus auf Entspannung statt Kraft."},
-{id:"mob_pancake", n:"Pancake / Grätsche",       t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_kniesehnen"], mob:true, how:"Sitzend mit weit gegrätschten, gestreckten Beinen den Oberkörper mit geradem Rücken nach vorne absenken, bis eine Dehnung in der Oberschenkelinnenseite/hinteren Oberschenkel spürbar ist."}
+{id:"mob_hip",     n:"Hüftöffner",               t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Dynamische oder gehaltene Dehn-/Mobilisationsübungen für die Hüfte (z. B. 90/90-Position, Hüftkreisen), die die Beweglichkeit in mehrere Richtungen verbessern."},
+{id:"mob_shoulder",n:"Schultermobilität",        t:"sec",  pat:"mob", e:"Band",       p:["tg_schulter_hint"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_schulter_rot_infra","tg_schulter_rot_teres_min"], mob:true, mk:"dyn", how:"Mobilisationsübungen für die Schulter mit dem Band oder Körpergewicht (z. B. Schulterkreisen, Band-Pass-throughs), um den Bewegungsradius der Schulter zu vergrößern."},
+{id:"mob_thoracic",n:"Brustwirbelsäule",         t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_rueck_rhomb","tg_rueck_trapez_mit"], s:["tg_rueck_strecker"], mob:true, mk:"dyn", how:"Übungen zur Mobilisation der Brustwirbelsäule (z. B. Rotationen im Vierfüßlerstand oder über eine Schaumstoffrolle), um die Rotations- und Streckfähigkeit im oberen Rücken zu verbessern."},
+{id:"mob_hamstring",n:"Beinrückseite dehnen",    t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_kniesehnen"], s:["tg_rueck_strecker"], mob:true, mk:"stat", how:"Gehaltenes oder dynamisches Dehnen der hinteren Oberschenkelmuskulatur, z. B. im Sitzen oder Stehen mit gestrecktem Bein sanft nach vorne beugen, bis eine Dehnung spürbar ist."},
+{id:"mob_ankle",   n:"Sprunggelenk",             t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_wade_gastro"], s:[], mob:true, mk:"dyn", how:"Mobilisationsübungen für das Sprunggelenk (z. B. Knie-zur-Wand-Dehnung), um die Beugefähigkeit des Sprunggelenks zu verbessern."},
+{id:"mob_couch",   n:"Couch Stretch",            t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_quadrizeps"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Ein Knie auf dem Boden, der Unterschenkel senkrecht an einer Wand oder Couch abgestützt, das andere Bein vorne aufgestellt. Oberkörper aufrichten und das Becken leicht nach vorne schieben, bis eine Dehnung im Hüftbeuger/Quadrizeps spürbar ist."},
+{id:"mob_deadhang",n:"Hängen zur Dekompression", t:"sec",  pat:"mob", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_unterarm_beug","tg_rueck_trapez_unt","tg_rueck_teres_major"], mob:true, mk:"stat", how:"Entspannt an der Stange hängen und die Wirbelsäule und Schultern dabei bewusst dekomprimieren lassen, ähnlich wie beim reinen Hängen, hier mit Fokus auf Entspannung statt Kraft."},
+{id:"mob_pancake", n:"Pancake / Grätsche",       t:"sec",  pat:"mob", e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_kniesehnen"], mob:true, mk:"stat", how:"Sitzend mit weit gegrätschten, gestreckten Beinen den Oberkörper mit geradem Rücken nach vorne absenken, bis eine Dehnung in der Oberschenkelinnenseite/hinteren Oberschenkel spürbar ist."},
+{id:"mob_chest", n:"Brustdehnung mit fixiertem Arm", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_brust_mitte","tg_brust_ober"], s:["tg_schulter_vorn","tg_bizeps"], mob:true, mk:"stat", how:"Unterarm auf Schulterhöhe an einer festen Senkrechten anlegen (Türrahmen, Pfosten, Balken, Rahmen einer Maschine), Ellbogen etwa rechtwinklig. Oberkörper langsam vom Arm wegdrehen, bis es vorne in der Brust zieht. Brustbein dabei angehoben lassen, nicht in die Schulter sacken. 2 × 40 Sekunden je Seite."},
+{id:"mob_biceps", n:"Bizepsdehnung mit Arm nach hinten", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_bizeps"], s:["tg_schulter_vorn","tg_unterarm_beug"], mob:true, mk:"stat", how:"Hand hinter dem Körper auf Schulterhöhe fixieren, Handfläche nach hinten, Arm gestreckt. Oberkörper langsam vom Arm wegdrehen. Zieht deutlich anders als die Brustdehnung, weil der Arm gestreckt bleibt und der Bizeps über zwei Gelenke läuft. 2 × 30 Sekunden je Seite."},
+{id:"mob_cobra", n:"Kobra", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_bauch_gerade"], s:["tg_huefte","tg_bauch_schraeg"], mob:true, mk:"stat", how:"Bauchlage, Hände neben der Brust. Oberkörper aufrichten, Becken bleibt am Boden. Nur so weit hoch, wie der untere Rücken entspannt bleibt – es soll vorne ziehen, nicht hinten drücken. 3 × 30 Sekunden."},
+{id:"mob_reardelt", n:"Hintere Schulter über der Brust", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_schulter_hint"], s:["tg_rueck_trapez_mit","tg_schulter_rot_infra"], mob:true, mk:"stat", how:"Gestreckten Arm quer vor der Brust führen, mit dem anderen Arm am Oberarm (nicht am Ellbogengelenk) heranziehen. Schulter dabei unten lassen, nicht zum Ohr ziehen. 2 × 30 Sekunden je Seite."},
+{id:"mob_triceps", n:"Trizepsdehnung über Kopf", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_trizeps_lang"], s:["tg_rueck_lat","tg_schulter_hint"], mob:true, mk:"stat", how:"Arm über Kopf, Hand zwischen die Schulterblätter, mit der anderen Hand den Ellbogen nach hinten führen. Trifft den langen Kopf, weil der über das Schultergelenk läuft – gebeugter Ellbogen allein reicht dafür nicht. 2 × 30 Sekunden je Seite."},
+{id:"mob_neck", n:"Seitliche Nackendehnung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_trapez_ob","tg_nacken"], s:["tg_hals_nacken"], mob:true, mk:"stat", how:"Im Sitzen eine Hand unter das Gesäß klemmen, damit die Schulter unten bleibt. Kopf zur Gegenseite neigen, Blick geradeaus. Kein Zug mit der Hand am Kopf – das Eigengewicht genügt. 2 × 30 Sekunden je Seite."},
+{id:"mob_lat", n:"Lat-Dehnung mit Griff über Kopf", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_lat"], s:["tg_rueck_teres_major","tg_rueck_trapez_unt"], mob:true, mk:"stat", how:"An einem festen Griff über Kopfhöhe festhalten, Hüfte nach hinten schieben, Brust Richtung Boden sinken lassen. Arme gestreckt, Kopf zwischen den Armen. 2 × 40 Sekunden je Seite."},
+{id:"mob_knee2chest", n:"Knie zur Brust", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_strecker"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Rückenlage, beide Knie zur Brust ziehen und umfassen. Lendenwirbelsäule flach an den Boden bringen. Ruhig weiteratmen – die tiefe Rückenmuskulatur löst erst nach etwa 20 Sekunden. 2 × 40 Sekunden."},
+{id:"mob_twist", n:"Liegende Drehung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_bauch_schraeg","tg_rueck_strecker"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Rückenlage, Arme seitlich ausgebreitet. Ein angewinkeltes Bein über die Körpermitte zur Gegenseite ablegen, beide Schultern bleiben am Boden. Kopf zur Gegenrichtung drehen. 2 × 45 Sekunden je Seite."},
+{id:"mob_wrist_flex", n:"Unterarmbeuger dehnen", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_unterarm_beug"], s:["tg_bizeps"], mob:true, mk:"stat", how:"Arm gestreckt nach vorn, Handfläche nach oben, Finger mit der anderen Hand nach unten ziehen. Ellbogen durchgestreckt lassen, sonst entzieht sich der Muskel. 2 × 30 Sekunden je Seite."},
+{id:"mob_wrist_ext", n:"Unterarmstrecker dehnen", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_unterarm_streck"], s:[], mob:true, mk:"stat", how:"Arm gestreckt nach vorn, Handrücken nach oben, Hand nach unten führen und mit der anderen Hand sanft nachhelfen. Gegenstück zur Beugerdehnung – gehört bei viel Greifarbeit immer dazu. 2 × 30 Sekunden je Seite."},
+{id:"mob_hipflex", n:"Ausfallschritt tief", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_huefte"], s:["tg_quadrizeps"], mob:true, mk:"stat", how:"Halbkniender Ausfallschritt, hinteres Knie am Boden. Becken aktiv nach vorn unten schieben und dabei das Gesäß der hinteren Seite anspannen – erst dann zieht es wirklich im Hüftbeuger statt im unteren Rücken. 2 × 45 Sekunden je Seite."},
+{id:"mob_pigeon", n:"Taube / Figur 4", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_gesaess_haupt","tg_gesaess_min"], s:["tg_gesaess_med"], mob:true, mk:"stat", how:"Vorderes Bein angewinkelt vor dem Körper ablegen, hinteres Bein lang nach hinten. Oberkörper über das vordere Bein senken. Wer nicht so tief kommt: in Rückenlage Fußknöchel auf das andere Knie legen (Figur 4) und den Oberschenkel heranziehen. 2 × 45 Sekunden je Seite."},
+{id:"mob_glutemed", n:"Seitliche Hüftdehnung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_gesaess_med"], s:["tg_gesaess_min"], mob:true, mk:"stat", how:"Im Stehen das zu dehnende Bein hinter das andere kreuzen, Hüfte zur Seite schieben, Oberkörper zur Gegenseite neigen. Zieht seitlich am Beckenkamm entlang. 2 × 40 Sekunden je Seite."},
+{id:"mob_quad", n:"Quadrizeps im Stehen", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_quadrizeps"], s:["tg_huefte"], mob:true, mk:"stat", how:"Im Stand den Fuß zum Gesäß ziehen, Knie zeigt nach unten und bleibt neben dem Standbein. Becken leicht nach hinten kippen, dann geht die Dehnung in den Oberschenkel statt ins Knie. 2 × 30 Sekunden je Seite."},
+{id:"mob_frog", n:"Frosch", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_huefte"], mob:true, mk:"stat", how:"Vierfüßlerstand, Knie weit auseinander, Unterschenkel parallel, Fußinnenseiten am Boden. Becken langsam nach hinten schieben. Kräftige Dehnung – Bewegung sehr klein halten und lange bleiben. 2 × 60 Sekunden."},
+{id:"mob_calf_straight", n:"Wade gestreckt, Vorfuß erhöht", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_wade_gastro"], s:["tg_kniesehnen"], mob:true, mk:"stat", how:"Vorfuß auf eine Kante stellen, Ferse absinken lassen, Knie gestreckt. Bei gestrecktem Knie trifft es den oberflächlichen Wadenmuskel, der über das Kniegelenk läuft. 2 × 40 Sekunden je Seite."},
+{id:"mob_calf_bent", n:"Wade gebeugt, Vorfuß erhöht", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_wade_soleus"], s:[], mob:true, mk:"stat", how:"Dieselbe Position, aber mit deutlich gebeugtem Knie. Das nimmt den oberflächlichen Wadenmuskel aus der Spannung, sodass der darunterliegende gedehnt wird. Beide Varianten gehören zusammen. 2 × 40 Sekunden je Seite."},
+{id:"mob_tibialis", n:"Schienbein dehnen", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_wade_fussheber"], s:[], mob:true, mk:"stat", how:"Im Knien die Fußrücken flach am Boden ablegen und sich langsam auf die Fersen setzen. Der Gegenspieler der Wade wird sonst nie gedehnt – bei Schienbeinbeschwerden nach dem Laufen die wichtigste Übung hier. 2 × 40 Sekunden."},
+{id:"mob_catcow", n:"Katze-Kuh", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_rueck_strecker"], s:["tg_bauch_gerade"], mob:true, mk:"dyn", how:"Vierfüßlerstand. Im Wechsel Wirbel für Wirbel runden (Kopf und Becken einrollen) und strecken. Langsam, jede Richtung etwa drei Sekunden. Kein Dehnen, sondern Mobilisation – die Wirbelsäule wird Segment für Segment durchbewegt. 2 × 10 Durchgänge."},
+{id:"mob_wgs", n:"World's Greatest Stretch", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_huefte","tg_adduktoren"], s:["tg_kniesehnen","tg_bauch_schraeg","tg_gesaess_haupt","tg_brust_mitte","tg_wade_gastro"], mob:true, mk:"dyn", how:"Eine Abfolge aus vier Schritten, keine Position: 1. tiefer Ausfallschritt. 2. Ellbogen zum Innenrist des vorderen Fußes senken. 3. Oberkörper aufdrehen, oberen Arm zur Decke führen, Blick folgt. 4. Vorderes Bein strecken, Hüfte zurückschieben, Fußspitze anziehen. Dann zurück und wechseln. 2 × 5 Durchgänge je Seite."},
+{id:"mob_legswing", n:"Beinpendel", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_kniesehnen","tg_huefte"], s:["tg_adduktoren","tg_gesaess_med"], mob:true, mk:"dyn", how:"Seitlich an etwas Festem abstützen, ein Bein locker vor und zurück schwingen, danach seitlich vor dem Körper her. Oberkörper bleibt ruhig, der Schwung kommt aus der Hüfte. Bewegungsradius über die Wiederholungen langsam vergrößern. 2 × 12 je Richtung und Seite."},
+{id:"mob_9090", n:"90/90-Hüftwechsel", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_gesaess_med","tg_adduktoren"], s:["tg_gesaess_haupt","tg_huefte"], mob:true, mk:"dyn", how:"Im Sitzen beide Beine im rechten Winkel, eines vor dem Körper, eines zur Seite. Knie kontrolliert auf die andere Seite kippen und zurück. Trainiert Innen- und Außendrehung der Hüfte im Wechsel. 2 × 10 Wechsel."},
+{id:"mob_wrist_circ", n:"Handgelenk-Mobilisation", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_unterarm_beug"], s:["tg_unterarm_streck"], mob:true, mk:"dyn", how:"Im Vierfüßlerstand Gewicht auf die Hände geben und langsam vor, zurück und seitlich verlagern, Handflächen bleiben am Boden. Danach Handrücken auflegen und vorsichtig dasselbe. Vorbereitung für alles, was Stützen oder schweres Greifen verlangt. 2 × 15 Bewegungen."}
 ];
 // Unveränderter Originalzustand jeder eingebauten Übung – bevor eigene Übungen angehängt oder
 // Anpassungen (state.exOverrides) angewendet werden. Wird nur für "Auf Standard zurücksetzen"
@@ -2518,7 +2542,7 @@ function equipOptions(){
 }
 function exPicker(b,kinds,onPick,opts){
   opts=opts||{};
-  var q="",reg=null,fine=null;
+  var q="",reg=null,fine=null,mk=null;
   var equip=[];
   var searchRow=el("div","searchrow");
   var search=document.createElement("input");
@@ -2544,7 +2568,7 @@ function exPicker(b,kinds,onPick,opts){
   var chips=el("div","disc-mgrid"),sub=el("div","chipbar sub");
   function regionChips(){
     chips.innerHTML="";
-    REGIONS.concat(opts.cardio?[CARDIO_REGION]:[]).forEach(function(rg){
+    REGIONS.concat(opts.cardio?[CARDIO_REGION,MOB_REGION]:[]).forEach(function(rg){
       var card=el("button","disc-mcard");card.type="button";
       card.setAttribute("aria-pressed",String(reg===rg));
       if(rg.cardio){
@@ -2557,7 +2581,7 @@ function exPicker(b,kinds,onPick,opts){
         card.appendChild(sv);
       }
       card.appendChild(el("span",null,rg.name));
-      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;regionChips();subChips();draw();};
+      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;mk=null;regionChips();subChips();draw();};
       chips.appendChild(card);
     });
     discLazyObserve(chips);
@@ -2565,6 +2589,16 @@ function exPicker(b,kinds,onPick,opts){
   function subChips(){
     sub.innerHTML="";sub.hidden=!reg;
     if(!reg)return;
+    if(reg.mobility){
+      MOB_KINDS.forEach(function(k){
+        var c=el("button","fchip",k[1]);c.type="button";
+        c.setAttribute("aria-pressed",String(mk===k[0]));
+        c.onclick=function(){mk=k[0];subChips();draw();};
+        sub.appendChild(c);
+      });
+      centerChip(sub);
+      return;
+    }
     var all=el("button","fchip","Ganze Region");all.type="button";all.setAttribute("aria-pressed",String(!fine));
     all.onclick=function(){fine=null;subChips();draw();};
     sub.appendChild(all);
@@ -2597,10 +2631,13 @@ function exPicker(b,kinds,onPick,opts){
     return it;
   }
   function filteredArr(){
-    var qq=q.toLowerCase(),ids=fine?[fine]:(reg?reg.ids:null);
+    var mobMode=!!(reg&&reg.mobility);
+    var qq=q.toLowerCase(),ids=mobMode?null:(fine?[fine]:(reg?reg.ids:null));
     var cardioMode=!!(reg&&reg.cardio);
     return EX.filter(function(e){
       if(kinds){if(kinds.indexOf(e.t)<0)return false;}
+      else if(mobMode){if(!e.mob)return false;if(mk&&e.mk!==mk)return false;}
+      else if(e.mob)return false;
       else if(cardioMode){if(e.t!=="cardio")return false;}
       else if(e.t==="cardio")return false;
       if(qq&&e.n.toLowerCase().indexOf(qq)<0&&(e.e||"").toLowerCase().indexOf(qq)<0)return false;
@@ -2611,7 +2648,7 @@ function exPicker(b,kinds,onPick,opts){
   }
   function draw(){
     list.innerHTML="";
-    var ids=fine?[fine]:(reg?reg.ids:null);
+    var ids=(reg&&reg.mobility)?null:(fine?[fine]:(reg?reg.ids:null));
     var arr=filteredArr();
     if(!arr.length){list.appendChild(el("div","empty","Nichts gefunden."));return;}
     // Großzügige Obergrenzen statt einer harten Kappung – der Katalog soll wirklich ALLE
@@ -2733,7 +2770,9 @@ function sheetExerciseDetail(ex){
       var h=el("h2","sec exd-section",title);body.appendChild(h);
       var c=el("div","exd-section");c.appendChild(content);body.appendChild(c);
     }
-    section("Beanspruchte Muskeln",exDetailInfo(ex));
+    // Bei Mobilitaetsuebungen ist die Aussage eine andere: rot heisst nicht "trainiert",
+    // sondern "wird gedehnt" - bei den dynamischen "wird bewegt".
+    section(ex.mob?(ex.mk==="dyn"?"Wird bewegt":"Wird gedehnt"):"Beanspruchte Muskeln",exDetailInfo(ex));
     section("Verlauf",exDetailHistory(ex,redraw));
     section("Fortschritt",exDetailProgress(ex));
     section("Rekorde",exDetailRecords(ex));
@@ -4141,12 +4180,25 @@ var CARDIO_REGION={name:"Cardio",cardio:true,
   ids:["tg_quadrizeps","tg_wade_gastro","tg_gesaess_haupt","tg_kniesehnen","tg_wade_fussheber",
        "tg_rueck_lat","tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_teres_major",
        "tg_schulter_vorn","tg_brust_mitte","tg_bauch_gerade","tg_bizeps"]};
+
+// Mobilitaet bekommt aus demselben Grund wie Cardio eine eigene Kachel: es ist kein
+// Koerperteil, sondern eine Art zu trainieren. Gefiltert wird hier NICHT ueber die ids,
+// sondern ueber ex.mob - die ids dienen nur der Figur auf der Kachel. Deshalb stehen dort
+// bewusst nur ein paar typisch gedehnte Bereiche und nicht alle 30 beteiligten Muskeln:
+// sonst waere die ganze Figur rot und man saehe gar nichts mehr.
+var MOB_REGION={name:"Mobilität",mobility:true,
+  ids:["tg_brust_mitte","tg_huefte","tg_adduktoren","tg_quadrizeps","tg_wade_gastro"]};
 /* ================= Entdecken (Übungskatalog zum Durchstöbern) ================= */
 // Eigener Tab: Muskelgruppen-Kacheln (jede mit einer Körperfigur, bei der die ganze Region
 // hervorgehoben ist) zum Filtern, darunter eine Kartenliste aller Übungen – jede Karte mit
 // einer kleinen Figur, die zeigt, welche Muskeln sie trainiert (Vorderansicht reicht fürs
 // schnelle Durchstöbern; Details/Rückansicht gibt's weiter per Tap im Übungskatalog-Sheet).
-var discRegion=null, discQuery="", discFine=null, discObserver=null, discEquip=[];
+// discMk: bei der Mobilitaets-Kachel steht hier "stat" oder "dyn" statt eines Muskels -
+// die beiden Arten schliessen sich gegenseitig aus, deshalb ein eigener Zustand.
+var discRegion=null, discQuery="", discFine=null, discMk=null, discObserver=null, discEquip=[];
+// Die beiden Arten von Mobilitaetsarbeit. null = beide zusammen.
+var MOB_KINDS=[[null,"Alles"],["stat","Statisch"],["dyn","Dynamisch"]];
+function mobKindLabel(mk){return mk==="dyn"?"Dynamisch":mk==="stat"?"Statisch":"";}
 function regionInvolve(region){
   var inv={};region.ids.forEach(function(id){inv[id]=1;});
   return inv;
@@ -4213,7 +4265,7 @@ function fw3dPutImage(svg,url,crop){
 }
 function fillRegionFig(svg){
   if(svg.getAttribute("data-filled"))return;
-  var name=svg.getAttribute("data-region"),region=REGIONS.find(function(r){return (r.key||r.name)===name;});
+  var name=svg.getAttribute("data-region"),region=REGIONS.concat([MOB_REGION]).find(function(r){return (r.key||r.name)===name;});
   if(!region)return;
   svg.setAttribute("data-filled","1");
   var crop=regionCropCache[name]||CROP_DEFAULT;
@@ -4275,9 +4327,14 @@ function renderDiscEquipChips(){
 function discExList(){
   var q=discQuery.trim().toLowerCase();
   var cardioMode=!!(discRegion&&discRegion.cardio);
-  var ids=discFine?[discFine]:(discRegion?discRegion.ids:null);
+  var mobMode=!!(discRegion&&discRegion.mobility);
+  // Bei Mobilitaet wird nicht nach Muskeln gefiltert (fast jede Dehnung trifft mehrere
+  // Regionen), sondern ueber ex.mob und die gewaehlte Art.
+  var ids=mobMode?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
   return EX.filter(function(e){
-    if(cardioMode){if(e.t!=="cardio")return false;}
+    if(mobMode){if(!e.mob)return false;if(discMk&&e.mk!==discMk)return false;}
+    else if(e.mob)return false;
+    else if(cardioMode){if(e.t!=="cardio")return false;}
     else if(e.t==="cardio")return false;
     if(q&&e.n.toLowerCase().indexOf(q)<0&&(e.e||"").toLowerCase().indexOf(q)<0)return false;
     if(discEquip.length&&discEquip.indexOf(e.e)<0)return false;
@@ -4311,7 +4368,7 @@ function cardioTreadmillIcon(){
 }
 function renderDiscMuscleGrid(){
   var mgrid=$("disc-mgrid");mgrid.innerHTML="";
-  REGIONS.concat([CARDIO_REGION]).forEach(function(rg){
+  REGIONS.concat([CARDIO_REGION,MOB_REGION]).forEach(function(rg){
     var card=el("button","disc-mcard");card.type="button";
     card.setAttribute("aria-pressed",String(discRegion===rg));
     if(rg.cardio){
@@ -4324,7 +4381,7 @@ function renderDiscMuscleGrid(){
       card.appendChild(sv);
     }
     card.appendChild(el("span",null,rg.name));
-    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
+    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;discMk=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
     mgrid.appendChild(card);
   });
   discLazyObserve(mgrid);
@@ -4334,6 +4391,19 @@ function renderDiscMuscleGrid(){
 function renderDiscSubChips(){
   var sub=$("disc-subchips");sub.innerHTML="";sub.hidden=!discRegion;
   if(!discRegion)return;
+  // Unter der Mobilitaets-Kachel stehen keine Einzelmuskeln, sondern die zwei Arten:
+  // gehalten (Dehnen) und bewegt (Mobilisieren). Das ist der eigentliche Unterschied -
+  // nach Muskeln sortiert waere hier fast jede Uebung ueberall dabei.
+  if(discRegion.mobility){
+    MOB_KINDS.forEach(function(k){
+      var c=el("button","fchip",k[1]);c.type="button";
+      c.setAttribute("aria-pressed",String(discMk===k[0]));
+      c.onclick=function(){discMk=k[0];renderDiscSubChips();renderDiscExGrid();};
+      sub.appendChild(c);
+    });
+    centerChip(sub);
+    return;
+  }
   var all=el("button","fchip","Ganze Region");all.type="button";all.setAttribute("aria-pressed",String(!discFine));
   all.onclick=function(){discFine=null;renderDiscSubChips();renderDiscExGrid();};
   sub.appendChild(all);
@@ -4374,10 +4444,11 @@ function discExCard(ex){
 function renderDiscExGrid(){
   var exgrid=$("disc-exgrid");exgrid.innerHTML="";
   var name=discFine?muscleById(discFine).name:(discRegion?discRegion.name:null);
+  if(discRegion&&discRegion.mobility&&discMk)name=discRegion.name+" · "+mobKindLabel(discMk);
   $("disc-exheading").textContent=name||"Alle Übungen";
   var list=discExList();
   if(!list.length){exgrid.appendChild(el("div","empty","Nichts gefunden."));return;}
-  var ids=discFine?[discFine]:(discRegion?discRegion.ids:null);
+  var ids=(discRegion&&discRegion.mobility)?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
   if(!ids){list.forEach(function(ex){exgrid.appendChild(discExCard(ex));});discLazyObserve(exgrid);return;}
   // Bei aktivem Muskel-/Regionsfilter zuerst die Übungen mit starkem Fokus zeigen (Primärmuskel
   // trifft), danach die, die den Bereich nur mittrainieren – sonst müsste man sich die relevanten
@@ -7480,7 +7551,7 @@ var I18N={
    Original bleibt unter einem Unterstrich-Feld liegen und wird beim Zurueckschalten
    wiederhergestellt. Die englischen Namen der Feinmuskeln stehen schon im 3D-Modell: dessen
    Schluessel SIND die englischen Bezeichnungen, nur mit Unterstrichen. */
-var UI_EN={"Heute": "Today", "Entdecken": "Explore", "Training": "Training", "Körper": "Body", "Werte": "Stats", "Alle": "All", "Alle Übungen": "All exercises", "Alter": "Age", "Anmeldung & Sync": "Sign-in & sync", "Arme": "Arms", "Beine": "Legs", "Assessment neu machen": "Redo assessment", "Ausdauer": "Endurance", "Ausdauerminuten pro Woche": "Cardio minutes per week", "Backup einspielen": "Restore backup", "Backup speichern": "Save backup", "Beenden": "Finish", "Belastungsäquivalent": "Load equivalent", "Cooper-Test": "Cooper test", "Datei/Text": "File/text", "Deutsch": "German", "Englisch": "English", "Eigene Einheit zusammenstellen": "Build your own session", "Einstellungen": "Settings", "Eintragen": "Log", "Erholung": "Recovery", "Geschlecht": "Sex", "Grenze": "Limit", "Konstanz": "Consistency", "Konto & Daten": "Account & data", "Korridor für dich": "Your range", "Korridor · Sätze pro Woche": "Range · sets per week", "Kraftstufen": "Strength levels", "Körperdaten": "Body data", "Körpergewicht": "Body weight", "Körperillustration:": "Body illustration:", "Letzte Tage": "Recent days", "Maximalkraft": "Max strength", "Meine Einheiten": "My sessions", "Minimum": "Minimum", "Optimum": "Optimum", "Minuten pro Woche": "Minutes per week", "Mobilität": "Mobility", "Mobilität pro Woche": "Mobility sessions per week", "Muskelabdeckung": "Muscle coverage", "Muskelgruppen": "Muscle groups", "Nach Körperregion": "By body region", "Nach Übungen suchen…": "Search exercises…", "Neue Einheit": "New session", "Neues Training starten": "Start new workout", "Notiz": "Note", "Rechenweg": "How it is calculated", "Ruhepuls": "Resting heart rate", "Sprache": "Language", "Standard": "Standard", "Teilwerte": "Sub-scores", "Verlauf": "History", "Was noch mehr bringt": "What more would add", "Weiter": "Continue", "Wochenziele": "Weekly goals", "Woche vor": "Next week", "Woche zurück": "Previous week", "Zurück": "Back", "Ziele, Körperdaten, Sprache, Konto": "Goals, body data, language, account", "Trainingstage pro Woche": "Training days per week", "Tipp eine Muskelgruppe an.": "Tap a muscle group.", "Tipp einen Muskel an – oder wähl oben eine Region.": "Tap a muscle — or pick a region above.", "Tipp einen Muskel an – oder oben eine Region wie „Brust“, dann werden alle zugehörigen Muskeln markiert.": "Tap a muscle — or a region above such as “Chest” to highlight every muscle in it.", "Ziehen = drehen · Tippen = Muskel auswählen": "Drag = rotate · Tap = select muscle", "Die Richtwerte sind Gruppenmittelwerte mit großer Streuung. Wenn du für diesen Muskel erkennbar mehr oder weniger brauchst, verschieb den Korridor hier.": "These guide values are group averages with wide spread. If this muscle clearly needs more or less for you, shift the range here.", "Die Namen von Regionen, Muskeln und Übungen wechseln mit. Erklärtexte sind noch nicht vollständig übersetzt.": "Region, muscle and exercise names switch along. Explanatory texts are not fully translated yet.", "3D-Modell wird geladen…": "Loading 3D model…", "3D-Modell konnte nicht geladen werden.": "3D model could not be loaded.", "deutlich mehr": "much more", "deutlich weniger": "much less", "mehr": "more", "weniger": "less", "im Korridor": "in range", "zu wenig": "too little", "über Limit": "over limit", "männlich": "male", "weiblich": "female", "nicht gemacht": "not done", "nichts": "none", "noch nichts notiert": "nothing noted yet", "noch offen": "still open", "offen": "open", "nur dieses Gerät": "this device only", "verfallen": "expired", "unter F": "below F", "+ Erstellen": "+ Create", ", MIT-Lizenz.": ", MIT licence.", "Mo": "Mon", "Di": "Tue", "Mi": "Wed", "Do": "Thu", "Fr": "Fri", "Sa": "Sat", "So": "Sun", "Knorrenmuskel": "Anconeus", "Beanspruchte Muskeln": "Muscles worked",
+var UI_EN={"Heute": "Today", "Entdecken": "Explore", "Training": "Training", "Körper": "Body", "Werte": "Stats", "Alle": "All", "Alle Übungen": "All exercises", "Alter": "Age", "Anmeldung & Sync": "Sign-in & sync", "Arme": "Arms", "Beine": "Legs", "Assessment neu machen": "Redo assessment", "Ausdauer": "Endurance", "Ausdauerminuten pro Woche": "Cardio minutes per week", "Backup einspielen": "Restore backup", "Backup speichern": "Save backup", "Beenden": "Finish", "Belastungsäquivalent": "Load equivalent", "Cooper-Test": "Cooper test", "Datei/Text": "File/text", "Deutsch": "German", "Englisch": "English", "Eigene Einheit zusammenstellen": "Build your own session", "Einstellungen": "Settings", "Eintragen": "Log", "Erholung": "Recovery", "Geschlecht": "Sex", "Grenze": "Limit", "Konstanz": "Consistency", "Konto & Daten": "Account & data", "Korridor für dich": "Your range", "Korridor · Sätze pro Woche": "Range · sets per week", "Kraftstufen": "Strength levels", "Körperdaten": "Body data", "Körpergewicht": "Body weight", "Körperillustration:": "Body illustration:", "Letzte Tage": "Recent days", "Maximalkraft": "Max strength", "Meine Einheiten": "My sessions", "Minimum": "Minimum", "Optimum": "Optimum", "Minuten pro Woche": "Minutes per week", "Mobilität": "Mobility", "Mobilität pro Woche": "Mobility sessions per week", "Muskelabdeckung": "Muscle coverage", "Muskelgruppen": "Muscle groups", "Nach Körperregion": "By body region", "Nach Übungen suchen…": "Search exercises…", "Neue Einheit": "New session", "Neues Training starten": "Start new workout", "Notiz": "Note", "Rechenweg": "How it is calculated", "Ruhepuls": "Resting heart rate", "Sprache": "Language", "Standard": "Standard", "Teilwerte": "Sub-scores", "Verlauf": "History", "Was noch mehr bringt": "What more would add", "Weiter": "Continue", "Wochenziele": "Weekly goals", "Woche vor": "Next week", "Woche zurück": "Previous week", "Zurück": "Back", "Ziele, Körperdaten, Sprache, Konto": "Goals, body data, language, account", "Trainingstage pro Woche": "Training days per week", "Tipp eine Muskelgruppe an.": "Tap a muscle group.", "Tipp einen Muskel an – oder wähl oben eine Region.": "Tap a muscle — or pick a region above.", "Tipp einen Muskel an – oder oben eine Region wie „Brust“, dann werden alle zugehörigen Muskeln markiert.": "Tap a muscle — or a region above such as “Chest” to highlight every muscle in it.", "Ziehen = drehen · Tippen = Muskel auswählen": "Drag = rotate · Tap = select muscle", "Die Richtwerte sind Gruppenmittelwerte mit großer Streuung. Wenn du für diesen Muskel erkennbar mehr oder weniger brauchst, verschieb den Korridor hier.": "These guide values are group averages with wide spread. If this muscle clearly needs more or less for you, shift the range here.", "Die Namen von Regionen, Muskeln und Übungen wechseln mit. Erklärtexte sind noch nicht vollständig übersetzt.": "Region, muscle and exercise names switch along. Explanatory texts are not fully translated yet.", "3D-Modell wird geladen…": "Loading 3D model…", "3D-Modell konnte nicht geladen werden.": "3D model could not be loaded.", "deutlich mehr": "much more", "deutlich weniger": "much less", "mehr": "more", "weniger": "less", "im Korridor": "in range", "zu wenig": "too little", "über Limit": "over limit", "männlich": "male", "weiblich": "female", "nicht gemacht": "not done", "nichts": "none", "noch nichts notiert": "nothing noted yet", "noch offen": "still open", "offen": "open", "nur dieses Gerät": "this device only", "verfallen": "expired", "unter F": "below F", "+ Erstellen": "+ Create", ", MIT-Lizenz.": ", MIT licence.", "Mo": "Mon", "Di": "Tue", "Mi": "Wed", "Do": "Thu", "Fr": "Fri", "Sa": "Sat", "So": "Sun", "Knorrenmuskel": "Anconeus", "Beanspruchte Muskeln": "Muscles worked", "Wird gedehnt": "Stretched", "Wird bewegt": "Mobilised", "Statisch": "Static", "Dynamisch": "Dynamic", "Alles": "All", "Mobilität · Statisch": "Mobility · Static", "Mobilität · Dynamisch": "Mobility · Dynamic",
 "Neue Übung":"New exercise","Vorschau":"Preview","keine gewählt":"none selected",
 "Primärmuskeln":"Primary muscles","Sekundärmuskeln (halber Satz)":"Secondary muscles (half a set)","Übung anlegen":"Create exercise","Übung wählen":"Choose exercise",
 "Übung angelegt":"Exercise created","Bitte einen Namen eingeben.":"Please enter a name.",
@@ -7639,7 +7710,7 @@ function applyUiLang(root){
 var LANG="de";
 var REG_EN={"Brust": "Chest", "Schultern": "Shoulders", "Rücken": "Back", "Rückenstrecker": "Spinal erectors", "Bizeps": "Biceps", "Trizeps": "Triceps", "Unterarme": "Forearms", "Rumpf": "Core", "Gesäß": "Glutes", "Quadrizeps": "Quadriceps", "Beinbeuger": "Hamstrings", "Adduktoren": "Adductors", "Waden": "Calves", "Hals": "Neck (front)", "Nacken": "Neck (back)"};
 var MUS_EN={"tg_brust_ober": "Upper chest", "tg_brust_mitte": "Mid chest", "tg_brust_unten": "Lower chest", "tg_brust_serratus": "Serratus anterior", "tg_bizeps": "Biceps", "tg_brachialis": "Brachialis", "tg_trizeps_lang": "Triceps long head", "tg_trizeps_lat": "Triceps lateral & medial", "tg_rueck_lat": "Latissimus dorsi", "tg_rueck_teres_major": "Teres major", "tg_rueck_trapez_ob": "Upper trapezius", "tg_rueck_trapez_mit": "Mid trapezius", "tg_rueck_trapez_unt": "Lower trapezius", "tg_rueck_rhomb": "Rhomboids", "tg_rueck_strecker": "Spinal erectors (deep)", "tg_schulter_vorn": "Front delt", "tg_schulter_seit": "Side delt", "tg_schulter_hint": "Rear delt", "tg_schulter_rot_infra": "Infraspinatus", "tg_schulter_rot_teres_min": "Teres minor", "tg_schulter_rot_sub": "Subscapularis", "tg_schulter_rot_supra": "Supraspinatus", "tg_bauch_gerade": "Rectus abdominis", "tg_bauch_schraeg": "Obliques", "tg_bauch_tief": "Deep core & breathing muscles", "tg_quadrizeps": "Quadriceps", "tg_huefte": "Hip flexors", "tg_adduktoren": "Adductors", "tg_kniesehnen": "Hamstrings", "tg_gesaess_haupt": "Gluteus maximus", "tg_gesaess_med": "Gluteus medius", "tg_gesaess_min": "Gluteus minimus", "tg_wade_gastro": "Calf (standing)", "tg_wade_soleus": "Calf (seated)", "tg_wade_fussheber": "Shin / dorsiflexors", "tg_unterarm_beug": "Wrist flexors & pronators", "tg_unterarm_streck": "Wrist extensors & supinators", "tg_nacken": "Neck (back)", "tg_hals_nacken": "Front/side neck muscles"};
-var EX_EN={"bench": "Barbell bench press", "bench_db": "Dumbbell bench press", "bench_inc": "Incline bench press", "bench_inc_db": "Incline DB press", "bench_dec": "Decline bench press", "machine_press": "Chest press machine", "machine_press_lying": "Lying chest press", "pushup": "Push-ups", "pushup_diamond": "Diamond push-ups", "pushup_arch": "Archer push-ups", "pushup_dec": "Feet-elevated push-ups", "dips": "Dips", "fly_db": "Dumbbell fly", "cable_fly": "Cable fly", "fly_machine": "Pec deck", "pullover": "Pullovers", "ohp": "Barbell overhead press", "ohp_db": "Dumbbell overhead press", "push_press": "Push press", "arnold": "Arnold press", "pike_pushup": "Pike push-ups", "hspu": "Handstand push-ups", "handstand": "Wall handstand hold", "pullup": "Pull-ups (overhand)", "chinup": "Chin-ups", "pullup_wide": "Wide-grip pull-ups", "pullup_weight": "Weighted pull-ups", "latpull": "Lat pulldown", "latpull_close": "Close-grip pulldown", "pullup_neg": "Negative pull-ups", "deadhang": "Passive hang", "row_bb": "Barbell row", "row_db": "Dumbbell row", "row_pendlay": "Pendlay row", "row_tbar": "T-bar row", "row_cable": "Cable row", "row_machine": "Lever seated row", "row_inv": "Inverted rows", "row_band": "Band row", "facepull": "Face pulls", "shrug": "Shrugs", "shrug_db": "Dumbbell shrugs", "squat": "Barbell squat", "squat_front": "Front squat", "squat_goblet": "Goblet squat", "squat_bw": "Bodyweight squat", "squat_pistol": "Pistol squat", "squat_bulg": "Bulgarian split squat", "legpress": "Leg press", "hacksquat": "Hack squat", "lunge": "Lunges", "lunge_walk": "Walking lunges", "stepup": "Step-ups", "stepup_bw": "Bodyweight step-ups", "legext": "Leg extension", "sissy": "Sissy squat", "wallsit": "Wall sit", "deadlift": "Deadlift", "deadlift_rdl": "Romanian deadlift", "deadlift_sumo": "Sumo deadlift", "deadlift_sl": "Single-leg deadlift", "hipthrust": "Hip thrust", "goodmorning": "Good morning", "backext": "Back extension", "legcurl": "Leg curl", "nordic": "Nordic curl", "kb_swing": "Kettlebell swing", "plank": "Plank", "lsit": "L-sit", "sideplank": "Side plank", "hollow": "Hollow body hold", "legraise": "Hanging leg raise", "kneeraise": "Hanging knee raise", "crunch": "Crunches", "situp": "Sit-ups", "russian": "Russian twist", "abwheel": "Ab wheel", "cablecrunch": "Cable crunch", "torso_rot": "Torso rotation machine", "deadbug": "Dead bug", "birddog": "Bird dog", "pallof": "Pallof press", "dragonflag": "Dragon flag", "lateral": "Lateral raise", "lateral_cable": "Cable lateral raise", "frontraise": "Front raise", "reversefly": "Reverse fly", "upright_row": "Upright row", "cuban": "Cuban press", "bandpullapart": "Band pull-apart", "curl_bb": "Barbell curl", "curl_db": "Dumbbell curl", "curl_hammer": "Hammer curl", "curl_incline": "Incline curl", "curl_preacher": "Preacher curl", "curl_preacher_machine": "Preacher curl machine", "curl_cable": "Cable curl", "curl_cable_lying": "Lying cable curl", "tri_push": "Triceps pushdown", "tri_skull": "Skull crusher", "tri_over": "Overhead triceps extension", "tri_kick": "Triceps kickback", "dips_bench": "Bench dips", "wrist_curl": "Wrist curl", "wrist_curl_rev": "Reverse wrist curl", "farmers": "Farmer's walk", "ricebucket": "Rice bucket grip work", "fatgripz": "Fat-grip holds", "calf_stand": "Standing calf raise", "calf_seat": "Seated calf raise", "calf_bw": "Bodyweight calf raise", "adduct": "Adductor machine", "clamshell": "Clamshells", "sidelying_raise": "Side-lying leg raise", "bandwalk_lat": "Lateral band walk", "abduct": "Abductor machine", "copenhagen": "Copenhagen plank", "neck_curl": "Neck curl", "neck_ext_bw": "Neck extension", "neck_flex_bw": "Neck flexion", "neck_side_bw": "Lateral neck flexion", "neck_harness": "Head harness", "neck_bridge": "Neck bridge", "run": "Running", "run_interval": "Interval runs", "bike": "Cycling", "row_erg": "Rowing machine", "swim": "Swimming", "jumprope": "Jump rope", "walk": "Brisk walking", "hike": "Hiking", "stairs": "Stair climbing", "burpee": "Burpees", "elliptical": "Elliptical", "football": "Football / ball sports", "mob_hip": "Hip openers", "mob_shoulder": "Shoulder mobility", "mob_thoracic": "Thoracic spine", "mob_hamstring": "Hamstring stretch", "mob_ankle": "Ankle mobility", "mob_couch": "Couch stretch", "mob_deadhang": "Dead hang decompression", "mob_pancake": "Pancake / straddle", "rot_internal": "Cable internal rotation", "emptycan": "Empty-can raise", "hipflex_cable": "Cable hip flexion"};
+var EX_EN={"bench": "Barbell bench press", "bench_db": "Dumbbell bench press", "bench_inc": "Incline bench press", "bench_inc_db": "Incline DB press", "bench_dec": "Decline bench press", "machine_press": "Chest press machine", "machine_press_lying": "Lying chest press", "pushup": "Push-ups", "pushup_diamond": "Diamond push-ups", "pushup_arch": "Archer push-ups", "pushup_dec": "Feet-elevated push-ups", "dips": "Dips", "fly_db": "Dumbbell fly", "cable_fly": "Cable fly", "fly_machine": "Pec deck", "pullover": "Pullovers", "ohp": "Barbell overhead press", "ohp_db": "Dumbbell overhead press", "push_press": "Push press", "arnold": "Arnold press", "pike_pushup": "Pike push-ups", "hspu": "Handstand push-ups", "handstand": "Wall handstand hold", "pullup": "Pull-ups (overhand)", "chinup": "Chin-ups", "pullup_wide": "Wide-grip pull-ups", "pullup_weight": "Weighted pull-ups", "latpull": "Lat pulldown", "latpull_close": "Close-grip pulldown", "pullup_neg": "Negative pull-ups", "deadhang": "Passive hang", "row_bb": "Barbell row", "row_db": "Dumbbell row", "row_pendlay": "Pendlay row", "row_tbar": "T-bar row", "row_cable": "Cable row", "row_machine": "Lever seated row", "row_inv": "Inverted rows", "row_band": "Band row", "facepull": "Face pulls", "shrug": "Shrugs", "shrug_db": "Dumbbell shrugs", "squat": "Barbell squat", "squat_front": "Front squat", "squat_goblet": "Goblet squat", "squat_bw": "Bodyweight squat", "squat_pistol": "Pistol squat", "squat_bulg": "Bulgarian split squat", "legpress": "Leg press", "hacksquat": "Hack squat", "lunge": "Lunges", "lunge_walk": "Walking lunges", "stepup": "Step-ups", "stepup_bw": "Bodyweight step-ups", "legext": "Leg extension", "sissy": "Sissy squat", "wallsit": "Wall sit", "deadlift": "Deadlift", "deadlift_rdl": "Romanian deadlift", "deadlift_sumo": "Sumo deadlift", "deadlift_sl": "Single-leg deadlift", "hipthrust": "Hip thrust", "goodmorning": "Good morning", "backext": "Back extension", "legcurl": "Leg curl", "nordic": "Nordic curl", "kb_swing": "Kettlebell swing", "plank": "Plank", "lsit": "L-sit", "sideplank": "Side plank", "hollow": "Hollow body hold", "legraise": "Hanging leg raise", "kneeraise": "Hanging knee raise", "crunch": "Crunches", "situp": "Sit-ups", "russian": "Russian twist", "abwheel": "Ab wheel", "cablecrunch": "Cable crunch", "torso_rot": "Torso rotation machine", "deadbug": "Dead bug", "birddog": "Bird dog", "pallof": "Pallof press", "dragonflag": "Dragon flag", "lateral": "Lateral raise", "lateral_cable": "Cable lateral raise", "frontraise": "Front raise", "reversefly": "Reverse fly", "upright_row": "Upright row", "cuban": "Cuban press", "bandpullapart": "Band pull-apart", "curl_bb": "Barbell curl", "curl_db": "Dumbbell curl", "curl_hammer": "Hammer curl", "curl_incline": "Incline curl", "curl_preacher": "Preacher curl", "curl_preacher_machine": "Preacher curl machine", "curl_cable": "Cable curl", "curl_cable_lying": "Lying cable curl", "tri_push": "Triceps pushdown", "tri_skull": "Skull crusher", "tri_over": "Overhead triceps extension", "tri_kick": "Triceps kickback", "dips_bench": "Bench dips", "wrist_curl": "Wrist curl", "wrist_curl_rev": "Reverse wrist curl", "farmers": "Farmer's walk", "ricebucket": "Rice bucket grip work", "fatgripz": "Fat-grip holds", "calf_stand": "Standing calf raise", "calf_seat": "Seated calf raise", "calf_bw": "Bodyweight calf raise", "adduct": "Adductor machine", "clamshell": "Clamshells", "sidelying_raise": "Side-lying leg raise", "bandwalk_lat": "Lateral band walk", "abduct": "Abductor machine", "copenhagen": "Copenhagen plank", "neck_curl": "Neck curl", "neck_ext_bw": "Neck extension", "neck_flex_bw": "Neck flexion", "neck_side_bw": "Lateral neck flexion", "neck_harness": "Head harness", "neck_bridge": "Neck bridge", "run": "Running", "run_interval": "Interval runs", "bike": "Cycling", "row_erg": "Rowing machine", "swim": "Swimming", "jumprope": "Jump rope", "walk": "Brisk walking", "hike": "Hiking", "stairs": "Stair climbing", "burpee": "Burpees", "elliptical": "Elliptical", "football": "Football / ball sports", "mob_hip": "Hip openers", "mob_shoulder": "Shoulder mobility", "mob_thoracic": "Thoracic spine", "mob_hamstring": "Hamstring stretch", "mob_ankle": "Ankle mobility", "mob_couch": "Couch stretch", "mob_deadhang": "Dead hang decompression", "mob_pancake": "Pancake / straddle", "mob_chest": "Pectoralis stretch", "mob_biceps": "Biceps stretch", "mob_cobra": "Prone press-up", "mob_reardelt": "Cross-body shoulder stretch", "mob_triceps": "Overhead triceps stretch", "mob_neck": "Upper trapezius stretch", "mob_lat": "Lat stretch", "mob_knee2chest": "Knee-to-chest", "mob_twist": "Supine spinal twist", "mob_wrist_flex": "Wrist flexor stretch", "mob_wrist_ext": "Wrist extensor stretch", "mob_hipflex": "Kneeling hip flexor stretch", "mob_pigeon": "Pigeon / figure-4", "mob_glutemed": "Gluteus medius stretch", "mob_quad": "Standing quad stretch", "mob_frog": "Frog stretch", "mob_calf_straight": "Gastrocnemius stretch", "mob_calf_bent": "Soleus stretch", "mob_tibialis": "Tibialis anterior stretch", "mob_catcow": "Cat-cow", "mob_wgs": "World's greatest stretch", "mob_legswing": "Leg swings", "mob_9090": "90/90 hip switch", "mob_wrist_circ": "Wrist mobilisation", "rot_internal": "Cable internal rotation", "emptycan": "Empty-can raise", "hipflex_cable": "Cable hip flexion"};
 /* Ein paar Feinmuskel-Schluessel sind Kuerzel oder wuerden beim Umwandeln holprig lesen. */
 var FINE_EN_FIX={tfl:"Tensor fasciae latae"};
 function enFromKey(k){

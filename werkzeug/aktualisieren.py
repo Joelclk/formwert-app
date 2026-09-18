@@ -17,7 +17,7 @@ Aufruf:
     python3 werkzeug/aktualisieren.py 249 "Klimmzug-Animation eingebaut"
     python3 werkzeug/aktualisieren.py 249 "..." --push
 """
-import os, re, sys, subprocess, datetime
+import os, re, sys, time, subprocess, datetime
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HIER)
@@ -25,12 +25,23 @@ ARTIFACT = "https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5"
 
 
 def git(*args, **kw):
-    # Git legt hier gelegentlich Sperrdateien ab, die es nicht wieder loswird.
+    # Git laesst hier gelegentlich Sperrdateien liegen, die es selbst nicht mehr aufraeumt -
+    # der naechste Befehl bricht dann ab. Loeschen ist nicht immer erlaubt (z. B. wenn dieses
+    # Skript aus einer eingeschraenkten Umgebung laeuft), darum werden sie beiseitegeschoben.
+    abstell = os.path.join(REPO, ".git", "alte_sperren")
     for wurzel, _, dateien in os.walk(os.path.join(REPO, ".git")):
+        if wurzel.startswith(abstell):
+            continue
         for d in dateien:
-            if d.endswith(".lock"):
+            if not d.endswith(".lock"):
+                continue
+            quelle = os.path.join(wurzel, d)
+            try:
+                os.remove(quelle)
+            except OSError:
                 try:
-                    os.remove(os.path.join(wurzel, d))
+                    os.makedirs(abstell, exist_ok=True)
+                    os.rename(quelle, os.path.join(abstell, "%s.%d" % (d, int(time.time() * 1000))))
                 except OSError:
                     pass
     return subprocess.run(["git"] + list(args), cwd=REPO,

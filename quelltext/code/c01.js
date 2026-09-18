@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: (Anweisung) bis NOTCH_TRAP_DELT
+   Enthaelt: (Anweisung) bis BRACHIALIS_FRONT_F
 */
 
 "use strict";
@@ -1232,7 +1232,7 @@ function equipOptions(){
 
 function exPicker(b,kinds,onPick,opts){
   opts=opts||{};
-  var q="",reg=null,fine=null;
+  var q="",reg=null,fine=null,mk=null;
   var equip=[];
   var searchRow=el("div","searchrow");
   var search=document.createElement("input");
@@ -1258,7 +1258,7 @@ function exPicker(b,kinds,onPick,opts){
   var chips=el("div","disc-mgrid"),sub=el("div","chipbar sub");
   function regionChips(){
     chips.innerHTML="";
-    REGIONS.concat(opts.cardio?[CARDIO_REGION]:[]).forEach(function(rg){
+    REGIONS.concat(opts.cardio?[CARDIO_REGION,MOB_REGION]:[]).forEach(function(rg){
       var card=el("button","disc-mcard");card.type="button";
       card.setAttribute("aria-pressed",String(reg===rg));
       if(rg.cardio){
@@ -1271,7 +1271,7 @@ function exPicker(b,kinds,onPick,opts){
         card.appendChild(sv);
       }
       card.appendChild(el("span",null,rg.name));
-      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;regionChips();subChips();draw();};
+      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;mk=null;regionChips();subChips();draw();};
       chips.appendChild(card);
     });
     discLazyObserve(chips);
@@ -1279,6 +1279,16 @@ function exPicker(b,kinds,onPick,opts){
   function subChips(){
     sub.innerHTML="";sub.hidden=!reg;
     if(!reg)return;
+    if(reg.mobility){
+      MOB_KINDS.forEach(function(k){
+        var c=el("button","fchip",k[1]);c.type="button";
+        c.setAttribute("aria-pressed",String(mk===k[0]));
+        c.onclick=function(){mk=k[0];subChips();draw();};
+        sub.appendChild(c);
+      });
+      centerChip(sub);
+      return;
+    }
     var all=el("button","fchip","Ganze Region");all.type="button";all.setAttribute("aria-pressed",String(!fine));
     all.onclick=function(){fine=null;subChips();draw();};
     sub.appendChild(all);
@@ -1311,10 +1321,13 @@ function exPicker(b,kinds,onPick,opts){
     return it;
   }
   function filteredArr(){
-    var qq=q.toLowerCase(),ids=fine?[fine]:(reg?reg.ids:null);
+    var mobMode=!!(reg&&reg.mobility);
+    var qq=q.toLowerCase(),ids=mobMode?null:(fine?[fine]:(reg?reg.ids:null));
     var cardioMode=!!(reg&&reg.cardio);
     return EX.filter(function(e){
       if(kinds){if(kinds.indexOf(e.t)<0)return false;}
+      else if(mobMode){if(!e.mob)return false;if(mk&&e.mk!==mk)return false;}
+      else if(e.mob)return false;
       else if(cardioMode){if(e.t!=="cardio")return false;}
       else if(e.t==="cardio")return false;
       if(qq&&e.n.toLowerCase().indexOf(qq)<0&&(e.e||"").toLowerCase().indexOf(qq)<0)return false;
@@ -1325,7 +1338,7 @@ function exPicker(b,kinds,onPick,opts){
   }
   function draw(){
     list.innerHTML="";
-    var ids=fine?[fine]:(reg?reg.ids:null);
+    var ids=(reg&&reg.mobility)?null:(fine?[fine]:(reg?reg.ids:null));
     var arr=filteredArr();
     if(!arr.length){list.appendChild(el("div","empty","Nichts gefunden."));return;}
     // Großzügige Obergrenzen statt einer harten Kappung – der Katalog soll wirklich ALLE
@@ -1455,7 +1468,9 @@ function sheetExerciseDetail(ex){
       var h=el("h2","sec exd-section",title);body.appendChild(h);
       var c=el("div","exd-section");c.appendChild(content);body.appendChild(c);
     }
-    section("Beanspruchte Muskeln",exDetailInfo(ex));
+    // Bei Mobilitaetsuebungen ist die Aussage eine andere: rot heisst nicht "trainiert",
+    // sondern "wird gedehnt" - bei den dynamischen "wird bewegt".
+    section(ex.mob?(ex.mk==="dyn"?"Wird bewegt":"Wird gedehnt"):"Beanspruchte Muskeln",exDetailInfo(ex));
     section("Verlauf",exDetailHistory(ex,redraw));
     section("Fortschritt",exDetailProgress(ex));
     section("Rekorde",exDetailRecords(ex));
@@ -2118,8 +2133,3 @@ var BRACHIORAD_BACK_F=[[18.383,181.106],[19.79,179.277],[21.042,176.031],[24.932
 var BRACHIALIS_FRONT=[[24.774,128.838],[25.637,130.417],[26.428,132.95],[23.48,141.551],[20.682,151.236],[18.365,162.163],[18.014,162.69],[16.634,162.891],[16.308,161.963],[16.293,160.659],[17.387,145.187],[17.892,142.54],[19.167,138.04],[22.201,131.37],[23.029,130.066]];
 
 var BRACHIALIS_FRONT_F=[[47.911,129.382],[46.334,131.763],[44.927,134.145],[43.815,136.526],[43.06,138.907],[40.591,148.432],[40.183,150.814],[39.906,153.195],[39.257,160.339],[39.158,162.72],[39.238,165.895],[44.098,165.895],[44.98,162.72],[47.238,155.576],[49.037,148.432],[50.395,143.67],[52.635,136.526],[54.258,129.382],[54.699,127.001],[50.367,127.001]];
-
-// Zwickel genau an der Nahtstelle Trapezius/hintere Schulter (rechte Körperseite, aus der
-// Zeichnung abgenommen) – gehört zu keinem der beiden Muskeln, wird per excludeMirror aus
-// beiden Bändern herausgeschnitten und bleibt so ungefärbt, egal welcher Trainingsstand.
-var NOTCH_TRAP_DELT=[[153.561,137.644],[135.758,142.126],[135.568,142.874],[137.083,145.115],[148.447,145.115],[147.879,143.621],[148.258,142.126],[149.583,140.632],[153.939,138.391],[156.97,137.644]];

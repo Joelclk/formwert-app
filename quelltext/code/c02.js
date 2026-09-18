@@ -1,7 +1,12 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: NOTCH_TRAP_DELT_SHOULDER bis addWorkoutCardio()
+   Enthaelt: NOTCH_TRAP_DELT bis addWorkoutCardio()
 */
+
+// Zwickel genau an der Nahtstelle Trapezius/hintere Schulter (rechte Körperseite, aus der
+// Zeichnung abgenommen) – gehört zu keinem der beiden Muskeln, wird per excludeMirror aus
+// beiden Bändern herausgeschnitten und bleibt so ungefärbt, egal welcher Trainingsstand.
+var NOTCH_TRAP_DELT=[[153.561,137.644],[135.758,142.126],[135.568,142.874],[137.083,145.115],[148.447,145.115],[147.879,143.621],[148.258,142.126],[149.583,140.632],[153.939,138.391],[156.97,137.644]];
 
 // Derselbe Zwickel, aber in die lokalen Koordinaten der Schulter-Maske (deltoids_back) umgerechnet:
 // Trapez- und Schultermaske überlappen sich an dieser Nahtstelle beide (eigene, unabhängige
@@ -843,16 +848,34 @@ var CARDIO_REGION={name:"Cardio",cardio:true,
        "tg_schulter_vorn","tg_brust_mitte","tg_bauch_gerade","tg_bizeps"]}
 ;
 
+
+// Mobilitaet bekommt aus demselben Grund wie Cardio eine eigene Kachel: es ist kein
+// Koerperteil, sondern eine Art zu trainieren. Gefiltert wird hier NICHT ueber die ids,
+// sondern ueber ex.mob - die ids dienen nur der Figur auf der Kachel. Deshalb stehen dort
+// bewusst nur ein paar typisch gedehnte Bereiche und nicht alle 30 beteiligten Muskeln:
+// sonst waere die ganze Figur rot und man saehe gar nichts mehr.
+var MOB_REGION={name:"Mobilität",mobility:true,
+  ids:["tg_brust_mitte","tg_huefte","tg_adduktoren","tg_quadrizeps","tg_wade_gastro"]}
+;
+
 /* ================= Entdecken (Übungskatalog zum Durchstöbern) ================= */
 // Eigener Tab: Muskelgruppen-Kacheln (jede mit einer Körperfigur, bei der die ganze Region
 // hervorgehoben ist) zum Filtern, darunter eine Kartenliste aller Übungen – jede Karte mit
 // einer kleinen Figur, die zeigt, welche Muskeln sie trainiert (Vorderansicht reicht fürs
 // schnelle Durchstöbern; Details/Rückansicht gibt's weiter per Tap im Übungskatalog-Sheet).
+// discMk: bei der Mobilitaets-Kachel steht hier "stat" oder "dyn" statt eines Muskels -
+// die beiden Arten schliessen sich gegenseitig aus, deshalb ein eigener Zustand.
 var discRegion=null,
  discQuery="",
  discFine=null,
+ discMk=null,
  discObserver=null,
  discEquip=[];
+
+// Die beiden Arten von Mobilitaetsarbeit. null = beide zusammen.
+var MOB_KINDS=[[null,"Alles"],["stat","Statisch"],["dyn","Dynamisch"]];
+
+function mobKindLabel(mk){return mk==="dyn"?"Dynamisch":mk==="stat"?"Statisch":"";}
 
 function regionInvolve(region){
   var inv={};region.ids.forEach(function(id){inv[id]=1;});
@@ -938,7 +961,7 @@ function fw3dPutImage(svg,url,crop){
 
 function fillRegionFig(svg){
   if(svg.getAttribute("data-filled"))return;
-  var name=svg.getAttribute("data-region"),region=REGIONS.find(function(r){return (r.key||r.name)===name;});
+  var name=svg.getAttribute("data-region"),region=REGIONS.concat([MOB_REGION]).find(function(r){return (r.key||r.name)===name;});
   if(!region)return;
   svg.setAttribute("data-filled","1");
   var crop=regionCropCache[name]||CROP_DEFAULT;
@@ -1003,9 +1026,14 @@ function renderDiscEquipChips(){
 function discExList(){
   var q=discQuery.trim().toLowerCase();
   var cardioMode=!!(discRegion&&discRegion.cardio);
-  var ids=discFine?[discFine]:(discRegion?discRegion.ids:null);
+  var mobMode=!!(discRegion&&discRegion.mobility);
+  // Bei Mobilitaet wird nicht nach Muskeln gefiltert (fast jede Dehnung trifft mehrere
+  // Regionen), sondern ueber ex.mob und die gewaehlte Art.
+  var ids=mobMode?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
   return EX.filter(function(e){
-    if(cardioMode){if(e.t!=="cardio")return false;}
+    if(mobMode){if(!e.mob)return false;if(discMk&&e.mk!==discMk)return false;}
+    else if(e.mob)return false;
+    else if(cardioMode){if(e.t!=="cardio")return false;}
     else if(e.t==="cardio")return false;
     if(q&&e.n.toLowerCase().indexOf(q)<0&&(e.e||"").toLowerCase().indexOf(q)<0)return false;
     if(discEquip.length&&discEquip.indexOf(e.e)<0)return false;
@@ -1042,7 +1070,7 @@ function cardioTreadmillIcon(){
 
 function renderDiscMuscleGrid(){
   var mgrid=$("disc-mgrid");mgrid.innerHTML="";
-  REGIONS.concat([CARDIO_REGION]).forEach(function(rg){
+  REGIONS.concat([CARDIO_REGION,MOB_REGION]).forEach(function(rg){
     var card=el("button","disc-mcard");card.type="button";
     card.setAttribute("aria-pressed",String(discRegion===rg));
     if(rg.cardio){
@@ -1055,7 +1083,7 @@ function renderDiscMuscleGrid(){
       card.appendChild(sv);
     }
     card.appendChild(el("span",null,rg.name));
-    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
+    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;discMk=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
     mgrid.appendChild(card);
   });
   discLazyObserve(mgrid);
@@ -1066,6 +1094,19 @@ function renderDiscMuscleGrid(){
 function renderDiscSubChips(){
   var sub=$("disc-subchips");sub.innerHTML="";sub.hidden=!discRegion;
   if(!discRegion)return;
+  // Unter der Mobilitaets-Kachel stehen keine Einzelmuskeln, sondern die zwei Arten:
+  // gehalten (Dehnen) und bewegt (Mobilisieren). Das ist der eigentliche Unterschied -
+  // nach Muskeln sortiert waere hier fast jede Uebung ueberall dabei.
+  if(discRegion.mobility){
+    MOB_KINDS.forEach(function(k){
+      var c=el("button","fchip",k[1]);c.type="button";
+      c.setAttribute("aria-pressed",String(discMk===k[0]));
+      c.onclick=function(){discMk=k[0];renderDiscSubChips();renderDiscExGrid();};
+      sub.appendChild(c);
+    });
+    centerChip(sub);
+    return;
+  }
   var all=el("button","fchip","Ganze Region");all.type="button";all.setAttribute("aria-pressed",String(!discFine));
   all.onclick=function(){discFine=null;renderDiscSubChips();renderDiscExGrid();};
   sub.appendChild(all);
@@ -1109,10 +1150,11 @@ function discExCard(ex){
 function renderDiscExGrid(){
   var exgrid=$("disc-exgrid");exgrid.innerHTML="";
   var name=discFine?muscleById(discFine).name:(discRegion?discRegion.name:null);
+  if(discRegion&&discRegion.mobility&&discMk)name=discRegion.name+" · "+mobKindLabel(discMk);
   $("disc-exheading").textContent=name||"Alle Übungen";
   var list=discExList();
   if(!list.length){exgrid.appendChild(el("div","empty","Nichts gefunden."));return;}
-  var ids=discFine?[discFine]:(discRegion?discRegion.ids:null);
+  var ids=(discRegion&&discRegion.mobility)?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
   if(!ids){list.forEach(function(ex){exgrid.appendChild(discExCard(ex));});discLazyObserve(exgrid);return;}
   // Bei aktivem Muskel-/Regionsfilter zuerst die Übungen mit starkem Fokus zeigen (Primärmuskel
   // trifft), danach die, die den Bereich nur mittrainieren – sonst müsste man sich die relevanten
