@@ -1,0 +1,883 @@
+:root{
+  --red:#CE2E27; --blue:#1F4E9B; --yellow:#C98305; --green:#2A7A50; --violet:#6B4E9E; --gold:#A8790A;
+  --ground:#EFF1F4; --surface:#FFFFFF; --surface-2:#F4F6F8; --sunken:#E2E6EA;
+  --ink:#12171D; --ink-2:#4B5560; --ink-3:#828C97;
+  --rule:#DCE1E6; --rule-2:#C2CAD2;
+  --accent:#1FA53E; --accent-ink:#06210C; --accent-soft:#D8F3DC;
+  --good:#2A7A50; --warn:#C2740B; --bad:#B2342E;
+  --body-fill:#DCE1E6; --body-passive:#CBD2D9; --body-line:#8F99A4;
+  --z0:#1F4E9B; --z1:#2A7A50; --z2:#B2342E;
+  --vol0:#B4BAC1; --vol1:#3E8C9B; --vol2:#2F8355; --vol3:#1C5F3C; --vol4:#7A3121;
+  --sel-stroke:#0E5C22; --sel-stroke-2:#BFF3CC;
+  --ex-pri:#C62828; --ex-sec:var(--yellow);
+  --card-sh:0 1px 2px rgba(18,23,29,.05), 0 1px 12px -6px rgba(18,23,29,.18);
+  --lift:0 4px 16px -6px rgba(18,23,29,.3);
+  --r:20px; --r-sm:14px;
+  --f-cond:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --nav-h:62px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0A0B0C; --surface:#17191B; --surface-2:#202325; --sunken:#000000;
+  --ink:#F2F4F2; --ink-2:#A9B0AC; --ink-3:#7A827E;
+  --rule:#2A2D2F; --rule-2:#3B3F40;
+  --red:#F1685B; --blue:#5B8FD8; --yellow:#E0A63A; --green:#4CA377; --violet:#9B82D0; --gold:#F0C24B;
+  --accent:#4ADE6E; --accent-ink:#06210C; --accent-soft:#173321;
+  --good:#4CA377; --warn:#E0A63A; --bad:#F1685B;
+  --body-fill:#1C1F21; --body-passive:#26292B; --body-line:#484E51;
+  --z0:#5B8FD8; --z1:#4CA377; --z2:#F1685B;
+  --vol0:#5A6168; --vol1:#4FA8B8; --vol2:#4CA377; --vol3:#7ED2A2; --vol4:#A24A33;
+  --sel-stroke:#DFFCE6; --sel-stroke-2:#0E3319;
+  --ex-pri:#F2503F; --ex-sec:var(--yellow);
+  --card-sh:0 1px 2px rgba(0,0,0,.5); --lift:0 4px 16px -6px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  --ground:#0A0B0C; --surface:#17191B; --surface-2:#202325; --sunken:#000000;
+  --ink:#F2F4F2; --ink-2:#A9B0AC; --ink-3:#7A827E;
+  --rule:#2A2D2F; --rule-2:#3B3F40;
+  --red:#F1685B; --blue:#5B8FD8; --yellow:#E0A63A; --green:#4CA377; --violet:#9B82D0; --gold:#F0C24B;
+  --accent:#4ADE6E; --accent-ink:#06210C; --accent-soft:#173321;
+  --good:#4CA377; --warn:#E0A63A; --bad:#F1685B;
+  --body-fill:#1C1F21; --body-passive:#26292B; --body-line:#484E51;
+  --z0:#5B8FD8; --z1:#4CA377; --z2:#F1685B;
+  --vol0:#5A6168; --vol1:#4FA8B8; --vol2:#4CA377; --vol3:#7ED2A2; --vol4:#A24A33;
+  --sel-stroke:#DFFCE6; --sel-stroke-2:#0E3319;
+  --ex-pri:#F2503F; --ex-sec:var(--yellow);
+  --card-sh:0 1px 2px rgba(0,0,0,.5); --lift:0 4px 16px -6px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+/* Kein elastisches "Gummiband" am Rand: am Seitenende soll es fest anschlagen statt nachzugeben
+   und dabei Inhalte dahinter durchscheinen zu lassen (typisches iOS-Safari-Overscroll-Verhalten). */
+html{overscroll-behavior-y:none}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+[hidden]{display:none!important}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 28px)}
+
+/* ---------- Kopfzeile ---------- */
+.appbar{position:sticky;top:0;z-index:40;background:var(--ground);padding:14px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.appbar h1{font-family:var(--f-cond);font-weight:700;font-size:19px;margin:0;letter-spacing:.02em;text-transform:uppercase}
+.appbar .sub{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
+.sync{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-3);font-family:var(--f-cond);letter-spacing:.08em;text-transform:uppercase}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex:none}
+.dot.on{background:var(--good)} .dot.off{background:var(--warn)}
+
+/* ---------- Karten ---------- */
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--card-sh);padding:16px;margin-bottom:12px}
+.card.flush{padding:0;overflow:hidden}
+h2.sec{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:20px 4px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2.sec span{font-family:var(--f-mono);font-size:11px;letter-spacing:0;text-transform:none}
+.card>h3{font-family:var(--f-cond);font-weight:600;font-size:14px;margin:0 0 10px;letter-spacing:.02em}
+
+/* ---------- Hero: Formwert ---------- */
+.hero{background:var(--surface);border-radius:var(--r);box-shadow:var(--card-sh);padding:18px;margin-bottom:12px;display:flex;align-items:center;gap:18px}
+.ring{width:104px;height:104px;flex:none}
+.hero-txt{min-width:0;flex:1}
+.hero-val{display:flex;align-items:baseline;gap:7px;margin-bottom:6px}
+.hero-val b{font-family:var(--f-mono);font-weight:600;font-size:40px;line-height:1;letter-spacing:-.035em}
+.hero-val i{font-style:normal;font-family:var(--f-mono);font-size:13px;color:var(--ink-3)}
+.trend{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-cond);font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.trend.up{color:var(--good)} .trend.down{color:var(--bad)}
+/* min-height reserviert Platz für den längsten Fall (3 Zeilen: Trainingstage + Muskelgruppen
+   unter Minimum + unter Bestform) – sonst springt beim An-/Abhaken (z.B. Mobilität) alles
+   darunter (Wochenleiste, Tagesliste) nach oben/unten, sobald eine Zeile weg-/dazukommt. */
+.hero-note{font-size:12.5px;color:var(--ink-3);margin-top:5px;line-height:1.35;min-height:4.05em}
+/* Ring-Legende: erklärt, welche Farbe im Formwert-Ring für welchen Bereich steht (der Ring
+   selbst ist jetzt in Bereichsfarben segmentiert statt einfarbig). */
+.ring-legend{display:flex;flex-wrap:wrap;gap:5px 10px;margin-top:8px}
+.ring-legend span{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.ring-legend i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+
+/* ---------- Wochenstreifen ---------- */
+.week{display:flex;gap:6px;justify-content:space-between;flex:1;min-width:0}
+.weekbar{display:flex;align-items:center;gap:4px}
+.wknav{flex:0 0 26px;height:56px;padding:0;border:0;border-radius:10px;background:transparent;
+  color:var(--ink-3);cursor:pointer;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.wknav svg{width:18px;height:18px}
+.wknav:active{background:var(--surface-2);color:var(--ink)}
+.wknav[disabled]{opacity:.28;cursor:default;background:transparent}
+.wd{cursor:pointer}
+.wd{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border-radius:var(--r-sm);background:var(--surface-2)}
+/* Tagesdetail-Sheet: Trainierte Muskeln dieses Tages, in derselben Vorder-/Rückansicht wie
+   die Übungsdiagramme, aber mit einem eigenen, etwas kleineren Rahmen für den Sheet-Kontext. */
+.day-figs{display:flex;gap:10px;margin:0 0 14px}
+.day-fig{flex:1;background:var(--surface-2);border-radius:var(--r-md);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.day-fig svg{width:100%;height:auto;aspect-ratio:1/2}
+.day-fig span{font-family:var(--f-cond);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.wd b{font-family:var(--f-cond);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.wd .pip{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--sunken);color:var(--ink-3);font-family:var(--f-mono);font-size:11px;font-weight:600}
+.wd.done .pip{background:var(--green);color:#fff}
+.wd.mob .pip{box-shadow:inset 0 0 0 2px var(--green)}
+.wd.today{background:color-mix(in srgb,var(--accent) 9%,var(--surface-2))}
+.wd.today b{color:var(--accent)}
+/* "viewing" = der Tag, den man per Wischgeste im Heute-Tab gerade sieht – eigener, kräftigerer
+   Rahmen, damit er sich von der (schwächeren) "heute"-Markierung des echten Kalendertags
+   unterscheidet, wenn man auf einen anderen Tag gewischt hat. */
+.wd.viewing{box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* ---------- Buttons ---------- */
+.btn{touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-2);padding:14px 22px;border-radius:999px;cursor:pointer;font-family:var(--f-body);font-weight:600;font-size:15.5px;letter-spacing:0;text-transform:none;min-height:50px}
+.btn:active{transform:scale(.985)}
+.btn.block{width:100%}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-2)}
+.btn.danger{background:var(--bad);color:#fff;box-shadow:none}
+.btn.small{padding:9px 16px;font-size:13px;min-height:40px}
+.btn:disabled{opacity:.45}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow>.btn{flex:1 1 auto}
+.linkbtn{background:none;border:0;color:var(--accent);font-family:var(--f-body);font-weight:600;font-size:14px;letter-spacing:0;text-transform:none;cursor:pointer;padding:6px 2px}
+
+/* ---------- Listenzeilen ---------- */
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.row:last-child{border-bottom:0}
+.row .main{flex:1;min-width:0}
+.row .main b{display:block;font-family:var(--f-cond);font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .main span{display:block;font-size:12.5px;color:var(--ink-3)}
+.row .val{font-family:var(--f-mono);font-size:14px;white-space:nowrap;text-align:right}
+.row.tap{cursor:pointer}
+.row.tap:active{background:var(--surface-2)}
+.chev{color:var(--ink-3);flex:none}
+.pill{font-family:var(--f-cond);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:99px;white-space:nowrap}
+.pill.pr{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.pill.l0{background:var(--sunken);color:var(--ink-3)}
+.pill.l1{background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--blue)}
+.pill.l2{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.pill.l3{background:color-mix(in srgb,var(--yellow) 20%,transparent);color:var(--yellow)}
+.pill.l4{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.pill.v0{background:color-mix(in srgb,var(--vol0) 22%,transparent);color:var(--ink-2)}
+.pill.v1{background:color-mix(in srgb,var(--vol2) 16%,transparent);color:var(--vol2)}
+.pill.v2{background:color-mix(in srgb,var(--vol4) 18%,transparent);color:var(--vol4)}
+/* Kraftstufen-Badges (F·E·D·C·B·A·S·S+) – eigener Namensraum "g0"…"g7"/"gnone", damit sie
+   nicht mit den l0…l4-Badges oben kollidieren (Mobility-Haken, Trainingszonen: eigene Bedeutung,
+   unverändert). Verlauf Rot→Grün über die ersten sechs Stufen, S/S+ in Gold, S+ zusätzlich mit
+   Krone – die einzige Stufe, die sich optisch nochmal von den anderen abhebt. */
+.pill.gnone{background:var(--sunken);color:var(--ink-3)}
+.pill.g0{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.pill.g1{background:color-mix(in srgb,color-mix(in srgb,var(--red) 65%,var(--yellow) 35%) 16%,transparent);color:color-mix(in srgb,var(--red) 65%,var(--yellow) 35%)}
+.pill.g2{background:color-mix(in srgb,color-mix(in srgb,var(--red) 30%,var(--yellow) 70%) 18%,transparent);color:color-mix(in srgb,var(--red) 30%,var(--yellow) 70%)}
+.pill.g3{background:color-mix(in srgb,var(--yellow) 20%,transparent);color:var(--yellow)}
+.pill.g4{background:color-mix(in srgb,color-mix(in srgb,var(--yellow) 45%,var(--green) 55%) 18%,transparent);color:color-mix(in srgb,var(--yellow) 45%,var(--green) 55%)}
+.pill.g5{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.pill.g6{background:color-mix(in srgb,var(--gold) 22%,transparent);color:var(--gold)}
+.pill.g7{background:color-mix(in srgb,var(--gold) 32%,transparent);color:var(--gold)}
+.pill.g7::before{content:"👑";margin-right:3px}
+.empty{color:var(--ink-3);font-size:13.5px;padding:22px 16px;text-align:center}
+.iconbtn{touch-action:manipulation;background:none;border:0;color:var(--ink-3);cursor:pointer;padding:8px;line-height:0;border-radius:50%;flex:none}
+/* Einstellungen sind jetzt eine eigene Seite statt einer Karte ganz unten im Werte-Tab -
+   vorher musste man dafuer erst den Tab wechseln und bis ans Ende scrollen. */
+.appbar-gear{margin-left:6px;color:var(--ink-3)}
+/* Muskelauswahl im Uebungsformular: eingeklappt, damit das Formular nicht von zwei
+   Chip-Teppichen mit je 39 Eintraegen zugedeckt wird. */
+.msel-head{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+  background:var(--surface-2);border:0;border-radius:var(--r-sm);padding:11px 12px;font:inherit;
+  color:var(--ink);-webkit-tap-highlight-color:transparent}
+.msel-head:active{background:var(--sunken)}
+.msel-val{flex:1;min-width:0;font-family:var(--f-body);font-size:13.5px;color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msel-head .chev{flex:none;line-height:0;color:var(--ink-3);transition:transform .16s ease}
+.msel-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.msel-list{margin-top:8px}
+/* Vorschaufiguren im Formular - kleiner als auf der Trainingsseite, sie sind hier Beiwerk. */
+.exform-figs{margin:4px 0 2px}
+.exform-figs .wo-figs{display:flex;gap:10px;padding:0}
+.exform-figs figure{flex:1 1 0;min-width:0;margin:0;text-align:center}
+.exform-figs svg{width:100%;height:auto;aspect-ratio:1/2;max-height:210px;display:block}
+.exform-figs figcaption{font-family:var(--f-cond);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:4px}
+.appbar-gear:active{color:var(--ink)}
+.setpage-group{font-family:var(--f-cond);font-weight:600;font-size:11px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);margin:22px 0 8px}
+.setpage-group:first-child{margin-top:8px}
+.setpage-note{font-family:var(--f-body);font-size:12px;color:var(--ink-3);line-height:1.45;margin:10px 2px 0}
+/* Startbildschirm, solange noch nicht feststeht, ob ein Profil gespeichert ist. */
+.bootwait{position:fixed;inset:0;z-index:70;background:var(--ground);display:flex;
+  align-items:center;justify-content:center;text-align:center;padding:24px}
+.bootwait b{display:block;font-family:var(--f-cond);font-weight:700;font-size:17px;margin-top:14px}
+.bootwait .bw-sub{display:block;font-size:13px;color:var(--ink-3);margin-top:5px}
+.bw-dot{display:inline-block;width:26px;height:26px;border-radius:50%;
+  border:2.5px solid var(--rule-2);border-top-color:var(--accent);animation:bwSpin .8s linear infinite}
+@keyframes bwSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.bw-dot{animation:none;border-top-color:var(--accent)}}
+.iconbtn:active{background:var(--surface-2)}
+.ex-info-how{font-weight:600;color:var(--ink);margin-bottom:8px!important}
+.ex-info-poses{display:flex;gap:8px;margin-bottom:10px}
+.ex-info-pose{flex:1;min-width:0;background:#17191B;border-radius:var(--r-sm);overflow:hidden}
+.ex-info-pose img{width:100%;display:block}
+.ex-info-pose-cap{font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;text-align:center;color:var(--ink-dim,#8a9099);padding:5px 2px}
+
+/* ---------- Balken ---------- */
+.meter{display:flex;flex-direction:column;gap:7px;padding:13px 16px;border-bottom:1px solid var(--rule)}
+.meter:last-child{border-bottom:0}
+.meter-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.meter-name{font-family:var(--f-cond);font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.sw{width:9px;height:9px;border-radius:2px;flex:none}
+.meter-val{font-family:var(--f-mono);font-size:15px;font-weight:600}
+.meter-val em{font-style:normal;font-size:11px;color:var(--ink-3);margin-left:5px;font-weight:400}
+.bar{position:relative;height:8px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.bar .peak{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.55;border-radius:2px}
+.meter-sub{font-size:12px;color:var(--ink-3)}
+.minibar{position:relative;height:6px;border-radius:99px;background:var(--sunken);min-width:56px;overflow:visible}
+.minibar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+.minibar u{position:absolute;top:-2px;bottom:-2px;width:1.5px;background:var(--ink-3);opacity:.6}
+
+/* ---------- Körperkarte ---------- */
+.viewtabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:99px;margin:0 auto 12px;width:fit-content}
+.viewtabs button{border:0;background:none;padding:8px 20px;border-radius:99px;font-family:var(--f-body);font-weight:600;font-size:13.5px;letter-spacing:0;text-transform:none;color:var(--ink-3);cursor:pointer;min-height:38px}
+.viewtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.bodystage{display:flex;justify-content:center;align-items:flex-start;gap:6px;padding:4px 0 8px}.body3d{position:relative;border-radius:var(--r-sm);overflow:hidden;background:#0b0d0f;margin:2px 0 10px}.body3d iframe{width:100%;height:480px;border:0;display:block;background:#0b0d0f}.body3d-hint{position:absolute;left:0;right:0;bottom:0;text-align:center;font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.7);padding:7px 0;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.4))}.body3d-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-family:var(--f-cond);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}@media (max-width:420px){.body3d iframe{height:400px}}
+.bodystage .bodycol{flex:1 1 0;min-width:0;text-align:center}
+.bodystage .bodycol span{display:block;font-family:var(--f-body);font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-top:4px}
+.callout{background:var(--surface-2);border-radius:999px;padding:11px 18px;margin:2px 0 12px;min-height:24px;line-height:1.3;text-align:center}
+.callout b{display:inline;font-family:var(--f-body);font-weight:700;font-size:14.5px}
+.callout span{display:inline;font-size:12.5px;color:var(--ink-3);margin-left:6px}
+.callout .co-hint{font-size:13px;color:var(--ink-3);padding:2px 0;display:block}
+.callout em{display:block;font-style:normal;font-family:var(--f-mono);font-size:11.5px;margin-top:3px;font-weight:600}
+.callout em.z0{color:var(--ink-3)} .callout em.z1{color:var(--vol2)} .callout em.z2{color:var(--vol4)}
+.row.sub{padding-left:28px;background:var(--surface-2)}.row.sub2{padding-left:46px}
+/* Dieselbe herangezoomte Figur wie im Entdecken-Tab, hier als Erkennungsbild der Region.
+   Sie teilt sich das Standbild mit den Kacheln - es wird kein zweites Mal gerendert. */
+.row .rfig{flex:0 0 40px;width:40px;line-height:0}
+.row .rfig svg{display:block;width:100%;height:auto;border-radius:6px;background:var(--sunken)}
+/* Muskelzeile. Der Korridor lag vorher als drei Haarstriche IM Balken - schwer zu lesen und
+   doppelt zu den Zahlen daneben. Jetzt ist er eine eigene Schiene UNTER dem Balken: man sieht
+   auf einen Blick, ob der Balken die Zielzone noch nicht erreicht, in ihr endet oder sie
+   ueberschiesst, ohne eine einzige Zahl lesen zu muessen. Die laute Status-Pille faellt weg;
+   der Status steht klein und farbig am Zeilenende. */
+.mrow-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.mrow-top b{display:block;font-family:var(--f-cond);font-weight:600;font-size:15px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mrow-val{font-family:var(--f-mono);font-size:16px;font-weight:600;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.mrow-val em{font-style:normal;font-size:10.5px;font-weight:500;color:var(--ink-3);margin-left:2px}
+.mtrack{position:relative;height:14px}
+.mtrack .tbg{position:absolute;left:0;right:0;top:0;height:7px;border-radius:99px;background:var(--sunken)}
+.mtrack .tfill{position:absolute;left:0;top:0;height:7px;border-radius:99px;min-width:3px}
+.mtrack .trail{position:absolute;top:10px;height:4px;border-radius:99px;
+  background:color-mix(in srgb,var(--ink-3) 34%,transparent)}
+.mtrack .trail u{position:absolute;top:-2px;bottom:-2px;width:2px;border-radius:1px;
+  background:var(--ink-3);opacity:.85}
+.mrow-meta{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  font-family:var(--f-body);font-size:11.5px;color:var(--ink-3);letter-spacing:0}
+.mrow-meta .st{font-weight:600;white-space:nowrap}
+.mrow-meta .st.v0{color:var(--ink-3)}
+.mrow-meta .st.v1{color:var(--vol2)}
+.mrow-meta .st.v2{color:var(--vol4)}
+.mrow-fines{font-family:var(--f-body);font-size:11px;color:var(--ink-3);line-height:1.35}
+.mdblock{margin-top:14px}
+.mdlab{font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.recrow{display:flex;align-items:center;gap:10px}
+.recbar{position:relative;flex:1;height:7px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.recbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+.recval{font-family:var(--f-mono);font-size:13.5px;font-weight:600;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.kchips{display:flex;gap:7px}
+/* Minimum, Optimum und Grenze tragen genau die Farbe, die der Balken an dieser Stelle haette -
+   damit bedeutet eine Farbe in der ganzen App dasselbe. */
+.kchip{flex:1;min-width:0;border-radius:11px;padding:7px 9px;text-align:center;
+  background:color-mix(in srgb,var(--c) 15%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 38%,transparent)}
+.kchip em{display:block;font-style:normal;font-family:var(--f-body);font-weight:600;
+  font-size:10.5px;letter-spacing:.02em;color:var(--ink-3)}
+.kchip b{display:block;font-family:var(--f-mono);font-size:16px;font-weight:600;color:var(--c);
+  line-height:1.25}
+/* Gruppenkarten im Detailkasten: dieselbe Bildsprache wie die Muskelzeilen, aber anwaehlbar -
+   ein Tipp fuehrt eine Ebene tiefer, bis zum einzelnen Muskel. */
+.gcard{display:block;width:100%;text-align:left;background:var(--surface);border:0;
+  border-radius:var(--r-sm);padding:11px 13px;margin-top:8px;cursor:pointer;font:inherit;
+  color:inherit;box-shadow:inset 0 0 0 1px var(--rule);-webkit-tap-highlight-color:transparent}
+.gcard:active{background:var(--surface-2)}
+/* Aufklappen und Auswahlwechsel bekommen einen kurzen Einblendweg. Ohne ihn springt der
+   Inhalt hart um, was bei mehreren Ebenen untereinander unruhig wirkt. Bewusst kurz, damit
+   sich nichts traege anfuehlt - und abgeschaltet, wenn das System weniger Bewegung wuenscht. */
+@keyframes fwIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.gpanel{animation:fwIn .16s ease-out}
+#mlist .row.sub,#mlist .row.sub2{animation:fwIn .18s ease-out}
+#mdetail .mdetailblock{animation:fwIn .16s ease-out}
+.finechips button{transition:background .12s ease,box-shadow .12s ease,color .12s ease}
+.gcard{transition:box-shadow .14s ease,background .12s ease}
+.mtrack .tfill,.recbar i,.minibar i{transition:width .22s ease,background .22s ease}
+.vollegend .vlpins i{transition:left .22s ease}
+@media (prefers-reduced-motion:reduce){
+  .gpanel,#mlist .row.sub,#mlist .row.sub2,#mdetail .mdetailblock{animation:none}
+  .mtrack .tfill,.recbar i,.minibar i,.vollegend .vlpins i{transition:none}
+}
+.gcard.open{box-shadow:inset 0 0 0 1.5px var(--accent);margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.gpanel{background:var(--surface);border-radius:0 0 var(--r-sm) var(--r-sm);padding:2px 13px 13px;
+  box-shadow:inset 0 0 0 1.5px var(--accent);border-top:1px solid var(--rule)}
+.mdname{font-family:var(--f-body);font-weight:700;font-size:14px;margin:10px 0 0}
+.mdname span{display:block;font-weight:500;font-size:12px;color:var(--ink-3)}
+.finechips button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);
+  box-shadow:inset 0 0 0 1px var(--accent)}
+.gcard.flat{cursor:default}
+.finechips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.finechips button{font:inherit;font-family:var(--f-body);font-size:12px;font-weight:500;
+  padding:6px 11px;border-radius:99px;border:0;cursor:pointer;
+  background:var(--surface);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.finechips button:active{background:var(--surface-2)}
+/* Weg zurueck. Die Auswahl geht mehrere Ebenen tief (Region -> Gruppe -> Einzelmuskel),
+   und ohne diesen Griff kam man nur ueber den Umweg "Region neu antippen" wieder heraus. */
+.backbar{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;
+  color:var(--ink-3);font:inherit;font-family:var(--f-body);font-size:12px;font-weight:600;
+  padding:0 0 9px;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.backbar svg{width:15px;height:15px}
+.backbar:active{color:var(--ink)}
+.gcard .main,.mrow .main{display:flex;flex-direction:column;gap:7px;width:100%}
+.row .val.hval{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.row .val.hval em{font-style:normal;font-size:10.5px;font-weight:500;color:var(--ink-3);margin-left:2px}
+.bodystage svg.bodysvg{width:100%;max-width:230px;height:auto;display:block;margin:0 auto;isolation:isolate}
+/* Illustration hell/dunkel – die Farbschicht liegt per mix-blend-mode darüber, damit die
+   Farbe in den Furchen zwischen den Muskelbäuchen sitzt und plastisch statt flach wirkt. */
+.figbase{pointer-events:none}
+/* Im Dunkelmodus die Illustration abdunkeln, damit sie ruhig im Hintergrund liegt und die
+   farbig markierten Muskeln klar hervorstechen. */
+.figdark{display:none;filter:brightness(.58) contrast(1.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .figlight{display:none}
+  :root:not([data-theme="light"]) .figdark{display:block}}
+:root[data-theme="dark"] .figlight{display:none}
+:root[data-theme="dark"] .figdark{display:block}
+.msklayer path{mix-blend-mode:multiply}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .msklayer path{mix-blend-mode:screen}}
+:root[data-theme="dark"] .msklayer path{mix-blend-mode:screen}
+.msk{cursor:pointer;transition:opacity .35s}
+.msk.dim{opacity:.22!important}
+.figzoom{transition:transform .5s cubic-bezier(.22,.85,.25,1);transform-origin:0 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-body);font-weight:500;letter-spacing:0}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.vollegend{margin-top:12px}
+.vollegend .vlbar{position:relative;height:8px;border-radius:99px;overflow:hidden;display:flex}
+.vollegend .vlbar b{display:block;height:100%}
+.vollegend .vlbar b.grad{flex:1 1 auto;background:linear-gradient(90deg,var(--vol0),var(--vol1) 34%,var(--vol2) 62%,var(--vol3))}
+.vollegend .vlbar b.over{flex:0 0 22%;background:var(--vol4)}
+.vollegend .vlbar u{position:absolute;top:0;width:1.5px;height:100%;background:var(--surface);opacity:.9}
+.vollegend .vlbarwrap{position:relative}
+.vollegend .vlpins{position:absolute;inset:0;pointer-events:none}
+.vollegend .vlpins i{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;
+  background:var(--ink);box-shadow:0 0 0 1.5px var(--surface)}
+/* Bei einer ganzen Region wurde frueher pro Muskel ein Strich gezeichnet - bei 21 Muskeln
+   ein Zaun, aus dem sich nichts mehr ablesen liess. Jetzt steht genau ein Zeiger auf dem
+   Durchschnitt der Gruppe, sonst nichts. */
+.vollegend .vlsel{position:relative;height:16px;margin-bottom:3px}
+.vollegend .vlsel span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--f-mono);font-size:10.5px;font-weight:600;color:var(--ink);
+  background:var(--surface-2);border:1px solid var(--rule);border-radius:99px;padding:0 6px;line-height:15px}
+.vollegend .vlmarks{position:relative;height:14px;margin-top:4px;font-size:10.5px;color:var(--ink-3);font-family:var(--f-body);font-weight:500;letter-spacing:0}
+.vollegend .vlmarks span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.vollegend .vlmarks span.st{left:0;transform:none}
+.vollegend .vlmarks span.en{left:auto;right:0;transform:none;color:var(--vol4)}
+.mdetail{margin-top:12px;padding:14px 16px;background:var(--surface-2);border-radius:var(--r-sm);font-size:13.5px;line-height:1.45}
+.mdetail b{font-family:var(--f-body);font-weight:700;font-size:16px;display:block;line-height:1.2}
+.mdetail .de{display:block;color:var(--ink-3);font-size:12.5px;margin-bottom:6px}
+.mdetail p{margin:0 0 8px;font-size:13px;color:var(--ink-2)}
+.mdetail .mstat{font-size:13px}
+.mdetail .dim{color:var(--ink-3);font-size:12px}
+
+/* ---------- Sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,14,18,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -8px 40px -12px rgba(0,0,0,.4);
+  transform:translateY(102%);transition:transform .26s cubic-bezier(.2,.8,.3,1);max-height:92vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;
+  padding:8px 16px calc(20px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto}
+.sheet.open{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:99px;background:var(--rule-2);margin:6px auto 12px}
+.sheet h3{font-family:var(--f-cond);font-weight:700;font-size:18px;margin:0 0 14px;letter-spacing:.01em}
+.sheet-close{position:absolute;right:14px;top:14px}
+
+/* ---------- Formularelemente ---------- */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-family:var(--f-cond);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+input[type=text],input[type=number],input[type=search],select,textarea{
+  background:var(--surface-2);border:1px solid var(--rule-2);border-radius:var(--r-sm);padding:13px 14px;width:100%;
+  font-family:var(--f-mono);font-size:16px;min-height:50px}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+select{font-family:var(--f-body)}
+textarea{font-family:var(--f-body);resize:vertical;min-height:88px}
+.stepper{display:flex;align-items:stretch;gap:0;border:1px solid var(--rule-2);border-radius:var(--r-sm);overflow:hidden;background:var(--surface-2)}
+.stepper button{border:0;background:var(--surface-2);color:var(--ink-2);width:52px;font-size:22px;font-family:var(--f-mono);cursor:pointer;min-height:50px}
+.stepper button:active{background:var(--sunken)}
+.stepper input{border:0;border-radius:0;text-align:center;background:transparent;min-height:50px;padding:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.exlist{max-height:46vh;overflow-y:auto;margin:0 -16px;border-top:1px solid var(--rule)}
+.exitem{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rule);cursor:pointer;background:var(--surface)}
+.exitem:active{background:var(--surface-2)}
+.exitem b{flex:1;font-family:var(--f-cond);font-weight:600;font-size:14.5px;min-width:0}
+.exitem span{font-size:11.5px;color:var(--ink-3);font-family:var(--f-mono);white-space:nowrap}
+/* Manche Einträge (Kraftstufen-Detail) verpacken Name+Untertext in ein eigenes ".main", statt
+   sie als direkte Flex-Kinder von .exitem zu setzen (siehe exPicker-Variante oben) – ohne eigenes
+   min-width:0 zwingt der lange Untertext ("Bestwert … · nächste Stufe ab … · Richtwert") dann die
+   ganze Zeile (und damit das Sheet) in die Breite, statt abzuschneiden. */
+.exitem .main{flex:1;min-width:0}
+.exitem .main span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* Feste Breite fürs Badge (statt an den Text angepasst) – sonst fällt der Balken/Untertext
+   links davon je nach Stufenname unterschiedlich breit aus, und die Balken enden nicht mehr
+   auf gleicher Höhe. Die Buchstaben-Stufen (F…S+) selbst sind kurz, aber "verfallen"/"unter F"
+   (kein bzw. abgelaufener Wert) müssen in dieselbe Breite passen, sonst verschieben die sich
+   wieder gegenüber den Zeilen mit echter Stufe – 86px deckt "verfallen" als längsten Fall ab. */
+.exitem .pill{flex:none;min-width:86px;text-align:center}
+.chipbar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
+.chipbar::-webkit-scrollbar{display:none}
+.fchip{flex:none;border:0;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule);color:var(--ink-2);padding:9px 15px;border-radius:99px;
+  font-family:var(--f-body);font-weight:600;font-size:13.5px;letter-spacing:0;text-transform:none;cursor:pointer;white-space:nowrap;min-height:38px}
+.fchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.chipbar.wrap{flex-wrap:wrap;overflow-x:visible;padding-bottom:2px}
+.chipbar.wrap .fchip{padding:7px 12px;font-size:12.5px;min-height:32px}
+.exlist .grouplab{margin:0;padding:10px 16px 5px;background:var(--surface-2);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:1}
+.chipbar.sub{padding-top:0;padding-bottom:8px}
+.pctlist{display:flex;flex-direction:column;gap:2px}
+.pctrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule)}
+.pctrow:last-child{border-bottom:0}
+.pctrow .pctname{flex:1;min-width:0;font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pctrow .stepper{flex:none;width:132px;min-height:38px}
+.pctrow .stepper button{width:36px;font-size:17px;min-height:38px}
+.pctrow .stepper input{min-height:38px;font-size:14px;padding:0}
+.pctrow .pctsuffix{flex:none;width:14px;color:var(--ink-3);font-family:var(--f-mono);font-size:12.5px}
+.pctlist .empty{padding:8px 0;color:var(--ink-3);font-size:13px}
+.chipbar.sub .fchip{font-size:12.5px;padding:7px 13px;min-height:34px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule-2)}
+.chipbar.sub .fchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.exadd{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rule);cursor:pointer;background:var(--surface)}
+.exadd:active{background:var(--surface-2)}
+.exadd b{color:var(--accent);flex:1;font-family:var(--f-cond);font-weight:600;font-size:14.5px}
+.exitem .iconbtn{margin-left:auto}
+
+/* ---------- Entdecken (Übungskatalog zum Durchstöbern) ---------- */
+.disc-search{margin:2px 0 4px}
+.scrim.over{z-index:65}
+.sheet.over{z-index:66}
+.searchrow{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.searchrow input{flex:1;margin:0}
+.searchrow .disc-search{flex:1;margin:0}
+.filterbtn{position:relative;flex:none;background:var(--surface-2);border-radius:var(--r-sm);
+  box-shadow:inset 0 0 0 1px var(--rule-2);min-height:50px;min-width:50px;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.filterbtn[data-active="true"]{color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.filterbtn .badge{position:absolute;top:3px;right:3px;min-width:15px;height:15px;border-radius:99px;
+  background:var(--accent);color:var(--accent-ink);font-family:var(--f-mono);font-size:9.5px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1}
+.equip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0 4px}
+.equip-card{background:var(--surface-2);border:0;border-radius:var(--r-sm);padding:12px 4px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;min-width:0}
+.equip-card[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 16%,var(--surface-2));
+  box-shadow:inset 0 0 0 1.5px var(--accent)}
+.equip-card svg{width:26px;height:26px;color:var(--ink-2)}
+.equip-card[aria-pressed="true"] svg{color:var(--accent)}
+.equip-card span{font-family:var(--f-body);font-weight:600;font-size:10.5px;color:var(--ink-2);
+  text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.equip-sheet-foot{display:flex;align-items:center;gap:10px;margin-top:16px}
+.equip-sheet-foot .btn{flex:1}
+.disc-mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 18px}
+.disc-mcard{background:var(--surface-2);border:0;border-radius:var(--r-sm);padding:10px 4px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0}
+.disc-mcard[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 16%,var(--surface-2));box-shadow:inset 0 0 0 1.5px var(--accent)}
+.disc-mcard svg{width:100%;max-width:86px;height:auto}
+.disc-mcard span{font-family:var(--f-cond);font-weight:600;font-size:11.5px;color:var(--ink-2);text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.disc-exgrid{display:flex;flex-direction:column;gap:12px;margin:8px 0 18px}
+.disc-excard{background:var(--surface-2);border-radius:var(--r-sm);padding:10px;cursor:pointer;
+  display:flex;flex-direction:column;min-width:0}
+.disc-excard:active{background:var(--sunken)}
+.disc-thumbs{display:flex;gap:6px}
+.disc-thumb{background:var(--surface);border-radius:calc(var(--r-sm) - 4px);padding:8px;display:flex;justify-content:center;flex:1;min-width:0}
+.disc-thumb svg{width:100%;max-width:200px;height:auto;isolation:isolate;display:block;margin:0 auto}
+.disc-excard b{font-family:var(--f-cond);font-weight:600;font-size:15.5px;margin-top:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.disc-excard .disc-muscle{font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- Live-Training ---------- */
+.wo-head{display:flex;align-items:center;gap:10px;padding:9px 14px 9px 16px;border-bottom:1px solid var(--rule)}
+input.wo-name{flex:1 1 auto;min-width:0;background:transparent;border:0;box-shadow:none;border-radius:0;padding:2px 0;
+  font-family:var(--f-cond);font-weight:700;font-size:16.5px;min-height:34px}
+input.wo-name:focus{outline:none;box-shadow:0 1px 0 0 var(--accent)}
+.wo-timer{display:flex;align-items:baseline;gap:6px;flex:none}
+.wo-timer b{font-family:var(--f-mono);font-size:17px;font-weight:600;letter-spacing:-.02em}
+.wo-timer span{font-family:var(--f-cond);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.wo-timer.paused span{color:var(--warn)}
+.wo-prog{font-size:12.5px;color:var(--ink-3);flex:none}
+.wo-head .btn.small{padding:7px 14px;font-size:13px;min-height:34px;flex:none}
+/* Eine Übung pro Seite, horizontal wischbar – die letzte Seite ist das große Plus. */
+.wo-pager{display:flex;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.wo-pager::-webkit-scrollbar{display:none}
+.wo-page{flex:0 0 100%;width:100%;min-width:0;box-sizing:border-box;scroll-snap-align:center;scroll-snap-stop:always;
+  padding:9px 16px 9px;display:flex;flex-direction:column;gap:6px}
+.wo-pagehead{display:flex;align-items:flex-start;gap:4px}
+.wo-pagehead .main{flex:1;min-width:0}
+.wo-pagehead b{display:block;font-family:var(--f-cond);font-weight:700;font-size:19px;line-height:1.2}
+.wo-pagehead span{display:block;font-size:11.5px;color:var(--ink-3);font-family:var(--f-mono);margin-top:3px}
+/* Reihenfolge-Sheet: eine Zeile je Uebung, die gerade sichtbare bekommt einen Streifen
+   in Akzentfarbe - so sieht man beim Verschieben, wo man selbst gerade steht. */
+.wo-ordnum{flex:none;width:22px;text-align:center;font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.wo-ordrow.cur{box-shadow:inset 3px 0 0 var(--accent)}
+.wo-ordrow.cur .main b{color:var(--accent)}
+.wo-ordrow .iconbtn:disabled{opacity:.25}
+.wo-ordrow .iconbtn{padding:7px}
+/* Rueckfrage beim Beenden, ob die benutzte Vorlage den Stand des Trainings uebernimmt. */
+.rt-ask{background:var(--surface-2);border-radius:var(--r-sm);padding:12px 14px;margin-top:12px}
+.rt-ask b{display:block;font-family:var(--f-cond);font-weight:700;font-size:14.5px}
+.rt-ask span{display:block;font-size:12.5px;color:var(--ink-3);line-height:1.4;margin:4px 0 10px}
+.rt-ask-row{display:flex;gap:8px}
+.rt-ask-row .fchip{flex:1 1 0;width:auto;min-width:0;text-align:center;padding:9px 10px}
+.wo-figwrap{display:flex;flex-direction:column;gap:5px}
+.wo-figs{display:grid;grid-template-columns:1fr 1fr;gap:4px;justify-items:center;background:var(--surface-2);border-radius:var(--r-sm);padding:6px 4px 4px}
+.wo-figs figure{margin:0;text-align:center;width:100%}
+.wo-figs svg{width:100%;max-width:106px;height:auto;isolation:isolate;display:block;margin:0 auto}
+/* Übungskatalog-Detailansicht: hier geht's ums Anschauen/Studieren, deshalb ohne den kleinen
+   max-width-Deckel von oben – die Figur darf die volle Spaltenbreite der Karte ausfüllen. */
+.exdetail-figs .wo-figs svg{max-width:100%}
+.exdetail-figs .wo-figs{padding:10px 8px 8px}
+.exdetail-figs figcaption{font-size:11px;margin-top:5px}
+.wo-figs figcaption{font-family:var(--f-cond);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+.wo-mus{display:flex;flex-direction:column;gap:4px;flex:none}
+.wo-mline span{display:flex;flex-wrap:wrap;gap:6px}
+.wo-mline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.35}
+.wo-mline i{width:9px;height:9px;border-radius:2px;background:var(--ex-pri);flex:none;transform:translateY(9px)}
+.wo-mline.s i{background:var(--ex-sec)}
+.wo-mline em{font-style:normal;font-family:var(--f-cond);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);flex:none;padding-top:8px}
+.wo-mline span{color:var(--ink-2);min-width:0}
+.wo-mchip{font:inherit;font-size:12.5px;color:var(--ink);background:var(--surface-2);border:1px solid rgba(128,128,128,.30);padding:6px 12px;border-radius:999px;cursor:pointer;text-align:left;line-height:1.15;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.wo-mchip:hover{border-color:var(--ex-pri)}
+.wo-mline.s .wo-mchip:hover{border-color:var(--ex-sec)}
+.wo-mchip[aria-pressed="true"]{background:var(--ex-pri);border-color:var(--ex-pri);color:#fff;font-weight:600}
+.wo-mline.s .wo-mchip[aria-pressed="true"]{background:var(--ex-sec);border-color:var(--ex-sec);color:#fff}
+/* Prozent-Variante: Farbe kommt pro Chip aus der Blau-Rot-Skala (--c wird in JS gesetzt). */
+.wo-mline.q span{gap:6px}
+.wo-mline.q .wo-mchip{padding-left:10px}
+.wo-mchip .mbar{display:inline-block!important;width:34px;height:7px;border-radius:999px;background:rgba(128,128,128,.22);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);margin-right:8px;vertical-align:0;overflow:hidden;transform:none;flex:none}
+.wo-mchip .mbar b{display:block;height:100%;background:var(--c,var(--ex-sec));border-radius:999px}
+.wo-mline.q .wo-mchip[aria-pressed="true"] .mbar{background:rgba(255,255,255,.28);box-shadow:none}
+.wo-mline.q .wo-mchip[aria-pressed="true"] .mbar b{background:#fff}
+.wo-pctnote{margin:6px 0 0;font-size:10.5px;line-height:1.45;color:var(--ink-3)}
+.wo-mchip .mpct{display:inline;margin-left:7px;font-family:var(--f-cond);font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.wo-mline.q .wo-mchip:hover{border-color:var(--c)}
+.wo-mline.q .wo-mchip:hover{border-color:var(--c-ink)}
+.wo-mline.q .wo-mchip[aria-pressed="true"]{background:var(--c-ink);border-color:var(--c-ink);color:#fff;font-weight:600}
+.wo-mline.q .wo-mchip[aria-pressed="true"] .mdot{background:#fff}
+.wo-mline.q .wo-mchip[aria-pressed="true"] .mpct{color:rgba(255,255,255,.88)}
+.wo-scale{display:flex;align-items:center;gap:8px;margin:0 0 2px}
+.wo-scale em{font-style:normal;font-family:var(--f-cond);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);flex:none}
+.wo-scale i{flex:1;min-width:48px;height:6px;border-radius:999px}
+.wo-scale b{flex:none;font-family:var(--f-cond);font-size:9.5px;letter-spacing:.09em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+/* Auf der laufenden Trainingsseite ist die Hoehe fest - die Liste wird dort scrollbar,
+   damit trotzdem jeder Muskel erreichbar bleibt. */
+body.wo-live .wo-mus{overflow-y:auto;overscroll-behavior:contain}
+
+/* ---------- Übungsdetail: eigene Vollbildseite, alle Abschnitte untereinander ---------- */
+.exdpage{position:fixed;inset:0;z-index:55;background:var(--ground);display:flex;flex-direction:column}
+.exdpage-head{flex:none;display:flex;align-items:center;gap:10px;padding:14px 16px 8px;background:var(--ground)}
+.exdpage-title{flex:1;min-width:0;font-family:var(--f-cond);font-weight:700;font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exdpage-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+.exdpage-inner{max-width:600px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.exdpage-inner .note.exd-meta{margin:0 0 4px}
+.exdpage-inner h2.sec{margin-top:28px}
+.exdpage-inner h2.sec:first-of-type{margin-top:6px}
+.exdtab-body{min-height:40px}
+.exd-hrow{padding:11px 0;border-bottom:1px solid var(--rule)}
+.exd-hrow:last-child{border-bottom:0}
+.exd-hrow b{font-family:var(--f-cond);font-weight:600;font-size:13.5px}
+.exd-hsets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.exd-hset{background:var(--surface-2);border-radius:8px;padding:5px 10px;font-family:var(--f-mono);font-size:12px;color:var(--ink-2);border:0;cursor:pointer}
+.exd-hset:active{background:var(--sunken)}
+.exd-nowval{margin-bottom:8px}
+.exd-nowval b{display:block;font-size:24px;font-family:var(--f-cond);font-weight:700}
+.exd-nowval span{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.exd-chart-wrap{margin:4px 0 2px}
+.exd-chart{width:100%;height:120px;display:block}
+.exd-chart-line{fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.exd-chart-dot{fill:var(--accent)}
+.exd-chart-dot.last{fill:var(--accent);stroke:var(--surface-2);stroke-width:2.5}
+.exd-chart-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);font-family:var(--f-mono);margin-top:2px}
+.exd-recgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.exd-rec{background:var(--surface-2);border-radius:var(--r-sm);padding:11px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.exd-rec-lab{font-family:var(--f-cond);font-weight:600;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.exd-rec b{font-family:var(--f-cond);font-weight:700;font-size:16.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exd-rec-sub{font-size:11px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.wo-dots{display:flex;gap:5px;justify-content:center;align-items:center;padding:9px 0 3px}
+.wo-dots i{width:6px;height:6px;border-radius:99px;background:var(--rule-2);cursor:pointer;transition:width .18s ease,background .18s ease}
+.wo-dots i.on{width:20px;background:var(--accent)}
+.wo-dots i.plus{background:transparent;box-shadow:inset 0 0 0 1.5px var(--rule-2)}
+.wo-dots i.plus.on{background:var(--accent);box-shadow:none;width:20px}
+.wo-addpage{align-items:center;justify-content:center;text-align:center;gap:14px;min-height:300px}
+.wo-plus{touch-action:manipulation;width:92px;height:92px;border-radius:50%;border:0;background:var(--surface-2);box-shadow:inset 0 0 0 1.5px var(--rule-2);
+  color:var(--ink-2);display:grid;place-items:center;cursor:pointer}
+.wo-plus:active{background:var(--sunken);color:var(--accent)}
+.wo-plus svg{width:36px;height:36px}
+.wo-addpage p{margin:0;color:var(--ink-3);font-size:13.5px;max-width:230px;line-height:1.45}
+/* Laufendes Training: die Übungsseite füllt genau den Bildschirm – kein Seiten-Scrollen,
+   der freie Platz geht an die Körperfigur. */
+body.wo-live{overflow:hidden}
+body.wo-live .appbar{display:none}
+body.wo-live .sess-normal{display:none}
+body.wo-live .sessbar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));
+  margin:0;border-radius:0;background:none;box-shadow:none;z-index:30}
+body.wo-live .wrap{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  /* Laeuft die Pausenuhr, sitzt ihre Leiste fest ueber der Navigation - der Inhalt
+     muss diesen Streifen freihalten, sonst verdeckt sie die Muskelzeile. */
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + var(--restbar-h,0px))}
+body.wo-live #p-training,body.wo-live #session-wrap,body.wo-live #session-wrap>.card.flush,
+body.wo-live #session-body,body.wo-live .wo-pager{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+body.wo-live .wo-pager{flex-direction:row}
+body.wo-live #session-wrap>.card.flush{margin-bottom:10px}
+body.wo-live .wo-page{height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain}
+/* Die Satztabelle hat Vorrang: Sie behaelt ihre Hoehe auch dann, wenn die Pausenleiste
+   erscheint. Frueher war sie schrumpfbar (flex:0 1 auto) und wurde beim Pausieren kleiner -
+   genau in dem Moment, in dem man den naechsten Satz eintraegt. Ab dem 4. Satz soll die
+   Figur aber nicht mehr kleiner werden - stattdessen scrollt die Tabelle selbst weiter.
+   Kopfzeile + 3 Satzzeilen sind zusammen rund 144px hoch (auf allen Uebungsarten gleich,
+   da jede Zeile dieselbe Mindesthoehe hat) - die Obergrenze liegt knapp darueber, damit
+   genau ab dem 4. Satz intern gescrollt wird, statt die Zeile weiter wachsen zu lassen. */
+body.wo-live .wo-table{flex:0 0 auto;min-height:0;max-height:min(150px,46vh);overflow-y:auto;overscroll-behavior:contain}
+/* Die Figur hat ab jetzt immer dieselbe Größe – unabhängig von der Satzzahl. Der übrige Platz
+   gehört der Satztabelle (drei Sätze passen ohne Scrollen); erst darüber hinaus scrollt sie
+   intern, die Figur bleibt bei ihrer Größe wie mit drei Sätzen. */
+body.wo-live .wo-figwrap{flex:1 1 auto;min-height:96px;display:flex;flex-direction:column;cursor:pointer}
+body.wo-live .wo-mus{height:auto;flex:0 0 auto;max-height:none}
+body.wo-live .wo-figs figure{justify-content:center}
+body.wo-live .wo-figs{flex:1 1 0;min-height:0}
+/* Trainingsseite VOR dem Start (kein Workout aktiv): feste, nicht scrollende Seite – passt
+   genau in den Bildschirm. Start-Button, Hinweistext und Überschrift bleiben fest, die
+   Einheiten-Karte darunter füllt den restlichen Platz komplett aus (nie abgeschnitten) – bei
+   mehreren Einheiten wird nicht mehr vertikal gescrollt, sondern seitlich zwischen den Karten
+   gewischt (siehe .rc-pager), ganz hinten die "+"-Karte für eine neue Einheit. */
+body.tr-idle-fixed{overflow:hidden}
+body.tr-idle-fixed .wrap{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
+body.tr-idle-fixed #p-training,body.tr-idle-fixed #start-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+body.tr-idle-fixed #start-wrap>.wo-start,
+body.tr-idle-fixed #start-wrap>.note,body.tr-idle-fixed #start-wrap>.sec{flex:0 0 auto}
+body.tr-idle-fixed #routine-list{flex:1 1 auto;min-height:0}
+body.wo-live .wo-figs figure{height:100%;display:flex;flex-direction:column;min-height:0}
+body.wo-live .wo-figs svg{flex:1 1 0;min-height:0;height:100%;width:100%;max-width:none}
+
+body.wo-live .wo-addpage{justify-content:center}
+.wo-setbtns{display:flex;gap:8px}
+.wo-setbtns .btn{flex:1;min-height:38px;padding:7px 14px;font-size:13.5px}
+.wo-ex{padding:10px 16px 6px;border-bottom:1px solid var(--rule)}
+.wo-ex-head{display:flex;align-items:center;gap:4px}
+.wo-ex-title{flex:1;min-width:0}
+.wo-ex-title b{display:block;font-family:var(--f-cond);font-weight:600;font-size:15.5px}
+.wo-ex-title span{display:block;font-size:12px;color:var(--ink-3);font-family:var(--f-mono)}
+.wo-table{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.wo-row{display:grid;grid-template-columns:34px 1fr 1.1fr 74px 46px;gap:8px;align-items:center}
+.wo-table.has-kg .wo-row{grid-template-columns:34px 1fr 1.1fr 1.1fr 74px 46px}
+.wo-row.head{font-family:var(--f-cond);font-size:9.5px;line-height:1.25;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.wo-row.head span:first-child,.wo-row .wo-n{text-align:center}
+.wo-n{font-family:var(--f-mono);font-size:13px;color:var(--ink-3)}
+.wo-prev{font-family:var(--f-mono);font-size:12.5px;color:var(--ink-3);text-align:center}
+.wo-row input{min-height:40px;padding:4px 8px;text-align:center;font-size:16px}
+.wo-row.done input{background:color-mix(in srgb,var(--green) 12%,var(--surface-2));border-color:transparent;color:var(--ink-2)}
+/* Einseitige Übungen mit Gewicht brauchen eine Spalte mehr (kg, dann L und R statt einer
+   gemeinsamen Wdh./Sek.-Spalte) – etwas schmaler pro Spalte, damit alles auf den Bildschirm passt. */
+.wo-table.uni-load .wo-row{grid-template-columns:28px 1fr 0.75fr 0.7fr 0.7fr 74px 46px;gap:6px}
+.wo-table.uni-plain .wo-row{grid-template-columns:28px 1fr 0.85fr 0.85fr 74px 46px;gap:6px}
+/* Reserve-Spalte in der Satzzeile: "RIR" klein ueber dem Wert, dieselbe Karten-Optik wie die
+   Zahlenfelder daneben. Ein bereits abgehakter Satz zeigt seinen eingefrorenen Wert nur an
+   (nicht antippbar) - laufende/offene Saetze lassen sich per Antippen weiterschalten. */
+.wo-rir{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:40px;padding:3px 2px;border:0;border-radius:var(--r-sm);background:var(--surface-2);color:var(--ink-2);touch-action:manipulation;cursor:pointer}
+.wo-rir i{font-style:normal;font-family:var(--f-cond);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.wo-rir b{font-family:var(--f-mono);font-size:14px;font-weight:600;line-height:1.1}
+.wo-rir[disabled]{opacity:.55;cursor:default}
+.wo-row.done .wo-rir{background:color-mix(in srgb,var(--green) 12%,var(--surface-2))}
+/* Vollbild "Beanspruchte Muskeln": die Figuren bekommen den ganzen verfuegbaren Platz
+   ueber der Liste. Die Hoehe waechst mit dem Bildschirm, hat aber eine Untergrenze, damit
+   auch auf kleinen Geraeten noch etwas zu erkennen ist. */
+.exdpage .muspage-figs{margin:0 -16px 10px;flex:none}
+.exdpage .muspage-figs .wo-figs{padding:4px 0;gap:2px;flex:none;min-height:0}
+.exdpage .muspage-figs .wo-figs figure{flex:1 1 0;min-width:0;height:auto;display:block;margin:0}
+.exdpage .muspage-figs .wo-figs svg{width:100%;height:auto;aspect-ratio:1/2;max-height:72vh;max-width:none;display:block;flex:none;min-height:0}
+.exdpage .muspage-figs figcaption{font-size:11px;letter-spacing:.1em;margin-top:6px}
+/* Zusammengeklappte Beanspruchungszeile auf der laufenden Trainingsseite. */
+.wo-musbar{display:flex;align-items:center;gap:8px;width:100%;padding:7px 2px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.wo-musbar em{flex:none;font-style:normal;font-family:var(--f-cond);font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.wo-musum{flex:1;min-width:0;display:flex;gap:10px;overflow:hidden;font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.wo-musum-i{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.wo-musum-i i{width:8px;height:8px;border-radius:50%;flex:none}
+.wo-muschev{flex:none;color:var(--ink-3);display:grid;place-items:center}
+.wo-muschev svg{width:15px;height:15px}
+/* Die Figur ist auf der Trainingsseite antippbar - dezenter Hinweis darauf. */
+body.wo-live .wo-figwrap.tap{touch-action:manipulation}
+body.wo-live .wo-figwrap.tap:active{opacity:.75}
+/* Balken in der Muskelliste einer Einheit - gleiche Sprache wie die Chips bei den Uebungen. */
+.fbar{display:inline-block;width:52px;height:7px;border-radius:999px;background:rgba(128,128,128,.22);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);overflow:hidden;flex:none;align-self:center}
+.fbar b{display:block;height:100%;background:var(--c,var(--ex-sec));border-radius:999px}
+/* Persoenlicher Korridor im Muskel-Detail. */
+.volset{margin-top:10px}
+.volset em{display:block;font-style:normal;font-family:var(--f-cond);font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+.volset-chips{display:flex;gap:4px;flex-wrap:wrap}
+.volset-chip{flex:1 1 auto;min-height:30px;padding:0 8px;border-radius:999px;border:1px solid var(--rule-2);background:var(--surface-2);color:var(--ink-2);font-size:11px;line-height:1.1;cursor:pointer;touch-action:manipulation;white-space:nowrap}
+.volset-chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.volset-hint{display:block;margin-top:6px;font-size:10px;line-height:1.45;color:var(--ink-3)}
+.volset-all{display:block;width:100%;margin-top:8px;min-height:32px;padding:0 10px;border-radius:999px;
+  border:1px dashed var(--rule-2);background:transparent;color:var(--ink-2);font-family:var(--f-body);
+  font-weight:600;font-size:11.5px;cursor:pointer;touch-action:manipulation}
+.volset-all:active{background:var(--surface-2);color:var(--ink)}
+/* Wiederholungen in Reserve: optionale Auswahlreihe beim Eintragen eines Satzes. */
+.rir{margin-top:14px}
+.rir em{display:block;font-style:normal;font-family:var(--f-cond);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.rir-chips{display:flex;gap:6px}
+.rir-chip{flex:1;min-height:38px;padding:0;border-radius:var(--r-sm);border:1px solid var(--rule-2);background:var(--surface-2);color:var(--ink-2);font-family:var(--f-mono);font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation}
+.rir-chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.rir-hint{display:block;margin-top:6px;font-size:10.5px;line-height:1.45;color:var(--ink-3)}
+/* Auf der laufenden Trainingsseite ist der Platz knapp: nur die Reihe, flacher. */
+.rir.compact{margin-top:6px;display:flex;align-items:center;gap:8px}
+.rir.compact:before{content:"RESERVE";font-family:var(--f-cond);font-size:9px;letter-spacing:.09em;color:var(--ink-3);flex:none}
+.rir.compact .rir-chips{flex:1}
+.rir.compact .rir-chip{min-height:30px;font-size:12.5px}
+.wo-check{touch-action:manipulation;width:46px;height:40px;border:0;border-radius:var(--r-sm);background:var(--surface-2);box-shadow:inset 0 0 0 1.5px var(--rule-2);color:var(--ink-3);display:grid;place-items:center;cursor:pointer}
+.wo-check svg{width:18px;height:18px}
+.wo-check.on{background:var(--green);color:#fff;box-shadow:none}
+#sessbar{padding:0;display:block}
+.sess-normal{display:flex;gap:8px;align-items:center;padding:12px 16px}
+.restbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--ink);color:var(--ground)}
+.restbar b{font-family:var(--f-mono);font-size:20px;min-width:58px;text-align:center}
+.rest-track{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden}
+.rest-track i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.restbar .btn.ghost{background:rgba(255,255,255,.12);color:var(--ground);box-shadow:none}
+.restbar .btn:not(.ghost){background:var(--accent);color:var(--accent-ink)}
+.wo-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 10px}
+.wo-sum div{background:var(--surface-2);border-radius:var(--r-sm);padding:10px 6px;text-align:center}
+.wo-sum b{display:block;font-family:var(--f-mono);font-size:17px;font-weight:600}
+.wo-sum span{font-family:var(--f-cond);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.sheet-sep{height:1px;background:var(--rule);margin:6px 16px}
+.wo-start{font-size:17px;min-height:58px;gap:10px}
+.wo-banner{display:flex;align-items:center;gap:12px;cursor:pointer;border-left:4px solid var(--accent)}
+.wo-banner b{font-family:var(--f-cond);font-size:15px;display:block}
+.wo-banner span{font-size:12.5px;color:var(--ink-3)}
+.wo-banner .num{margin-left:auto;font-family:var(--f-mono);font-size:18px;font-weight:600}
+/* Einheiten-Liste als horizontaler Wisch-Pager: eine Karte je Bildschirmbreite, volle
+   verfügbare Höhe – so wird nie eine Karte abgeschnitten oder braucht eigenes Scrollen.
+   Ganz hinten eine "+"-Karte für eine neue Einheit (siehe rc-add). */
+.rc-list{display:flex;flex-direction:column;height:100%;min-height:0}
+.rc-pager{display:flex;flex:1 1 auto;min-height:0;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.rc-pager::-webkit-scrollbar{display:none}
+.routine-card{flex:0 0 100%;width:100%;min-width:0;scroll-snap-align:start;margin-bottom:0;
+  display:flex;flex-direction:column;min-height:0}
+.rc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}
+.rc-top b{font-family:var(--f-body);font-weight:700;font-size:16px}
+.rc-figs{display:flex;flex:1 1 auto;min-height:0;gap:6px;justify-content:center;align-items:stretch;margin:8px 0 4px}
+.rc-figs svg{height:100%;width:auto;max-width:46%;isolation:isolate}
+.rc-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px;flex:0 0 auto}
+.tagpill{background:var(--surface-2);color:var(--ink-2);font-family:var(--f-body);font-weight:500;font-size:12px;padding:5px 11px;border-radius:99px;white-space:nowrap}
+.routine-card .note{flex:0 0 auto}
+.routine-card .btn{margin-top:10px;flex:0 0 auto}
+.rc-add{align-items:center;justify-content:center;text-align:center;gap:2px;cursor:pointer;
+  border:1.5px dashed var(--rule-2);background:transparent}
+.rc-add-ic{width:52px;height:52px;border-radius:99px;background:var(--surface-2);color:var(--ink-2);
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.rc-add b{font-family:var(--f-body);font-weight:700;font-size:16px}
+.rc-add .btn{margin-top:14px;flex:0 0 auto}
+/* Jeder Punkt bleibt ein eigenständiger Kreis in fester Größe – der aktive wird nur größer/farbig
+   markiert (kein länglicher Balken mehr), damit nie zwei Punkte optisch zu einem verschmelzen. */
+.rc-dots{display:flex;gap:9px;justify-content:center;align-items:center;padding:12px 0 0;margin-bottom:14px;flex:0 0 auto}
+.rc-dots i{width:6px;height:6px;border-radius:99px;background:var(--rule-2);cursor:pointer;transition:transform .18s ease,background .18s ease}
+.rc-dots i.on{background:var(--accent);transform:scale(1.4)}
+.rc-dots i.plus{background:transparent;box-shadow:inset 0 0 0 1.5px var(--rule-2)}
+.rc-dots i.plus.on{background:var(--accent);box-shadow:none}
+.focusmap{display:grid;grid-template-columns:1fr 1fr;gap:6px;justify-items:center;margin:10px 0 6px}
+.focusmap svg{width:100%;max-width:130px;height:auto;isolation:isolate}
+.focus-legend{display:flex;gap:12px;justify-content:center;font-size:11.5px;color:var(--ink-2);font-family:var(--f-cond);margin-bottom:6px}
+.focus-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.pill.f3{background:var(--accent);color:var(--accent-ink)}
+.pill.f2{background:color-mix(in srgb,var(--yellow) 24%,transparent);color:var(--yellow)}
+.pill.f1{background:var(--sunken);color:var(--ink-2)}
+.ed-row{display:grid;grid-template-columns:1fr 54px 54px 58px 26px 34px;gap:6px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--rule)}
+.ed-move{display:flex;flex-direction:column;gap:2px;justify-self:center}
+.ed-mv{width:26px;height:20px;padding:0;border:0;border-radius:6px;background:var(--surface-2);color:var(--ink-2);display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
+.ed-mv svg{width:14px;height:14px}
+.ed-mv:disabled{opacity:.28;cursor:default}
+.ed-row>div:first-child{min-width:0}
+.ed-row b{font-family:var(--f-cond);font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-row input{min-height:42px;padding:4px 6px;text-align:center;font-size:15px}
+.ed-row .lab{font-family:var(--f-cond);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:block;text-align:center;margin-top:2px;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-head{display:grid;grid-template-columns:1fr 54px 54px 58px 26px 34px;gap:6px;padding:8px 16px 2px;font-family:var(--f-cond);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ed-head span:not(:first-child){text-align:center}
+/* ---------- Session ---------- */
+.sess-ex{padding:14px 16px;border-bottom:1px solid var(--rule)}
+.sess-ex h4{margin:0 0 4px;font-family:var(--f-cond);font-weight:600;font-size:15.5px;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.sess-ex h4 em{font-style:normal;font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);font-weight:400}
+.setboxes{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.setbox{border:0;box-shadow:inset 0 0 0 1.5px var(--rule-2);background:var(--surface-2);padding:10px 12px;border-radius:var(--r-sm);
+  cursor:pointer;font-family:var(--f-mono);font-size:13px;min-height:44px;min-width:64px;color:var(--ink-3)}
+.setbox.done{background:color-mix(in srgb,var(--green) 14%,var(--surface));box-shadow:inset 0 0 0 1.5px var(--green);color:var(--good);font-weight:600}
+.sessbar{position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));background:var(--surface);
+  border-radius:var(--r);box-shadow:var(--card-sh);margin-bottom:12px;
+  padding:12px 16px;display:flex;gap:8px;align-items:center;z-index:20;overflow:hidden}
+.sessbar .prog{flex:1;font-family:var(--f-mono);font-size:13px;color:var(--ink-2)}
+
+/* ---------- Verlauf ---------- */
+.spark{width:100%;height:88px;display:block}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:0 10px 8px 0;white-space:nowrap}
+td{padding:11px 10px 11px 0;border-top:1px solid var(--rule);vertical-align:middle}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.formula{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);background:var(--surface-2);padding:12px;border-radius:var(--r-sm);overflow-x:auto;white-space:pre;margin:0}
+.note{font-size:12.5px;color:var(--ink-3);margin:10px 0 0;line-height:1.45}
+.hint{background:var(--surface-2);border-left:3px solid var(--blue);padding:12px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13.5px;color:var(--ink-2);margin:14px 0;line-height:1.45}
+.hint b{color:var(--ink)}
+/* Aufklappbarer "Wie wird das gezählt?"-Hinweis pro Übung – per (i)-Button ein-/ausgeblendet,
+   damit er nicht dauerhaft Platz wegnimmt (Titelzeile, Trainingsseite, Übungskatalog). */
+.sheet-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sheet-title-row h3{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sheet-title-row .iconbtn{margin-top:-4px}
+.ex-info{background:var(--surface-2);border-radius:var(--r-sm);padding:11px 13px;margin-top:10px}
+.ex-info p{font-size:12.5px;color:var(--ink-2);line-height:1.45;margin:0}
+.ex-info p+p{margin-top:6px}
+
+/* ---------- Untere Navigation ---------- */
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:color-mix(in srgb,var(--surface) 94%,transparent);
+  backdrop-filter:saturate(1.6) blur(12px);-webkit-backdrop-filter:saturate(1.6) blur(12px);
+  border-top:1px solid var(--rule);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.bottom button{flex:1;border:0;background:none;padding:8px 2px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--ink-3);font-family:var(--f-cond);font-weight:600;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;min-height:var(--nav-h)}
+nav.bottom button svg{width:22px;height:22px}
+nav.bottom button[aria-selected="true"]{color:var(--accent)}
+.fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);z-index:45;
+  width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:var(--lift);cursor:pointer;display:grid;place-items:center}
+.fab:active{transform:scale(.94)}
+.fab svg{width:26px;height:26px}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 18px);transform:translate(-50%,12px);background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:99px;font-size:13.5px;opacity:0;pointer-events:none;transition:.2s;z-index:80;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* ---------- Onboarding ---------- */
+.ob{position:fixed;inset:0;background:var(--ground);z-index:70;display:flex;flex-direction:column}
+.ob-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+.ob-inner{max-width:600px;margin:0 auto;padding:24px 16px 20px}
+.ob-navwrap{flex:none;background:var(--ground);border-top:1px solid var(--rule);padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));position:relative;z-index:1}
+.ob-step{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);letter-spacing:.08em}
+.ob h2{font-family:var(--f-cond);font-weight:700;font-size:26px;margin:8px 0 8px;text-wrap:balance;line-height:1.15}
+.ob p.intro{color:var(--ink-2);font-size:14.5px;max-width:56ch;margin:0 0 16px;line-height:1.5}
+.progress{display:flex;gap:4px;margin:12px 0 18px}
+.progress i{height:3px;flex:1;background:var(--rule);border-radius:99px}
+.progress i.done{background:var(--accent)}
+.qrow{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.qrow .q{min-width:0;flex:1}
+.qrow .q b{font-family:var(--f-cond);font-weight:600;font-size:15.5px;display:block}
+.qrow .q span{font-size:12.5px;color:var(--ink-3);display:block;line-height:1.35}
+.qin{display:flex;align-items:center;gap:6px;flex:none}
+.qin input{width:84px;text-align:center}
+.qin .unit{font-family:var(--f-mono);font-size:12px;color:var(--ink-3);min-width:26px}
+.ob-nav{display:flex;gap:10px;justify-content:space-between;max-width:600px;margin:0 auto}
+.ob-nav .btn{flex:1}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:8px;margin-top:6px}
+.pick{border:0;box-shadow:inset 0 0 0 1px var(--rule-2);background:var(--surface);padding:12px 13px;cursor:pointer;text-align:left;
+  font-family:var(--f-cond);font-weight:600;font-size:14px;border-radius:var(--r-sm);line-height:1.25;min-height:60px;color:var(--ink)}
+.pick small{display:block;font-family:var(--f-body);font-weight:400;font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.pick[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent);background:color-mix(in srgb,var(--red) 7%,var(--surface))}
+.grouplab{font-family:var(--f-cond);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:18px 0 6px}
+.card.flush .grouplab{margin:0;padding:13px 16px 7px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.calcout{background:var(--surface-2);border-radius:var(--r-sm);padding:11px 13px;font-family:var(--f-mono);font-size:13px;color:var(--ink-2);margin-top:10px}
+.calcout b{color:var(--ink);font-weight:600}
+.segbtn{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:99px;margin-bottom:12px}
+.segbtn button{flex:1;border:0;background:none;padding:9px 8px;border-radius:99px;font-family:var(--f-cond);font-weight:600;font-size:13px;
+  letter-spacing:.04em;color:var(--ink-3);cursor:pointer;min-height:42px}
+.segbtn button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--card-sh)}

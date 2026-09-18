@@ -1,0 +1,144 @@
+<div class="wrap">
+  <div class="appbar">
+    <div>
+      <h1 id="apptitle">Heute</h1>
+      <div class="sub" id="todaydate">—</div>
+    </div>
+    <span class="sync"><span class="dot" id="syncdot"></span><span id="synctxt">verbinde</span></span>
+    <button class="iconbtn appbar-gear" id="btn-newex" type="button" aria-label="Neue Übung" hidden></button>
+    <button class="iconbtn appbar-gear" id="btn-settings" type="button" aria-label="Einstellungen"></button>
+  </div>
+
+  <!-- ===== HEUTE ===== -->
+  <section id="p-heute">
+    <div class="hero">
+      <svg class="ring" viewBox="0 0 120 120" id="ring" aria-hidden="true"></svg>
+      <div class="hero-txt">
+        <div class="hero-val"><b id="fitval" class="num">–</b><i>/ 100</i></div>
+        <div class="trend" id="fittrend"></div>
+        <div class="hero-note" id="fitnote"></div>
+        <div class="ring-legend" id="ringlegend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="weekbar">
+        <button class="wknav" id="wkprev" type="button" aria-label="Woche zurück"></button>
+        <div class="week" id="weekstrip"></div>
+        <button class="wknav" id="wknext" type="button" aria-label="Woche vor"></button>
+      </div>
+    </div>
+
+    <div class="card tap wo-banner" id="wo-banner" hidden></div>
+
+    <h2 class="sec"><span id="todaylabel">Heute</span> <span id="todaysum"></span></h2>
+    <div class="card flush" id="todaylist"></div>
+  </section>
+
+  <!-- ===== ENTDECKEN ===== -->
+  <section id="p-entdecken" hidden>
+    <div class="searchrow">
+    <input type="search" id="disc-search" class="disc-search" placeholder="Nach Übungen suchen…" autocomplete="off">
+    <button type="button" class="filterbtn" id="disc-filterbtn" aria-label="Filter"></button>
+    </div>
+    <h2 class="sec">Muskelgruppen</h2>
+    <div class="disc-mgrid" id="disc-mgrid"></div>
+    <div class="chipbar sub" id="disc-subchips" hidden></div>
+    <h2 class="sec" id="disc-exheading">Alle Übungen</h2>
+    <div class="disc-exgrid" id="disc-exgrid"></div>
+  </section>
+
+  <!-- ===== KÖRPER ===== -->
+  <section id="p-koerper" hidden>
+    <div class="card">
+      <div class="chipbar" id="regionchips"></div>
+      <div class="callout" id="callout"></div>
+      <div class="body3d" id="body3d"><div class="body3d-loading" id="body3d-loading">3D-Modell wird geladen…</div><iframe id="body3d-frame" title="3D-Muskelmodell" hidden></iframe><div class="body3d-hint">Ziehen = drehen · Tippen = Muskel auswählen</div></div>
+      <div class="vollegend">
+        <div class="vlsel" id="vlsel" hidden></div>
+        <div class="vlbarwrap">
+          <div class="vlbar"><b class="grad"></b><b class="over"></b><u style="left:26.5%"></u><u style="left:48.4%"></u><u style="left:78%"></u></div>
+          <div class="vlpins" id="vlpins"></div>
+        </div>
+        <div class="vlmarks"><span class="st">nichts</span><span style="left:26.5%">Minimum</span><span style="left:48.4%">Optimum</span><span class="en">über Limit</span></div>
+      </div>
+      <div class="mdetail" id="mdetail">Tipp eine Muskelgruppe an.</div>
+    </div>
+    <h2 class="sec">Nach Körperregion <span>letzte 7 Tage · antippen für Details</span></h2>
+    <div class="card flush" id="mlist"></div>
+    <p class="note" style="padding:0 4px">Primärmuskeln zählen 1,0 Sätze, Sekundärmuskeln 0,5. Brust (oben/mitte/unten) und Schulter (vorn/seitlich/hinten) werden einzeln erfasst und auf der Figur entlang ihres Faserverlaufs getrennt dargestellt – diese Liste zeigt jede Gruppe mit ihren Marken für Minimum, Optimum und Erholungsgrenze.</p>
+    <p class="note" style="padding:0 4px">Körperillustration: <a href="https://github.com/crmapache/js-rich-body-highlighter" target="_blank" rel="noopener" style="color:var(--ink-3)">js-rich-body-highlighter</a>, MIT-Lizenz.</p>
+  </section>
+
+  <!-- ===== WERTE ===== -->
+  <section id="p-werte" hidden>
+    <h2 class="sec">Teilwerte</h2>
+    <div class="card flush" id="skills"></div>
+
+    <h2 class="sec">Kraftstufen</h2>
+    <div class="card flush" id="strengthlist"></div>
+
+    <h2 class="sec">Ausdauer</h2>
+    <div class="card flush" id="cardiolist"></div>
+
+    <h2 class="sec">Verlauf <span id="sparkmeta"></span></h2>
+    <div class="card"><svg class="spark" id="spark" viewBox="0 0 720 88" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+
+    <h2 class="sec">Letzte Tage</h2>
+    <div class="card flush" id="history"></div>
+
+    <h2 class="sec">Rechenweg</h2>
+    <div class="card"><p class="formula" id="formulabox"></p></div>
+
+    <h2 class="sec">Einstellungen</h2>
+    <div class="card flush" id="settings"></div>
+    <div style="padding:0 4px"><button class="btn ghost block" id="btn-redo" style="margin-top:4px">Assessment neu machen</button></div>
+  </section>
+
+  <!-- ===== TRAINING ===== -->
+  <section id="p-training" hidden>
+    <div id="session-wrap" hidden>
+      <div class="card flush"><div id="session-body"></div></div>
+      <div class="sessbar" id="sessbar">
+        <div class="restbar" id="restbar" hidden><div class="rest-track"><i id="rest-fill"></i></div><b id="rest-left" class="num">0:00</b><button class="btn ghost small" id="rest-plus">+30 s</button><button class="btn small" id="rest-skip">Weiter</button></div>
+        <div class="sess-normal" id="sess-normal"><span class="prog" id="session-meta"></span><button class="btn small primary" id="btn-session-end">Beenden</button></div>
+      </div>
+    </div>
+    <div id="start-wrap">
+      <button class="btn primary block wo-start" id="btn-start-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12"/></svg>
+        Neues Training starten
+      </button>
+      <h2 class="sec">Meine Einheiten <span id="routine-count"></span></h2>
+      <div class="rc-list" id="routine-list"></div>
+    </div>
+  </section>
+</div>
+
+<button class="fab" id="fab" aria-label="Eintragen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<nav class="bottom" role="tablist">
+  <button id="tab-heute" role="tab" aria-selected="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Heute</button>
+  <button id="tab-entdecken" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Entdecken</button>
+  <button id="tab-training" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12"/></svg>Training</button>
+  <button id="tab-koerper" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.5"/><path d="M12 7.5v7M12 7.5 6 10M12 7.5 18 10M12 14.5 9 21M12 14.5 15 21"/></svg>Körper</button>
+  <button id="tab-werte" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Werte</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheet-body"></div></div>
+<div class="scrim over" id="scrim2"></div>
+<div class="sheet over" id="sheet2"><div class="grab"></div><div id="sheet2-body"></div></div>
+<div class="bootwait" id="bootwait" hidden><div><span class="bw-dot"></span><b>Deine Daten werden geladen</b><span class="bw-sub">Einen Moment – die App holt dein Profil.</span></div></div>
+<div class="ob" id="ob" hidden><div class="ob-scroll"><div class="ob-inner" id="ob-inner"></div></div><div class="ob-navwrap" id="ob-navwrap"></div></div>
+<div class="exdpage" id="exdpage" hidden>
+  <div class="exdpage-head" id="exdpage-head"></div>
+  <div class="exdpage-scroll"><div class="exdpage-inner" id="exdpage-body"></div></div>
+</div>
