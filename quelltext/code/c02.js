@@ -1,7 +1,32 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: NOTCH_TRAP_DELT bis addWorkoutCardio()
+   Enthaelt: BRACHIORAD_BACK bis addWorkoutExercise()
 */
+
+// Unterarm hinten: Brachioradialis-Streifen von der linken Armseite abgenommen (aus der bereits
+// als eigener Teilpfad gezeichneten Kontur), dann mit der echten Seitenachse gespiegelt. Vorher
+// wurden hier einfach die beiden hand-gezeichneten Teilpfade pro Seite direkt übernommen ("bysize")
+// – die waren aber nie exakt gleich groß (Illustration ~3-5 % seitenungleich), das gab die
+// wahrgenommene Asymmetrie. Für Überlappung wurde die Kontur vorab mit der echten Silhouette
+// beider Arme verschnitten, damit die gespiegelte Fläche auf keiner Seite über den Unterarm hinausragt.
+var BRACHIORAD_BACK=[[5.309,174.836],[6.974,166.879],[8.363,158.544],[12.212,138.407],[12.939,133.281],[13.336,128.904],[13.535,125.025],[13.436,122.638],[13.734,112.095],[13.337,111.3],[12.143,110.802],[11.701,111.097],[10.402,112.82],[8.761,115.576],[6.374,120.351],[4.484,125.125],[3.191,129.998],[2.214,135.169],[1.873,138.103],[1.202,148.996],[1.202,154.366],[1.089,158.237],[0.605,164.512],[-0.091,169.485],[-1.085,174.458],[-2.083,178.266],[-2.375,181.01],[-2.329,181.977],[-2.065,182.622],[-1.534,183.057],[-0.688,183.399],[2.144,184.26],[2.466,184.055],[3.067,182.875],[3.788,180.923]];
+
+var BRACHIORAD_BACK_F=[[18.383,181.106],[19.79,179.277],[21.042,176.031],[24.932,163.527],[26.761,156.213],[28.589,150.868],[29.405,148.045],[30.199,144.394],[32.027,137.783],[33.653,130.753],[34.559,125.544],[34.559,118.231],[33.856,115.277],[33.293,114.292],[32.027,114.574],[30.902,116.121],[28.792,119.356],[26.682,124.279],[25.276,128.499],[23.869,133.563],[22.884,138.627],[22.682,141.443],[22.364,143.311],[20.774,156.631],[19.79,161.414],[16.555,171.26],[15.429,175.198],[14.383,177.874],[14.664,179.14],[15.558,180.034]];
+
+// Brachialis-Streifen (Oberarm vorn, außen neben dem Bizeps-Bauch sichtbar). In der männlichen
+// Figur ist er zwar je Arm als eigener Teilpfad vorgezeichnet, die beiden Teilpfade sind im
+// Rohbild aber NICHT spiegelgleich (rechts deutlich kürzer); die weibliche Figur hat gar keine
+// eigene Kontur dafür. Beides ergibt eine einzige, in Blob-Koordinaten normierte Kontur je Figur,
+// die auf beide Armseiten gespiegelt angewendet wird. Wichtig: die Kontur liegt vollständig
+// INNERHALB beider Arm-Silhouetten dieser Figur (per Verschnitt mit beiden Umrissen berechnet) –
+// sonst würde sie an der Maskenkante je Seite unterschiedlich abgeschnitten und die Seiten sähen
+// trotz identischer Kontur wieder verschieden aus.
+// Vom Nutzer direkt auf der Illustration nachgezeichnete Brachialis-Kontur (Fotoauswertung: Punkte
+// digitalisiert, per Bildabgleich in Maskenkoordinaten übertragen) – ersetzt die frühere, zu knapp
+// geschätzte Fläche. Dadurch wird nichts vom Bizeps (blau) mehr am Innenrand mit eingefärbt.
+var BRACHIALIS_FRONT=[[24.774,128.838],[25.637,130.417],[26.428,132.95],[23.48,141.551],[20.682,151.236],[18.365,162.163],[18.014,162.69],[16.634,162.891],[16.308,161.963],[16.293,160.659],[17.387,145.187],[17.892,142.54],[19.167,138.04],[22.201,131.37],[23.029,130.066]];
+
+var BRACHIALIS_FRONT_F=[[47.911,129.382],[46.334,131.763],[44.927,134.145],[43.815,136.526],[43.06,138.907],[40.591,148.432],[40.183,150.814],[39.906,153.195],[39.257,160.339],[39.158,162.72],[39.238,165.895],[44.098,165.895],[44.98,162.72],[47.238,155.576],[49.037,148.432],[50.395,143.67],[52.635,136.526],[54.258,129.382],[54.699,127.001],[50.367,127.001]];
 
 // Zwickel genau an der Nahtstelle Trapezius/hintere Schulter (rechte Körperseite, aus der
 // Zeichnung abgenommen) – gehört zu keinem der beiden Muskeln, wird per excludeMirror aus
@@ -1154,7 +1179,7 @@ function exPrimaryRegionLabel(ex){
   return names.join(" · ");
 }
 
-function discExCard(ex){
+function discExCard(ex,onPick,onDelete){
   var card=el("div","disc-excard tap");
   var thumbs=el("div","disc-thumbs");
   [["front","Vorderansicht"],["back","Rückansicht"]].forEach(function(vv){
@@ -1167,7 +1192,31 @@ function discExCard(ex){
   card.appendChild(thumbs);
   card.appendChild(el("b",null,ex.n));
   card.appendChild(el("span","disc-muscle",exPrimaryRegionLabel(ex)));
-  card.onclick=function(){sheetExerciseDetail(ex);};
+  if(onPick){
+    // In der Auswahl ist Auswaehlen die Hauptsache, im Entdecken-Tab das Nachschlagen.
+    // Deshalb waehlt hier die Karte aus, und die Details liegen auf dem "i" daneben.
+    card.onclick=function(){onPick(ex);};
+    if(onPick!==sheetExerciseDetail){
+      var info=el("button","iconbtn disc-cardbtn info");info.type="button";
+      info.setAttribute("aria-label","Details zu "+ex.n);
+      info.innerHTML=svgIcon(IC_INFO,1.9);
+      info.onclick=function(ev){ev.stopPropagation();sheetExerciseDetail(ex);};
+      card.appendChild(info);
+    }
+    if(ex.custom&&onDelete){
+      var del=el("button","iconbtn disc-cardbtn del");del.type="button";
+      del.setAttribute("aria-label","Übung löschen");del.innerHTML=svgIcon(IC_TRASH,1.6);
+      del.onclick=function(ev){
+        ev.stopPropagation();
+        if(customExInUse(ex.id)){toast("Schon verwendet – kann nicht gelöscht werden");return;}
+        askConfirm("Übung löschen?","„"+ex.n+"“ wird aus deinem Übungskatalog entfernt.","Löschen",
+          function(){removeCustomExercise(ex.id);onDelete();},true);
+      };
+      card.appendChild(del);
+    }
+  }else{
+    card.onclick=function(){sheetExerciseDetail(ex);};
+  }
   return card;
 }
 
@@ -1734,6 +1783,27 @@ function renderHistory(){
 // analog zum "+" am Ende des Übungs-Pagers im laufenden Training (siehe woAddPage()).
 var rcPage=0;
 
+function routineIds(){
+  var ids=Object.keys(state.routines),pos={};
+  ids.forEach(function(id,i){
+    var r=state.routines[id];
+    // Einheiten ohne gespeicherte Position (alle bisherigen) behalten ihre
+    // bisherige Reihenfolge und stehen hinter den einsortierten.
+    pos[id]=(r&&typeof r.ord==="number")?r.ord:1000+i;
+  });
+  ids.sort(function(a,b){return pos[a]-pos[b];});
+  return ids;
+}
+
+function setRoutineOrder(ids){
+  var changed=false;
+  ids.forEach(function(id,i){
+    var r=state.routines[id];if(!r)return;
+    if(r.ord!==i){r.ord=i;state.dirtyRoutines[id]=true;changed=true;}
+  });
+  if(changed)persist();
+}
+
 function rcGoto(i,smooth){
   var p=$("rc-pager");if(!p)return;
   var x=i*(p.clientWidth||p.offsetWidth||0);
@@ -1741,7 +1811,7 @@ function rcGoto(i,smooth){
 }
 
 function renderRoutines(){
-  var box=$("routine-list");box.className="rc-list";box.innerHTML="";var ids=Object.keys(state.routines);
+  var box=$("routine-list");box.className="rc-list";box.innerHTML="";var ids=routineIds();
   // Alle Mini-Figuren (front/back je Karte) erst zeichnen, nachdem die Karten im Dokument stehen –
   // siehe Kommentar in focusPanel(): getBBox()/getTotalLength() liefern auf einem noch nicht
   // eingehängten <svg> nur Nullen.
@@ -1766,6 +1836,7 @@ function renderRoutines(){
     card.appendChild(tags);
     card.appendChild(el("p","note",r.items.length+" Übungen · "+r.items.reduce(function(a,i){return a+i.sets;},0)+" Sätze"));
     var st=el("button","btn primary block","Training starten");st.onclick=function(){startSession(id);};card.appendChild(st);
+    if(ids.length>1)rcDragEnable(card,id,ids,pager);
     pager.appendChild(card);
   });
   var add=el("div","card routine-card rc-add");add.setAttribute("role","button");add.setAttribute("tabindex","0");
@@ -1778,6 +1849,7 @@ function renderRoutines(){
   pager.appendChild(add);
   box.appendChild(pager);
   var dots=el("div","rc-dots");dots.id="rc-dots";box.appendChild(dots);
+  if(ids.length>1)box.appendChild(el("p","rc-hint","Karte gedrückt halten und zur Seite schieben, um die Reihenfolge zu ändern."));
   if(pendingDraws.length)requestAnimationFrame(function(){pendingDraws.forEach(function(o){drawMini(o.sv,o.v,o.sets);});});
   $("routine-count").textContent=ids.length+(ids.length===1?" Einheit":" Einheiten");
   function rcDots(){
@@ -1803,6 +1875,86 @@ function renderRoutines(){
   requestAnimationFrame(function(){rcGoto(rcPage,false);});
 }
 
+
+/* Karte gedrueckt halten und schieben. Bewusst erst nach einer kurzen Haltezeit: der
+   Pager wird sonst seitlich gewischt, und genau diese Geste braucht man weiterhin zum
+   Blaettern. Waehrend des Ziehens wird das Blaettern angehalten, die Karte folgt dem
+   Finger, und oben steht, auf welchen Platz sie faellt. Verschoben wird erst beim
+   Loslassen - so kann man es sich bis zuletzt anders ueberlegen. */
+function rcDragEnable(card,id,ids,pager){
+  var halten=null,sx=0,sy=0,zieht=false,von=ids.indexOf(id),ziel=von,breite=0,schild=null;
+  function punkte(){
+    // Die Punktreihe zeigt waehrend des Ziehens den Zielplatz - dasselbe Bild,
+    // das sie sonst fuer die aktuelle Seite zeigt.
+    var d=$("rc-dots");if(!d)return;
+    Array.prototype.forEach.call(d.children,function(x,i){
+      x.classList.toggle("on",i===ziel);
+      x.classList.toggle("ghost",zieht&&i===von&&i!==ziel);
+    });
+  }
+  function schildText(){
+    if(schild)schild.textContent="Platz "+(ziel+1)+" von "+ids.length;
+    punkte();
+  }
+  function stoppen(){
+    if(halten){clearTimeout(halten);halten=null;}
+    if(!zieht)return;
+    zieht=false;
+    card.classList.remove("rc-drag");
+    card.style.transform="";
+    if(schild&&schild.parentNode)schild.parentNode.removeChild(schild);
+    schild=null;
+    punkte();
+  }
+  function starten(){
+    halten=null;zieht=true;ziel=von;
+    breite=pager.clientWidth||card.offsetWidth||1;
+    card.classList.add("rc-drag");
+    schild=el("div","rc-droplab");card.appendChild(schild);
+    schildText();
+    if(navigator.vibrate)try{navigator.vibrate(12);}catch(e){}
+  }
+  card.addEventListener("pointerdown",function(e){
+    if(e.button&&e.button!==0)return;
+    var t=e.target;
+    while(t&&t!==card){if(t.tagName==="BUTTON")return;t=t.parentNode;}
+    sx=e.clientX;sy=e.clientY;
+    try{card.setPointerCapture(e.pointerId);}catch(err){}
+    halten=setTimeout(starten,380);
+  });
+  card.addEventListener("pointermove",function(e){
+    if(!zieht){
+      // Wer sofort wischt, will blaettern - dann kein Ziehen starten.
+      if(halten&&(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8)){clearTimeout(halten);halten=null;}
+      return;
+    }
+    var dx=e.clientX-sx;
+    // Gedaempft und begrenzt: die Karte zeigt die Richtung an, verlaesst aber nie
+    // den sichtbaren Bereich. Alles darueber hinaus wuerde der Pager abschneiden.
+    var weg=Math.max(-46,Math.min(46,dx*0.28));
+    card.style.transform="translateX("+weg.toFixed(1)+"px) scale(.955)";
+    // Ein halber Kartenbreiten-Schritt je Platz: so erreicht man auch den dritten
+    // Platz, ohne dreimal ueber den ganzen Bildschirm ziehen zu muessen.
+    var neu2=Math.max(0,Math.min(ids.length-1,von+Math.round(dx/(breite*0.5))));
+    if(neu2!==ziel){ziel=neu2;schildText();if(navigator.vibrate)try{navigator.vibrate(8);}catch(e2){}}
+  });
+  // Auf dem Handy verhindert nur ein nicht-passives touchmove das Mitscrollen.
+  card.addEventListener("touchmove",function(e){if(zieht)e.preventDefault();},{passive:false});
+  card.addEventListener("pointerup",function(){
+    var ablegen=zieht&&ziel!==von;
+    var neuerPlatz=ziel;
+    stoppen();
+    if(!ablegen)return;
+    var liste=ids.slice();
+    liste.splice(liste.indexOf(id),1);
+    liste.splice(neuerPlatz,0,id);
+    setRoutineOrder(liste);
+    rcPage=neuerPlatz;
+    renderRoutines();
+    toast("Reihenfolge geändert");
+  });
+  card.addEventListener("pointercancel",stoppen);
+}
 
 /* ================= Live-Training ================= */
 var workout=null,
@@ -1922,16 +2074,5 @@ function tickInner(){
 function addWorkoutExercise(ex){
   workout.exercises.push({ex:ex.id,restSec:90,sets:[defaultSet(ex,null)]});
   woPage=workout.exercises.length-1;   // direkt auf die neue Übungsseite wischen
-  saveWorkout();renderSession();
-}
-
-// Cardio hat keine Saetze zum Abhaken - der Datensatz existiert also sofort (nicht erst nach
-// einem Haekchen), damit er wie ein Satz laufend in day(TODAY).cardio steht und beim Beenden
-// des Trainings schon in der cardioMin-Summe (finishWorkout) auftaucht.
-function addWorkoutCardio(ex){
-  var rec={ex:ex.id,min:20,km:0,wid:workout.id};
-  day(TODAY).cardio.push(rec);touch(TODAY);
-  workout.exercises.push({ex:ex.id,cardioRec:rec});
-  woPage=workout.exercises.length-1;
   saveWorkout();renderSession();
 }

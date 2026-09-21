@@ -1,7 +1,19 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: FW3D_VIEW_TILT bis (Anweisung)
+   Enthaelt: MIN_TILT bis (Anweisung)
 */
+
+/* Brust und Schulter liegen obenauf - dort soll nie etwas durchsichtig werden. */
+/* Muskeln, die ohnehin ganz aussen liegen. Fuer sie wird nichts durchsichtig gemacht -
+   das Freilegen wuerde nur die Umgebung ausduennen, ohne dass man den Muskel dadurch
+   besser saehe. Der Bizeps gehoert dazu: er liegt direkt unter der Haut. */
+/* Blickwinkel je Muskelgruppe. Frontal ist nicht fuer jeden Muskel die beste Ansicht: eine
+   gewoelbte Flaeche wie die Brust zeigt von vorn nur ihre Silhouette, der Saegemuskel liegt
+   seitlich, der Latissimus faechert zur Seite auf. yaw dreht das Modell zusaetzlich (Grad),
+   pitch hebt die Kamera an (positiv = Blick von leicht oben). Ohne Eintrag bleibt es bei der
+   bisherigen, rein geometrischen Ausrichtung. */
+// Leichte Schraege in Grad - eine Zahl, damit alle betroffenen Gruppen zusammen bleiben.
+var MIN_TILT=14;
 
 var FW3D_VIEW_TILT={
   // Gedreht nur dort, wo eine flache Ansicht die Form verschluckt: die gewoelbte Brust,

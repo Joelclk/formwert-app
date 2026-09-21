@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: (Anweisung) bis BRACHIALIS_FRONT_F
+   Enthaelt: (Anweisung) bis BRACHIORAD_FRONT_F
 */
 
 "use strict";
@@ -1306,21 +1306,9 @@ function exPicker(b,kinds,onPick,opts){
   var addBtn=el("div","exadd");addBtn.appendChild(el("b",null,"+ Neue Übung erstellen"));
   addBtn.onclick=function(){sheetCreateExercise(kinds,onPick);};
   b.appendChild(addBtn);
-  var list=el("div","exlist");b.appendChild(list);
+  var list=el("div","exlist exlist-cards");b.appendChild(list);
   function item(e){
-    var it=el("div","exitem");
-    it.appendChild(el("b",null,e.n));it.appendChild(el("span",null,e.e));
-    if(e.custom){
-      var del=el("button","iconbtn");del.setAttribute("aria-label","Übung löschen");del.innerHTML=svgIcon(IC_TRASH,1.6);
-      del.onclick=function(ev){
-        ev.stopPropagation();
-        if(customExInUse(e.id)){toast("Schon verwendet – kann nicht gelöscht werden");return;}
-        askConfirm("Übung löschen?","„"+e.n+"“ wird aus deinem Übungskatalog entfernt.","Löschen",function(){removeCustomExercise(e.id);draw();},true);
-      };
-      it.appendChild(del);
-    }
-    it.onclick=function(){onPick(e);};
-    return it;
+    return discExCard(e,onPick,function(){draw();});
   }
   function filteredArr(){
     var mobMode=!!(reg&&reg.mobility);
@@ -1346,9 +1334,11 @@ function exPicker(b,kinds,onPick,opts){
     // Großzügige Obergrenzen statt einer harten Kappung – der Katalog soll wirklich ALLE
     // Übungen zeigen können, nicht nur die ersten paar (früher 90/60, das reichte bei
     // wachsendem Katalog nicht mehr für die ungefilterte "Alle"-Ansicht).
-    if(!ids){arr.slice(0,600).forEach(function(e){list.appendChild(item(e));});return;}
+    if(!ids){arr.slice(0,600).forEach(function(e){list.appendChild(item(e));});discLazyObserve(list);return;}
     var pri=arr.filter(function(e){return exHits(e,ids)>=1;}).slice(0,300);
     var sec=arr.filter(function(e){return exHits(e,ids)<1;}).slice(0,300);
+    pri.sort(function(a,b){return exFocusScore(b,ids)-exFocusScore(a,ids);});
+    sec.sort(function(a,b){return exFocusScore(b,ids)-exFocusScore(a,ids);});
     var name=fine?muscleById(fine).name:reg.name;
     if(pri.length){
       list.appendChild(el("div","grouplab","Starker Fokus · "+name));
@@ -1358,6 +1348,7 @@ function exPicker(b,kinds,onPick,opts){
       list.appendChild(el("div","grouplab","Wird mittrainiert"));
       sec.forEach(function(e){list.appendChild(item(e));});
     }
+    discLazyObserve(list);
   }
   search.addEventListener("input",function(){q=this.value;draw();});
   draw();
@@ -1439,18 +1430,93 @@ function openEquipFilterMenu(selected,onChange,countFn){
   });
 }
 
+// Sheets, die beim Oeffnen der Detailseite offen waren. Sie werden nur unsichtbar
+// gemacht, nicht geschlossen - ihr Inhalt bleibt genau so stehen, wie er war.
+var exPageBack=[];
+
+function hideOpenSheets(){
+  var out=[];
+  ["scrim","sheet","scrim2","sheet2"].forEach(function(id){
+    var n=$(id);
+    if(n&&n.classList.contains("open")){n.style.display="none";out.push(n);}
+  });
+  return out;
+}
+
+function showHiddenSheets(list){
+  (list||[]).forEach(function(n){if(n)n.style.display="";});
+}
+
+/* ================= 3D-Bewegungsablauf (animierter Arm) =================
+   Ein eigenes, kleines 3D-Fenster nur fuer die Uebungsseite: der rechte Arm aus dem
+   Anatomie-Rig (Blender), mit gebackener Bewegung und den Muskelfarben der Uebung.
+   Viewer und Modell liegen gzip-komprimiert vor und werden erst beim Oeffnen entpackt. */
+var FW_ANIM_V="__DATEN_ENTFERNT__base64__202092_ZEICHEN__";
+
+var FW_ANIM_G="__DATEN_ENTFERNT__base64__454724_ZEICHEN__";
+
+var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer"}
+;
+
+var fwAnimGlb=null,
+ fwAnimHtml=null;
+
+function fwAnimB64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+
+function fwAnimGunzip(u){return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();}
+
+function exAnimBlock(ex){
+  var clip=FW_ANIM_CLIP[ex.id]; if(!clip)return null;
+  var wrap=el("div","exanim");
+  var box=el("div","exanim-box"); wrap.appendChild(box);
+  box.appendChild(el("span","exanim-load","3D-Modell wird geladen …"));
+  wrap.appendChild(el("p","note exanim-cap","Rechter Arm, Muskeln in den Farben von „Beanspruchte Muskeln“."));
+  if(typeof DecompressionStream==="undefined"){box.firstChild.textContent="Die 3D-Animation braucht einen neueren Browser.";return wrap;}
+  var fr=document.createElement("iframe"); fr.className="exanim-frame"; fr.id="exanim-frame"; fr.title="3D-Bewegungsablauf";
+  box.appendChild(fr);
+  var inv=exPctInv(ex)||exInvolve(ex);
+  fr._fwAnim={clip:clip,colors:fw3dColorsForInvolve(inv,"step")};
+  (fwAnimHtml?Promise.resolve(fwAnimHtml):fwAnimGunzip(fwAnimB64(FW_ANIM_V)).then(function(b){return (fwAnimHtml=new TextDecoder("utf-8").decode(b));}))
+    .then(function(h){fr.srcdoc=h;})
+    .catch(function(){box.firstChild.textContent="3D-Animation konnte nicht geladen werden.";});
+  return wrap;
+}
+
+window.addEventListener("message",function(ev){
+  var d=ev.data; if(!d||d.src!=="fwanim")return;
+  var fr=$("exanim-frame"); if(!fr||ev.source!==fr.contentWindow)return;
+  if(d.type==="boot"){
+    if(!fwAnimGlb)fwAnimGlb=fwAnimB64(FW_ANIM_G);
+    var buf=fwAnimGlb.slice().buffer;
+    try{fr.contentWindow.postMessage({to:"fwanim",type:"init",glb:buf,clip:fr._fwAnim.clip,colors:fr._fwAnim.colors,neutral:"#B0B6BE"},"*",[buf]);}catch(e){}
+  }else if(d.type==="ready"){fr.parentNode.classList.add("ready");}
+  else if(d.type==="error"){var bx=fr.parentNode;bx.firstChild.textContent="3D-Animation konnte nicht geladen werden.";fr.remove();}
+});
+
 function closeExPage(){
+  var af=$("exanim-frame");if(af)af.remove();
   var page=$("exdpage");if(!page||page.hidden)return;
-  page.hidden=true;syncScrollLock();
+  page.hidden=true;
+  showHiddenSheets(exPageBack);exPageBack=[];
+  syncScrollLock();
 }
 
 // Übungsdetail: eigene Vollbildseite (kein Sheet mehr) – alle Bereiche (Muskeln, Verlauf,
 // Fortschritt, Rekorde) stehen der Reihe nach untereinander, man sieht alles durch Scrollen statt
 // über Tabs umschalten zu müssen.
 function sheetExerciseDetail(ex){
-  closeSheet(); // eine evtl. offene Liste (z. B. der Übungskatalog) darunter schließen – die
-                // Detailseite ersetzt den Bildschirm, sie stapelt sich nicht obendrauf.
-  var page=$("exdpage");page.hidden=false;syncScrollLock();
+  var page=$("exdpage");
+  if(page.hidden){
+    // Von aussen geoeffnet: eine offene Auswahl darunter nur ausblenden, damit "Zurueck"
+    // genau dorthin zurueckfuehrt - mit Suchbegriff, Filter und Scrollposition.
+    exPageBack=hideOpenSheets();
+  }else{
+    // Aus der Detailseite heraus (nach dem Bearbeiten): das Bearbeiten-Sheet gehoert
+    // wirklich zu - es wird geschlossen, der Rueckweg bleibt der von vorhin.
+    closeSheet2();closeSheet();
+  }
+  var kamVonListe=exPageBack.length>0;
+  page.hidden=false;syncScrollLock();
   var head=$("exdpage-head");head.innerHTML="";
   var back=el("button","iconbtn");back.type="button";back.setAttribute("aria-label","Zurück");
   back.innerHTML=svgIcon(IC_CHEVLEFT,2.1);back.onclick=closeExPage;
@@ -1464,6 +1530,8 @@ function sheetExerciseDetail(ex){
   var meta=[pat?pat.name:null,ex.e].filter(Boolean).join(" · ");
   if(meta)body.appendChild(el("p","note exd-meta",meta));
   body.appendChild(infoBoxD);
+  var anim=exAnimBlock(ex);
+  if(anim){body.appendChild(el("h2","sec","Bewegungsablauf in 3D"));body.appendChild(anim);}
   function redraw(){
     Array.prototype.slice.call(body.querySelectorAll(".exd-section")).forEach(function(n){n.remove();});
     function section(title,content){
@@ -1492,9 +1560,13 @@ function sheetExerciseDetail(ex){
     };
     body.appendChild(del);
   }
-  var toList=el("button","btn ghost block","Zur Liste");toList.style.marginTop="8px";
-  toList.onclick=function(){closeExPage();openExerciseCatalog();};
-  body.appendChild(toList);
+  if(!kamVonListe){
+    // Kam man aus einer Auswahl, fuehrt "Zurueck" oben schon dorthin - dann waere ein
+    // zweiter Knopf mit demselben Ziel nur verwirrend.
+    var toList=el("button","btn ghost block","Zur Liste");toList.style.marginTop="8px";
+    toList.onclick=function(){closeExPage();openExerciseCatalog();};
+    body.appendChild(toList);
+  }
   page.querySelector(".exdpage-scroll").scrollTop=0;
 }
 
@@ -2112,28 +2184,3 @@ var SCAP_TMAJ=[[-0.001,0.174],[0.01,0.204],[0.054,0.26],[0.125,0.294],[0.167,0.3
 var BRACHIORAD_FRONT=[[11.172,115.624],[9.139,119.328],[7.419,123.033],[5.82,126.737],[4.725,130.441],[3.982,134.145],[3.394,137.849],[2.958,141.553],[2.633,145.258],[2.014,156.37],[1.019,163.779],[-0.263,171.187],[3.475,171.187],[5.433,167.483],[7.726,163.779],[9.578,160.074],[14.341,148.962],[15.84,145.258],[18.61,137.849],[19.844,134.145],[20.074,130.441],[20.603,126.737],[20.527,123.55],[19.465,120.316],[18.775,117.713],[17.971,112.157],[17.825,111.92],[13.527,111.92]];
 
 var BRACHIORAD_FRONT_F=[[32.405,118.27],[30.394,121.445],[28.838,124.62],[27.514,127.795],[26.402,130.97],[25.481,134.145],[24.629,137.32],[23.265,143.67],[21.825,153.195],[20.644,159.545],[18.908,165.895],[17.719,169.599],[20.973,169.599],[21.132,169.07],[22.578,165.895],[24.219,162.72],[25.912,159.545],[27.941,156.37],[29.387,153.195],[36.178,137.32],[37.025,134.145],[37.554,130.97],[38.207,127.795],[37.589,124.62],[37.06,118.27],[36.46,115.095],[34.974,115.095]];
-
-// Unterarm hinten: Brachioradialis-Streifen von der linken Armseite abgenommen (aus der bereits
-// als eigener Teilpfad gezeichneten Kontur), dann mit der echten Seitenachse gespiegelt. Vorher
-// wurden hier einfach die beiden hand-gezeichneten Teilpfade pro Seite direkt übernommen ("bysize")
-// – die waren aber nie exakt gleich groß (Illustration ~3-5 % seitenungleich), das gab die
-// wahrgenommene Asymmetrie. Für Überlappung wurde die Kontur vorab mit der echten Silhouette
-// beider Arme verschnitten, damit die gespiegelte Fläche auf keiner Seite über den Unterarm hinausragt.
-var BRACHIORAD_BACK=[[5.309,174.836],[6.974,166.879],[8.363,158.544],[12.212,138.407],[12.939,133.281],[13.336,128.904],[13.535,125.025],[13.436,122.638],[13.734,112.095],[13.337,111.3],[12.143,110.802],[11.701,111.097],[10.402,112.82],[8.761,115.576],[6.374,120.351],[4.484,125.125],[3.191,129.998],[2.214,135.169],[1.873,138.103],[1.202,148.996],[1.202,154.366],[1.089,158.237],[0.605,164.512],[-0.091,169.485],[-1.085,174.458],[-2.083,178.266],[-2.375,181.01],[-2.329,181.977],[-2.065,182.622],[-1.534,183.057],[-0.688,183.399],[2.144,184.26],[2.466,184.055],[3.067,182.875],[3.788,180.923]];
-
-var BRACHIORAD_BACK_F=[[18.383,181.106],[19.79,179.277],[21.042,176.031],[24.932,163.527],[26.761,156.213],[28.589,150.868],[29.405,148.045],[30.199,144.394],[32.027,137.783],[33.653,130.753],[34.559,125.544],[34.559,118.231],[33.856,115.277],[33.293,114.292],[32.027,114.574],[30.902,116.121],[28.792,119.356],[26.682,124.279],[25.276,128.499],[23.869,133.563],[22.884,138.627],[22.682,141.443],[22.364,143.311],[20.774,156.631],[19.79,161.414],[16.555,171.26],[15.429,175.198],[14.383,177.874],[14.664,179.14],[15.558,180.034]];
-
-// Brachialis-Streifen (Oberarm vorn, außen neben dem Bizeps-Bauch sichtbar). In der männlichen
-// Figur ist er zwar je Arm als eigener Teilpfad vorgezeichnet, die beiden Teilpfade sind im
-// Rohbild aber NICHT spiegelgleich (rechts deutlich kürzer); die weibliche Figur hat gar keine
-// eigene Kontur dafür. Beides ergibt eine einzige, in Blob-Koordinaten normierte Kontur je Figur,
-// die auf beide Armseiten gespiegelt angewendet wird. Wichtig: die Kontur liegt vollständig
-// INNERHALB beider Arm-Silhouetten dieser Figur (per Verschnitt mit beiden Umrissen berechnet) –
-// sonst würde sie an der Maskenkante je Seite unterschiedlich abgeschnitten und die Seiten sähen
-// trotz identischer Kontur wieder verschieden aus.
-// Vom Nutzer direkt auf der Illustration nachgezeichnete Brachialis-Kontur (Fotoauswertung: Punkte
-// digitalisiert, per Bildabgleich in Maskenkoordinaten übertragen) – ersetzt die frühere, zu knapp
-// geschätzte Fläche. Dadurch wird nichts vom Bizeps (blau) mehr am Innenrand mit eingefärbt.
-var BRACHIALIS_FRONT=[[24.774,128.838],[25.637,130.417],[26.428,132.95],[23.48,141.551],[20.682,151.236],[18.365,162.163],[18.014,162.69],[16.634,162.891],[16.308,161.963],[16.293,160.659],[17.387,145.187],[17.892,142.54],[19.167,138.04],[22.201,131.37],[23.029,130.066]];
-
-var BRACHIALIS_FRONT_F=[[47.911,129.382],[46.334,131.763],[44.927,134.145],[43.815,136.526],[43.06,138.907],[40.591,148.432],[40.183,150.814],[39.906,153.195],[39.257,160.339],[39.158,162.72],[39.238,165.895],[44.098,165.895],[44.98,162.72],[47.238,155.576],[49.037,148.432],[50.395,143.67],[52.635,136.526],[54.258,129.382],[54.699,127.001],[50.367,127.001]];

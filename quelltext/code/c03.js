@@ -1,7 +1,18 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: EX_PCT bis woAddPage()
+   Enthaelt: addWorkoutCardio() bis woAddPage()
 */
+
+// Cardio hat keine Saetze zum Abhaken - der Datensatz existiert also sofort (nicht erst nach
+// einem Haekchen), damit er wie ein Satz laufend in day(TODAY).cardio steht und beim Beenden
+// des Trainings schon in der cardioMin-Summe (finishWorkout) auftaucht.
+function addWorkoutCardio(ex){
+  var rec={ex:ex.id,min:20,km:0,wid:workout.id};
+  day(TODAY).cardio.push(rec);touch(TODAY);
+  workout.exercises.push({ex:ex.id,cardioRec:rec});
+  woPage=workout.exercises.length-1;
+  saveWorkout();renderSession();
+}
 
 /* Anteil einer Übung an den einzelnen Muskeln – dieselbe Gewichtung, mit der die Sätze auch in
    die Wochenauslastung eingehen: Primärmuskel 1,0 · Sekundärmuskel 0,5 Sätze je Satz. */
