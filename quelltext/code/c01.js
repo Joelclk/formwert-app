@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: (Anweisung) bis BRACHIORAD_FRONT_F
+   Enthaelt: (Anweisung) bis SCAP_TMAJ
 */
 
 "use strict";
@@ -249,6 +249,16 @@ var session=null,
 var heuteDate=TODAY;
 
 var LSK="formwert-v3";
+
+var CLOUD_REPLACE_KEY="formwert-cloud-replace-pending";
+
+
+function cloudReplacePending(){try{return localStorage.getItem(CLOUD_REPLACE_KEY)==="1";}catch(e){return false;}}
+
+
+function markCloudReplacePending(on){try{
+  if(on)localStorage.setItem(CLOUD_REPLACE_KEY,"1");else localStorage.removeItem(CLOUD_REPLACE_KEY);
+}catch(e){warnSaveFailed();}}
 
 
 function emptyDay(){return {sets:[],cardio:[],workouts:[],mobility:false,rest:false,note:""};}
@@ -1451,11 +1461,21 @@ function showHiddenSheets(list){
    Ein eigenes, kleines 3D-Fenster nur fuer die Uebungsseite: der rechte Arm aus dem
    Anatomie-Rig (Blender), mit gebackener Bewegung und den Muskelfarben der Uebung.
    Viewer und Modell liegen gzip-komprimiert vor und werden erst beim Oeffnen entpackt. */
-var FW_ANIM_V="__DATEN_ENTFERNT__base64__202092_ZEICHEN__";
+var FW_ANIM_V="__DATEN_ENTFERNT__base64__201944_ZEICHEN__";
 
-var FW_ANIM_G="__DATEN_ENTFERNT__base64__454724_ZEICHEN__";
+var FW_ANIM_G="__DATEN_ENTFERNT__base64__1009316_ZEICHEN__";
 
-var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer"}
+var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer",tri_push:"pushdown",
+  tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"lateral",
+  frontraise:"frontraise",ohp:"press",ohp_db:"press",push_press:"press",arnold:"press",
+  pike_pushup:"press",hspu:"press",bench:"bench",bench_db:"bench",machine_press:"bench",
+  machine_press_lying:"bench",pushup:"bench",pushup_arch:"bench",bench_dec:"bench",bench_inc:"incline",
+  bench_inc_db:"incline",pushup_dec:"incline",fly_db:"fly",cable_fly:"fly",fly_machine:"fly",
+  reversefly:"reversefly",bandpullapart:"reversefly",facepull:"facepull",row_bb:"row",row_db:"row",
+  row_pendlay:"row",row_tbar:"row",row_cable:"row",row_machine:"row",row_inv:"row",row_band:"row",
+  latpull:"latpull",latpull_close:"latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
+  pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",pullover:"pullover",
+  rot_internal:"rotint"}
 ;
 
 var fwAnimGlb=null,
@@ -1470,7 +1490,7 @@ function exAnimBlock(ex){
   var wrap=el("div","exanim");
   var box=el("div","exanim-box"); wrap.appendChild(box);
   box.appendChild(el("span","exanim-load","3D-Modell wird geladen …"));
-  wrap.appendChild(el("p","note exanim-cap","Rechter Arm, Muskeln in den Farben von „Beanspruchte Muskeln“."));
+  wrap.appendChild(el("p","note exanim-cap","Rechte Körperhälfte: Arm, Schulter, Brust und Rücken – Muskeln in den Farben von „Beanspruchte Muskeln“."));
   if(typeof DecompressionStream==="undefined"){box.firstChild.textContent="Die 3D-Animation braucht einen neueren Browser.";return wrap;}
   var fr=document.createElement("iframe"); fr.className="exanim-frame"; fr.id="exanim-frame"; fr.title="3D-Bewegungsablauf";
   box.appendChild(fr);
@@ -2171,16 +2191,3 @@ var SCAP_TMIN=[[0.09,0.124],[0.176,0.09],[0.26,0.151],[0.283,0.17],[0.269,0.175]
 var LATS_UPPER_SHAPE=[[0.584,0.357],[0.6,0.356],[0.353,0.2],[0.21,0.083],[0.205,0.074],[0.199,0.077],[0.146,0.1],[0.1,0.12],[0.176,0.09],[0.26,0.151],[0.283,0.17],[0.269,0.175],[0.091,0.124],[0.084,0.127],[0.057,0.139],[0.238,0.182],[0.301,0.2],[0.367,0.23],[0.471,0.289],[0.56,0.357]];
 
 var SCAP_TMAJ=[[-0.001,0.174],[0.01,0.204],[0.054,0.26],[0.125,0.294],[0.167,0.309],[0.226,0.326],[0.317,0.342],[0.447,0.354],[0.56,0.357],[0.471,0.289],[0.367,0.23],[0.301,0.2],[0.238,0.182],[0.048,0.137],[0.006,0.155]];
-         // großer Rundmuskel
-// Unterarm vorn: der Oberarmspeichenmuskel ist hier nicht als eigener Umriss gezeichnet (anders
-// als am Rücken, siehe "bysize" unten). Die Außenkante folgt der Speichenseiten-Kontur der Maske,
-// die Innenkante der in der Illustration selbst durchgezeichneten Furche zwischen der radialen
-// Muskelsäule und der Beugergruppe – aus einem hochskalierten Rendering abgemessen (Helligkeits-
-// profil quer über den Unterarm bei vielen Höhen, wobei die Silhouettenkanten selbst ausgenommen
-// wurden, sonst misst man die Armkontur statt der Furche). Zum Handgelenk hin läuft der Streifen
-// spitz aus, weil der Muskelbauch dort in die Sehne übergeht. Wie beim Brachialis liegt die
-// Kontur vollständig innerhalb BEIDER Arm-Silhouetten der jeweiligen Figur, damit beide Seiten
-// exakt gleich aussehen und nicht je Seite anders von der Maskenkante beschnitten werden.
-var BRACHIORAD_FRONT=[[11.172,115.624],[9.139,119.328],[7.419,123.033],[5.82,126.737],[4.725,130.441],[3.982,134.145],[3.394,137.849],[2.958,141.553],[2.633,145.258],[2.014,156.37],[1.019,163.779],[-0.263,171.187],[3.475,171.187],[5.433,167.483],[7.726,163.779],[9.578,160.074],[14.341,148.962],[15.84,145.258],[18.61,137.849],[19.844,134.145],[20.074,130.441],[20.603,126.737],[20.527,123.55],[19.465,120.316],[18.775,117.713],[17.971,112.157],[17.825,111.92],[13.527,111.92]];
-
-var BRACHIORAD_FRONT_F=[[32.405,118.27],[30.394,121.445],[28.838,124.62],[27.514,127.795],[26.402,130.97],[25.481,134.145],[24.629,137.32],[23.265,143.67],[21.825,153.195],[20.644,159.545],[18.908,165.895],[17.719,169.599],[20.973,169.599],[21.132,169.07],[22.578,165.895],[24.219,162.72],[25.912,159.545],[27.941,156.37],[29.387,153.195],[36.178,137.32],[37.025,134.145],[37.554,130.97],[38.207,127.795],[37.589,124.62],[37.06,118.27],[36.46,115.095],[34.974,115.095]];

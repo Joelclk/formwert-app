@@ -1,7 +1,105 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: addWorkoutCardio() bis woAddPage()
+   Enthaelt: relinkCardio() bis woAddPage()
 */
+
+/* Ein Ausdauer-Eintrag im Training zeigt auf DENSELBEN Datensatz wie der Tag (day.cardio) -
+   die Minuten werden direkt darin geaendert, dadurch zaehlen sie aufs Wochenziel. Beim
+   Speichern (localStorage/Cloud) wird daraus zwangslaeufig eine eigene Kopie: nach dem Laden
+   zeigen Training und Tag auf zwei verschiedene Objekte, und Aenderungen im Training kaemen
+   nirgends mehr an. Hier wird die Verbindung wieder hergestellt - passender Datensatz im Tag
+   (gleiche Uebung, gleiches Training), sonst wird die mitgespeicherte Kopie wieder eingetragen.
+   Verworfen wird nichts: der Eintrag im Training ist der Beleg, dass es die Einheit gibt. */
+function relinkCardio(w){
+  var used=[];
+  w.exercises.forEach(function(e){
+    if(!e||!e.cardioRec)return;
+    if(cardioDayOf(e.cardioRec)){used.push(e.cardioRec);return;}
+    var hit=null;
+    for(var k in state.days){
+      var list=state.days[k].cardio||[];
+      for(var i=0;i<list.length&&!hit;i++){
+        var r=list[i];
+        if(r&&r.ex===e.ex&&r.wid===w.id&&used.indexOf(r)<0)hit=r;
+      }
+      if(hit)break;
+    }
+    if(hit){e.cardioRec=hit;used.push(hit);return;}
+    var rec=e.cardioRec;
+    if(!rec.ex)rec.ex=e.ex;
+    if(!rec.wid)rec.wid=w.id;
+    if(rec.min==null)rec.min=0;
+    if(rec.km==null)rec.km=0;
+    day(TODAY).cardio.push(rec);touch(TODAY);used.push(rec);
+  });
+}
+
+function startWorkout(routineId){
+  var r=routineId?state.routines[routineId]:null;
+  workout={id:rid(),name:r?r.name:"Training",routineId:r?routineId:null,startedAt:Date.now(),pausedMs:0,paused:false,pauseStart:0,rest:{endAt:0,len:90},exercises:[]};
+  if(r)r.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
+    var sets=[];for(var i=0;i<it.sets;i++)sets.push({kg:it.kg||0,reps:it.reps,done:false});
+    workout.exercises.push({ex:it.ex,restSec:90,sets:sets});});
+  woPage=0;woShape=null;
+  saveWorkout();selectTab("tab-training");renderAll();window.scrollTo({top:0,behavior:"smooth"});
+  startTick();
+}
+
+var swT=null;
+
+function saveWorkoutSoon(){if(swT)clearTimeout(swT);swT=setTimeout(function(){swT=null;saveWorkout();},500);}
+
+function flushWorkoutSave(){if(swT){clearTimeout(swT);swT=null;saveWorkout();}}
+
+// Schutz gegen Datenverlust: wird z. B. während des Eintippens eines Gewichts die App in den
+// Hintergrund geschickt oder der Tab geschlossen, bevor die 500ms-Verzögerung von
+// saveWorkoutSoon() abgelaufen ist, würde dieser letzte Tastendruck sonst verloren gehen.
+// Bei jedem Sichtbarkeits-/Fokuswechsel und beim Schließen sofort speichern.
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){flushWorkoutSave();flushLocalSave();}});
+
+addEventListener("pagehide",function(){flushWorkoutSave();flushLocalSave();});
+
+addEventListener("beforeunload",function(){flushWorkoutSave();flushLocalSave();});
+
+function saveWorkout(){
+  try{localStorage.setItem("formwert-workout",workout?JSON.stringify(workout):"");}catch(e){warnSaveFailed();}
+  if(db){if(workout)db.doc("state/workout").set(workout).catch(function(){});else db.doc("state/workout").delete().catch(function(){});}
+}
+
+function startTick(){if(woTick)return;woTick=setInterval(tickWorkout,1000);}
+
+function tickWorkout(){
+  if(!workout){clearInterval(woTick);woTick=null;return;}
+  try{tickInner();}catch(e){}
+}
+
+function restbarSpace(rb){
+  try{document.body.style.setProperty("--restbar-h",(rb&&!rb.hidden?rb.offsetHeight:0)+"px");}catch(e){}
+}
+
+function tickInner(){
+  var t=$("wo-timer");if(t)t.textContent=fmtDur(woElapsed());var bt=$("wo-banner-t");if(bt)bt.textContent=fmtDur(woElapsed());
+  woAlign();woFillFigs();
+  var rb=$("restbar");if(!rb)return;
+  var left=Math.ceil((workout.rest.endAt-Date.now())/1000);
+  if(workout.rest.endAt&&left>0){
+    var wasHidden=rb.hidden;
+    rb.hidden=false;$("rest-left").textContent=fmtDur(left);
+    $("rest-fill").style.width=clamp(100*left/workout.rest.len,0,100)+"%";
+    // Die Pausenleiste sitzt ueber der Seite - ihre Hoehe muss die Trainingsseite
+    // freihalten, sonst verdeckt sie die Muskelzeile darunter.
+    if(wasHidden)restbarSpace(rb);
+  }
+  else{ if(workout.rest.endAt&&!rb.hidden){try{if(navigator.vibrate)navigator.vibrate([120,60,120]);}catch(e){}}
+    if(!rb.hidden){rb.hidden=true;restbarSpace(rb);}
+    workout.rest.endAt=0;}
+}
+
+function addWorkoutExercise(ex){
+  workout.exercises.push({ex:ex.id,restSec:90,sets:[defaultSet(ex,null)]});
+  woPage=workout.exercises.length-1;   // direkt auf die neue Übungsseite wischen
+  saveWorkout();renderSession();
+}
 
 // Cardio hat keine Saetze zum Abhaken - der Datensatz existiert also sofort (nicht erst nach
 // einem Haekchen), damit er wie ein Satz laufend in day(TODAY).cardio steht und beim Beenden
