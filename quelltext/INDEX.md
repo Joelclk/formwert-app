@@ -1,6 +1,6 @@
 # Quelltext-Verzeichnis
 
-Lesefassung von `formwert_app.html` (Version 263), erzeugt von
+Lesefassung von `formwert_app.html` (Version 264), erzeugt von
 `werkzeug/zerlegen.py`. **Diese Dateien werden nicht ausgefuehrt.**
 Die App selbst ist und bleibt die eine Datei `formwert_app.html`.
 
@@ -8,7 +8,7 @@ Sehr lange eingebettete Datenbloecke (3D-Modell, Koerperbilder,
 Schriften) sind durch `"__DATEN_ENTFERNT..."` ersetzt - sonst waere
 die Lesefassung genauso unlesbar wie das Original.
 
-Ersetzt wurden 15 Datenbloecke mit zusammen 12.9 MB.
+Ersetzt wurden 15 Datenbloecke mit zusammen 13.1 MB.
 
 ## Dateien
 
