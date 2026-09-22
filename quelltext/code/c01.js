@@ -1461,9 +1461,9 @@ function showHiddenSheets(list){
    Ein eigenes, kleines 3D-Fenster nur fuer die Uebungsseite: der rechte Arm aus dem
    Anatomie-Rig (Blender), mit gebackener Bewegung und den Muskelfarben der Uebung.
    Viewer und Modell liegen gzip-komprimiert vor und werden erst beim Oeffnen entpackt. */
-var FW_ANIM_V="__DATEN_ENTFERNT__base64__213188_ZEICHEN__";
+var FW_ANIM_V="__DATEN_ENTFERNT__base64__213424_ZEICHEN__";
 
-var FW_ANIM_G="__DATEN_ENTFERNT__base64__1269524_ZEICHEN__";
+var FW_ANIM_G="__DATEN_ENTFERNT__base64__1305456_ZEICHEN__";
 
 var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer",tri_push:"pushdown",
   tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"lateral",
