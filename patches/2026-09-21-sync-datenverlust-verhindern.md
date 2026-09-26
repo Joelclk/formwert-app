@@ -9,6 +9,18 @@ offene Änderungen beim Cloud-Download gewinnen und entfernt sie erst nach einer
 erfolgreichen, zusammengefassten Übertragung. Fehlgeschlagene Übertragungen
 werden sichtbar und automatisch wiederholt.
 
+**Überarbeitet am 26.09.2026** (vor dem ersten Anwenden – die Fassung vom 21.09.
+war nie in der App):
+
+- Eigene Übungen und Übungs-Anpassungen werden beim Verbinden wieder immer mit dem
+  Cloud-Stand zusammengeführt. Die erste Fassung hat das Einlesen übersprungen,
+  solange lokal etwas offen war, und danach die lokale Liste hochgeschrieben – damit
+  wären eigene Übungen, die auf einem anderen Gerät angelegt wurden, aus dem Konto
+  gelöscht worden. Damit gelöschte Übungen und zurückgesetzte Anpassungen beim
+  Zusammenführen nicht wieder auftauchen, merkt sich die App sie
+  (`state.extrasGone`), bis das Konto sie ebenfalls los ist.
+- Beim Einspielen eines Backups werden auch diese neuen Markierungen geleert.
+
 ALT:
 ```js
 var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},customEx:[],exOverrides:{}};
@@ -16,7 +28,7 @@ var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},customEx:[
 
 NEU:
 ```js
-var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},dirtyExtras:0,customEx:[],exOverrides:{}};
+var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},dirtyExtras:0,extrasGone:{},customEx:[],exOverrides:{}};
 ```
 
 ALT:
@@ -39,12 +51,12 @@ NEU:
 ```js
 function setExOverride(id,patch){
   state.exOverrides=state.exOverrides||{};
-  state.exOverrides[id]=patch;markExtrasDirty();
+  state.exOverrides[id]=patch;if(state.extrasGone)delete state.extrasGone["ov:"+id];markExtrasDirty();
   applyExOverrides();saveLocal();queueSave();secDirty.entdecken=true;
 }
 function resetExOverride(id){
   if(!state.exOverrides)return;
-  delete state.exOverrides[id];markExtrasDirty();
+  delete state.exOverrides[id];markExtrasDirty("ov:"+id);
   var base=EX_BASE[id],ex=exById(id);
   if(base&&ex){Object.keys(ex).forEach(function(k){delete ex[k];});Object.assign(ex,base);}
   saveLocal();queueSave();secDirty.entdecken=true;
@@ -61,7 +73,7 @@ function loadLocal(){try{var r=localStorage.getItem(LSK)||localStorage.getItem("
 NEU:
 ```js
 function loadLocal(){try{var r=localStorage.getItem(LSK)||localStorage.getItem("formwert-v2");
-  if(r){var o=JSON.parse(r);if(o&&o.profile){state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];state.exOverrides=o.exOverrides||{};state.dirty=o.dirty||{};state.dirtyRoutines=o.dirtyRoutines||{};state.dirtyExtras=o.dirtyExtras||0;}}}catch(e){}
+  if(r){var o=JSON.parse(r);if(o&&o.profile){state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];state.exOverrides=o.exOverrides||{};state.dirty=o.dirty||{};state.dirtyRoutines=o.dirtyRoutines||{};state.dirtyExtras=o.dirtyExtras||0;state.extrasGone=o.extrasGone||{};}}}catch(e){}
   applyCustomEx();applyExOverrides();}
 ```
 
@@ -75,7 +87,7 @@ NEU:
 ```js
 function saveLocal(){try{localStorage.setItem(LSK,JSON.stringify(
   {profile:state.profile,days:state.days,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides,
-   dirty:state.dirty,dirtyRoutines:state.dirtyRoutines,dirtyExtras:state.dirtyExtras}));}catch(e){warnSaveFailed();}}
+   dirty:state.dirty,dirtyRoutines:state.dirtyRoutines,dirtyExtras:state.dirtyExtras,extrasGone:state.extrasGone}));}catch(e){warnSaveFailed();}}
 ```
 
 ALT:
@@ -104,7 +116,7 @@ function removeCustomExercise(id){
   state.customEx=state.customEx.filter(function(e){return e.id!==id;});
   for(var i=0;i<EX.length;i++){if(EX[i].id===id){EX.splice(i,1);break;}}
   if(EX_BY_ID)delete EX_BY_ID[id];
-  markExtrasDirty();saveLocal();queueSave();secDirty.entdecken=true;
+  markExtrasDirty("ex:"+id);saveLocal();queueSave();secDirty.entdecken=true;
 }
 ```
 
@@ -193,7 +205,14 @@ function touch(d){state.dirty[d]=nextDirty();saveLocal();queueSave();}
 
 function markRoutineDirty(id){state.dirtyRoutines[id]=nextDirty();saveLocal();}
 
-function markExtrasDirty(){state.dirtyExtras=nextDirty();saveLocal();}
+// Eigene Übungen und Anpassungen werden beim Verbinden mit dem Cloud-Stand zusammengeführt.
+// Was hier gelöscht oder zurückgesetzt wurde, steht dort aber noch drin und käme so zurück –
+// darum wird es gemerkt, bis der nächste erfolgreiche Upload es auch aus dem Konto entfernt.
+function markExtrasDirty(gone){
+  state.dirtyExtras=nextDirty();
+  if(gone){state.extrasGone=state.extrasGone||{};state.extrasGone[gone]=1;}
+  saveLocal();
+}
 
 var stTimer=null;
 
@@ -215,7 +234,7 @@ function persist(){
   persistRun=Promise.all(jobs).then(function(){
     p.forEach(function(d){if(state.dirty[d]===pv[d])delete state.dirty[d];});
     r.forEach(function(id){if(state.dirtyRoutines[id]===rv[id])delete state.dirtyRoutines[id];});
-    if(state.dirtyExtras===ev)state.dirtyExtras=0;
+    if(state.dirtyExtras===ev){state.dirtyExtras=0;state.extrasGone={};}
     if(syncRetryT){clearTimeout(syncRetryT);syncRetryT=null;}
     saveLocal();setSync("on","synchronisiert");return true;
   },function(){
@@ -270,20 +289,6 @@ NEU:
 
 ALT:
 ```js
-    secDirty.entdecken=true;secDirty.training=true;
-  }).catch(function(){});
-}
-```
-
-NEU:
-```js
-    secDirty.entdecken=true;secDirty.training=true;
-  }).catch(function(e){throw e;});
-}
-```
-
-ALT:
-```js
       if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(!b)return;
         if(doc.id===TODAY&&state.days[TODAY]&&(state.days[TODAY].sets||[]).length)return;
         state.days[doc.id]={sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""};});
@@ -310,24 +315,51 @@ NEU:
 
 ALT:
 ```js
+function fw_syncPullExtras(d){
+  return d.doc("state/exoverrides").get().then(function(es){
     var v=es&&es.exists?cloneWritable(es.data()):null;v=v&&v.v;
     if(v&&typeof v==="object"){
-```
-
-NEU:
-```js
-    var v=es&&es.exists?cloneWritable(es.data()):null;v=v&&v.v;
-    if(!state.dirtyExtras&&v&&typeof v==="object"){
-```
-
-ALT:
-```js
+      state.exOverrides=state.exOverrides||{};
+      Object.keys(v).forEach(function(id){if(!state.exOverrides[id])state.exOverrides[id]=v[id];});
+    }
+    return d.doc("state/customex").get();
+  }).then(function(cs){
+    var v=cs&&cs.exists?cloneWritable(cs.data()):null;v=v&&v.v;
     if(Array.isArray(v)){
+      state.customEx=state.customEx||[];
+      var have={};state.customEx.forEach(function(e){if(e&&e.id)have[e.id]=1;});
+      v.forEach(function(e){if(e&&e.id&&!have[e.id])state.customEx.push(e);});
+    }
+    applyCustomEx();applyExOverrides();
+    secDirty.entdecken=true;secDirty.training=true;
+  }).catch(function(){});
+}
 ```
 
 NEU:
 ```js
-    if(!state.dirtyExtras&&Array.isArray(v)){
+function fw_syncPullExtras(d){
+  // Kein catch: Schlägt das Einlesen fehl, darf connect() nicht weitermachen und danach
+  // den unvollständigen lokalen Stand als vollständig ins Konto schreiben.
+  var gone=state.extrasGone||{};
+  return d.doc("state/exoverrides").get().then(function(es){
+    var v=es&&es.exists?cloneWritable(es.data()):null;v=v&&v.v;
+    if(v&&typeof v==="object"){
+      state.exOverrides=state.exOverrides||{};
+      Object.keys(v).forEach(function(id){if(!state.exOverrides[id]&&!gone["ov:"+id])state.exOverrides[id]=v[id];});
+    }
+    return d.doc("state/customex").get();
+  }).then(function(cs){
+    var v=cs&&cs.exists?cloneWritable(cs.data()):null;v=v&&v.v;
+    if(Array.isArray(v)){
+      state.customEx=state.customEx||[];
+      var have={};state.customEx.forEach(function(e){if(e&&e.id)have[e.id]=1;});
+      v.forEach(function(e){if(e&&e.id&&!have[e.id]&&!gone["ex:"+e.id])state.customEx.push(e);});
+    }
+    applyCustomEx();applyExOverrides();
+    secDirty.entdecken=true;secDirty.training=true;
+  });
+}
 ```
 
 ALT:
@@ -342,4 +374,16 @@ NEU:
       mergeDuplicateCustomEx();
       if(state.profile&&state.profile.version>=3)renderAll();persist();
       connectTries=0;
+```
+
+ALT:
+```js
+  state.dirty={};state.dirtyRoutines={};
+  markCloudReplacePending(true);
+```
+
+NEU:
+```js
+  state.dirty={};state.dirtyRoutines={};state.dirtyExtras=0;state.extrasGone={};
+  markCloudReplacePending(true);
 ```
