@@ -1,0 +1,3 @@
+# Sicherungskopien der Werkzeuge (je rund 13 MB) - gehoeren nicht ins Repo
+*.vorher
+__pycache__/

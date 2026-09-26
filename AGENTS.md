@@ -77,6 +77,16 @@ python3 werkzeug/zerlegen.py
 Das Skript bricht ab und ändert nichts, wenn ein ALT-Block nicht genau einmal
 vorkommt.
 
+## Änderungen am 3D-Modell
+
+Das 3D-Modell ist ein einziger base64-Block (`FW3D_HTML_B64`) und lässt sich
+**nicht** über `patches/` ändern. Daran wird in
+`muskelmodell_3d_vollstaendig.html` gearbeitet, das mit
+`werkzeug/modell_auspacken.py` aus der App geholt und mit
+`werkzeug/modell_einpacken.py` zurückgebracht wird (Ablauf im `README.md`).
+Nie an einer alten Fassung dieser Datei weiterarbeiten – immer erst frisch
+auspacken. Am Modell arbeitet nur eine Sitzung gleichzeitig.
+
 ## Regeln für den Code
 
 - **Sprache der Oberfläche ist Deutsch.** Auch Kommentare auf Deutsch.
