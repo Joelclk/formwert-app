@@ -49,8 +49,9 @@ Für den Store ist es nicht nötig.
 - **Konto löschen in der App** (Apple verlangt das, sobald es Konten gibt).
 - **Sign in with Apple**, falls andere Anmeldungen wie Google angeboten werden.
 - Datenschutzerklärung und Impressum, Datenschutz-Angaben in App Store und Play Store.
-- **Google Fonts lokal einbinden.** Das Laden von Google-Servern ist in Deutschland ohne
-  Einwilligung abmahnfähig.
+- ~~**Google Fonts lokal einbinden.**~~ Erledigt, live seit Version 422: `app/fonts/` +
+  `fonts/schriften.js` (per `fetch` + `FontFace`, weil die Artifact-CSP Schriftdateien nur von
+  Google oder als data:-URI erlaubt).
 - **Lizenzen nennen:** Z-Anatomy (CC BY-SA 4.0, Weitergabe des Modells unter gleicher
   Lizenz), js-rich-body-highlighter (MIT), three.js (MIT).
 - Hinweis, dass die App keine medizinische Beratung ist.
@@ -78,7 +79,7 @@ Ergebnisse identisch (120 von 120 Stichtagen).
 3. Große Daten als echte Binärdateien (`.glb`, `.webp`) statt base64 in JavaScript:
    rund ein Viertel kleiner, kein Dekodieren beim Start. Betrifft `assets/3d-viewer.js`
    (11 MB) und `assets/fig-*.js` (17 MB).
-   **Erster Schritt erledigt (27.09.2026, noch nicht veröffentlicht):** `3d-viewer.js`
+   **Erster Schritt erledigt, live seit Version 421:** `3d-viewer.js`
    hatte eine überflüssige äußere base64-Schicht um die ganze Betrachter-Seite. Die ist weg
    (11,2 → 8,4 MB), und `fw3dHtml()` merkt sich das Ergebnis. Vorher wurde die Seite bei
    jedem Aufruf neu ausgepackt – Körper-Tab und Figuren je einmal, bei 4× gedrosselter CPU

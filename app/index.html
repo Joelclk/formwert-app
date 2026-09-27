@@ -13,9 +13,8 @@
                           3d-viewer/anim-* werden erst bei Bedarf nachgeladen
 -->
 <title>Formwert</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!-- Schriften liegen lokal (fonts/): Laden von Google-Servern gibt die IP-Adresse weiter. -->
+<script src="fonts/schriften.js"></script>
 <link rel="stylesheet" href="css/1-basis.css">
 <link rel="stylesheet" href="css/2-designsystem.css">
 <link rel="stylesheet" href="css/3-seiten.css">
@@ -160,7 +159,7 @@
       <div class="card free-card">
         <div class="free-txt"><b>Freies Training</b><span>Leer starten, Übungen fügst du unterwegs hinzu.</span></div>
         <button class="btn ghost block wo-start" id="btn-start-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Neues Training starten
         </button>
       </div>
