@@ -138,6 +138,24 @@ Trainingstag. Neu im Körper-Tab: Umschalter „Training | Mobilität“ mit Ber
 Wirbelsäule, …), gedehnt/bewegt, zuletzt, Vorschlägen. Einheiten und Training bieten
 Mobilitätsübungen in der Auswahl an. Kern: `mobDay()`, `isTrainDay()` in `02-berechnung.js`.
 
+**3D-Bewegungsabläufe für Bein und Hüfte (27.09.2026, vorbereitet, Modell fehlt noch).**
+Das Animationsmodell (`app/assets/anim-modell.js`) enthält nur den rechten Arm mit
+Schultern, Rumpf und Becken – keine Beinmuskeln und -knochen. Für Hüftkreisen, Beinheben,
+Tor öffnen und Beinpendel kommt ein zweites Modell `anim-modell-bein.js`, das getrennt
+geladen wird (Armübungen bleiben unverändert). Der Weg:
+1. Auf dem Mac in Blender (Rig-Datei „FORMWERT Production Anatomy Rig“, vorher speichern):
+   `werkzeug/bein_animation_blender.py` ausführen. Es baut die vier Bewegungen (hipcar,
+   legcircle, gate, legswing) als NLA-Spuren, exportiert `formwert_anim_bein.glb` neben die
+   .blend und lädt die Datei danach neu. Mit `NUR_VORSCHAU = True` nur zum Anschauen.
+2. Im Repo: `gltfpack -i formwert_anim_bein.glb -o bein.glb -kn -c` (`npm i -g gltfpack`),
+   dann `python3 werkzeug/animation_einpacken.py modell bein.glb bein`. Das schaltet
+   `FW_ANIM_BEIN` in `04-animation.js` auf true.
+3. Veröffentlichen: `anim-modell-bein.js`, `04-animation.js` (und `anim-viewer.js`, falls
+   noch nicht live – dort stehen die Kamerawinkel der neuen Bewegungen).
+Der Viewer lässt sich mit `animation_einpacken.py viewer-auspacken` / `viewer-einpacken`
+bearbeiten. Zuordnung Übung → Bewegung → Modell: `FW_ANIM_CLIP`, `FW_ANIM_MODELL` in
+`04-animation.js`; die Muskelfarben kommen über die Objektnamen (Z-Anatomy, ohne `.r`).
+
 ## 6. Zusammenarbeit zwischen Sitzungen
 
 - **Nur eine Sitzung veröffentlicht** das Artifact. Die anderen liefern Patches.

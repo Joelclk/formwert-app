@@ -181,7 +181,8 @@ setTimeout(function(){applyUiLang(document.body);},0);
     "Trag Dehn- oder Mobilisationsübungen ein – hier siehst du dann, welche Bereiche du bewegt hast und welche lange nicht dran waren.":"Log stretching or mobility exercises – this then shows which areas you have moved and which have been left out for a while.",
     "Gemacht":"Done","Passt dazu":"Good fits","gehalten":"static","bewegt":"dynamic",
     "zuletzt heute":"today","zuletzt gestern":"yesterday","✓ volle Einheit":"✓ full session",
-    "+ Mobilität eintragen":"+ Log mobility","Gehalten":"Static","Bewegt":"Dynamic","Alle Bereiche":"All areas","Sonstiges":"Other"};
+    "+ Mobilität eintragen":"+ Log mobility","Gehalten":"Static","Bewegt":"Dynamic","Alle Bereiche":"All areas","Sonstiges":"Other",
+    "Rechte Körperhälfte: Bein, Hüfte und Becken – Muskeln in den Farben von „Beanspruchte Muskeln“.":"Right side of the body: leg, hip and pelvis – muscles coloured as in “Muscles worked”."};
   for(var a in AREA_EN)add[a]=AREA_EN[a];
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
   var cnt={};for(var k1 in UI_EN){var v=UI_EN[k1];cnt[v]=(cnt[v]||0)+1;}

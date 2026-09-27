@@ -107,6 +107,11 @@ JavaScript-Text (`FW3D_HTML`, eine komplette HTML-Seite). Daran wird in
 Nie an einer alten Fassung dieser Datei weiterarbeiten – immer erst frisch
 auspacken. Am Modell arbeitet nur eine Sitzung gleichzeitig.
 
+Der kleine **3D-Bewegungsablauf** auf der Übungsseite ist davon getrennt:
+`app/assets/anim-viewer.js` (Betrachter) und `anim-modell.js` / `anim-modell-bein.js`
+(Modelle, gzip + base64). Aus- und Einpacken mit `werkzeug/animation_einpacken.py`;
+neue Bein-Bewegungen entstehen in Blender mit `werkzeug/bein_animation_blender.py`.
+
 ## Regeln für den Code
 
 - **Sprache der Oberfläche ist Deutsch.** Auch Kommentare auf Deutsch.
