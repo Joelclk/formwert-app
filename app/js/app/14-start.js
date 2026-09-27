@@ -79,6 +79,34 @@ function mergeDuplicateCustomEx(){
   if(changed)saveLocal();
   return changed;
 }
+// Einmalige Migration fuer built-in Uebungen, die zu einer anderen zusammengelegt wurden (anders
+// als mergeDuplicateCustomEx oben geht es hier NICHT um eigene Uebungen, sondern um eine fest
+// eingebaute Uebung, die es unter ihrer alten ID nicht mehr gibt - "Klimmzüge mit Zusatzgewicht"
+// (pullup_weight) ist seit der Zusammenlegung Teil von "pullup" mit optionalem Zusatzgewicht-Feld.
+// Die Feldstruktur (kg+reps) ist identisch, es muss also nur der ex-Bezug umbenannt werden - schon
+// geloggte Saetze bleiben dadurch erhalten statt beim naechsten Laden ins Leere zu zeigen.
+var LEGACY_BUILTIN_MERGE={"pullup_weight":"pullup"};
+function mergeLegacyBuiltinEx(){
+  var changed=false;
+  for(var oldId in LEGACY_BUILTIN_MERGE){
+    var newId=LEGACY_BUILTIN_MERGE[oldId];
+    for(var d in state.days){
+      var dd=state.days[d];
+      (dd.sets||[]).forEach(function(s){if(s.ex===oldId){s.ex=newId;state.dirty[d]=true;changed=true;}});
+    }
+    for(var rid3 in state.routines){
+      var r=state.routines[rid3];
+      (r.items||[]).forEach(function(it){if(it.ex===oldId){it.ex=newId;state.dirtyRoutines[rid3]=true;changed=true;}});
+    }
+    if(workout&&Array.isArray(workout.exercises)){
+      var touched4=false;
+      workout.exercises.forEach(function(we){if(we.ex===oldId){we.ex=newId;touched4=true;}});
+      if(touched4){changed=true;saveWorkout();}
+    }
+  }
+  if(changed)saveLocal();
+  return changed;
+}
 /* Wird genau einmal wirksam: entweder die App zeigen (Profil vorhanden) oder die
    Einrichtung starten (wirklich keins vorhanden - weder hier noch in der Cloud). */
 var bootSettled=false;
@@ -93,6 +121,7 @@ function fwBootReady(){
 function fwBoot(){
   selectTab("tab-heute");
   mergeDuplicateCustomEx();
+  mergeLegacyBuiltinEx();
   // Liegt hier schon ein Profil, geht es sofort weiter - kein Warten, kein Flackern.
   if(state.profile&&state.profile.version>=3){fwBootReady();return;}
   // Sonst: nicht sofort nach den Eckdaten fragen. Erst muss feststehen, ob in der
@@ -135,6 +164,7 @@ function connect(){
     }).then(function(qs){
       if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id)state.routines[b.id]=b;});
       mergeDuplicateCustomEx();
+      mergeLegacyBuiltinEx();
       if(state.profile&&state.profile.version>=3)renderAll();persist();
       connectTries=0;setSync("on","synchronisiert");
     }).catch(function(){

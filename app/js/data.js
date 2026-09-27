@@ -161,7 +161,7 @@ var EX=[
 {id:"pushup_diamond",n:"Diamant-Liegestütze",    t:"reps", pat:"push_h", e:"Körpergewicht", p:["tg_trizeps_lat"], s:["tg_brust_mitte","tg_schulter_vorn"], std:"pushup",sf:0.72,est:true, how:"Wie Liegestütze, aber Daumen und Zeigefinger beider Hände bilden eine Raute unter der Brust. Betont Trizeps und innere Brust stärker, Ellbogen bleiben nah am Körper."},
 {id:"pushup_arch", n:"Archer-Liegestütze",       t:"reps", pat:"push_h", e:"Körpergewicht", p:["tg_brust_mitte"], s:["tg_brust_ober","tg_brust_unten","tg_trizeps_lat","tg_schulter_vorn","tg_bauch_gerade"], std:"pushup",sf:0.4,est:true, how:"Einseitige Liegestütz-Variante: ein Arm bleibt gestreckt weit außen, der andere führt die Druckbewegung aus – deutlich mehr Last auf dem arbeitenden Arm."},
 {id:"pushup_dec",  n:"Liegestütze Füße erhöht",  t:"reps", pat:"push_h", e:"Körpergewicht", p:["tg_brust_ober","tg_schulter_vorn"], s:["tg_brust_mitte","tg_trizeps_lat","tg_brust_serratus"], std:"pushup",sf:0.70, how:"Füße erhöht auf einer Bank oder Stufe, Hände am Boden. Erhöht den Anteil der oberen Brust und Schulter gegenüber der klassischen Liegestütze."},
-{id:"dips",        n:"Dips",                     t:"reps", pat:"push_h", e:"Parallettes", p:["tg_brust_unten","tg_trizeps_lat"], s:["tg_brust_mitte","tg_schulter_vorn","tg_brust_serratus"], st:["tg_trizeps_lang"], std:"dips", how:"An den Parallettes/Barren mit gestreckten Armen abstützen, Oberkörper leicht nach vorne geneigt für mehr Brustbeteiligung. Absenken bis die Oberarme etwa parallel zum Boden sind, dann hochdrücken."},
+{id:"dips",        n:"Dips",                     t:"load", wt:"body", pat:"push_h", e:"Parallettes", p:["tg_brust_unten","tg_trizeps_lat"], s:["tg_brust_mitte","tg_schulter_vorn","tg_brust_serratus"], st:["tg_trizeps_lang"], std:"dips", how:"An den Parallettes/Barren mit gestreckten Armen abstützen, Oberkörper leicht nach vorne geneigt für mehr Brustbeteiligung. Absenken bis die Oberarme etwa parallel zum Boden sind, dann hochdrücken. Zusatzgewicht optional (Gürtel/Kurzhantel) – ohne einfach 0 eintragen."},
 {id:"fly_db",      n:"Fliegende Kurzhantel",     t:"load", pat:"push_h", e:"Kurzhantel", p:["tg_brust_mitte"], s:["tg_brust_ober","tg_brust_unten","tg_schulter_vorn"], std:"bench",sf:0.45,est:true, wt:"side", how:"Rückenlage, Kurzhanteln über der Brust mit leicht gebeugten Ellbogen. Arme bogenförmig zur Seite absenken, bis eine Dehnung in der Brust spürbar ist, dann auf demselben Weg zurückführen."},
 {id:"cable_fly",   n:"Fliegende am Kabelzug",       t:"load", pat:"push_h", e:"Kabelzug",   p:["tg_brust_mitte"], s:["tg_brust_ober","tg_brust_unten","tg_schulter_vorn"], std:"bench",sf:0.5,est:true, how:"An zwei Kabelzügen stehend, Griffe vor dem Körper zusammenführen (bogenförmige Bewegung), Ellbogen leicht gebeugt. Kontrolliert zurück in die gedehnte Position."},
 {id:"fly_machine", n:"Butterfly Maschine",       t:"load", pat:"push_h", e:"Maschine",   p:["tg_brust_mitte"], s:["tg_brust_ober","tg_brust_unten","tg_schulter_vorn"], std:"bench",sf:0.6,est:true, how:"Am Butterfly sitzend Polster/Griffe vor dem Körper zusammenführen, ohne den Rücken von der Lehne zu lösen, dann langsam wieder öffnen."},
@@ -177,13 +177,12 @@ var EX=[
 {id:"handstand",   n:"Wand-Handstand halten",    t:"sec",  pat:"push_v", e:"Körpergewicht", p:["tg_schulter_vorn","tg_schulter_seit"], s:["tg_bauch_gerade","tg_trizeps_lat","tg_brust_serratus"], std:"handstand", how:"Handstand an der Wand aufbauen und die Position möglichst ruhig und mit angespanntem Rumpf halten – reine Haltezeit, keine Wiederholungen."},
 
 /* --- Ziehen senkrecht --- */
-{id:"pullup",      n:"Klimmzüge Obergriff",      t:"reps", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat","tg_bizeps"], s:["tg_unterarm_beug","tg_unterarm_streck","tg_schulter_hint","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_rueck_teres_major","tg_rueck_rhomb"], std:"pullup", how:"Obergriff, schulterbreit bis etwas breiter. Aus dem Hang das Kinn über die Stange ziehen, Schulterblätter dabei nach unten ziehen, dann kontrolliert ablassen.", poseImgs:EX_POSES.pullup, poseLabels:["Ausgangsposition","Endposition"]},
-{id:"chinup",      n:"Klimmzüge Untergriff",     t:"reps", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat","tg_bizeps"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_unterarm_beug","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"pullup",sf:1.15, how:"Untergriff (Handflächen zum Gesicht), etwa schulterbreit. Zieht stärker den Bizeps mit ein als der Klimmzug im Obergriff, Bewegung sonst identisch."},
-{id:"pullup_wide", n:"Klimmzüge weit",           t:"reps", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_bizeps","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"pullup",sf:0.85, how:"Klimmzug mit deutlich breiterem Obergriff als schulterbreit – verkürzt den Bewegungsweg und betont den äußeren Latissimus stärker."},
-{id:"pullup_weight",n:"Klimmzüge mit Zusatzgew.",t:"load", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_bizeps","tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"pullup_w",sf:1.0,est:true, how:"Klimmzug mit Zusatzgewicht (Gürtel oder Kurzhantel zwischen den Füßen) für alle, denen Körpergewicht allein nicht mehr genug Widerstand bietet."},
+{id:"pullup",      n:"Klimmzüge Obergriff",      t:"load", wt:"body", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat","tg_bizeps"], s:["tg_unterarm_beug","tg_unterarm_streck","tg_schulter_hint","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_rueck_teres_major","tg_rueck_rhomb"], std:"pullup", how:"Obergriff, schulterbreit bis etwas breiter. Aus dem Hang das Kinn über die Stange ziehen, Schulterblätter dabei nach unten ziehen, dann kontrolliert ablassen. Zusatzgewicht optional (Gürtel/Kurzhantel) – ohne einfach 0 eintragen.", poseImgs:EX_POSES.pullup, poseLabels:["Ausgangsposition","Endposition"]},
+{id:"chinup",      n:"Klimmzüge Untergriff",     t:"load", wt:"body", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat","tg_bizeps"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_unterarm_beug","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"pullup",sf:1.15, how:"Untergriff (Handflächen zum Gesicht), etwa schulterbreit. Zieht stärker den Bizeps mit ein als der Klimmzug im Obergriff, Bewegung sonst identisch. Zusatzgewicht optional – ohne einfach 0 eintragen."},
+{id:"pullup_wide", n:"Klimmzüge weit",           t:"load", wt:"body", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_bizeps","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"pullup",sf:0.85, how:"Klimmzug mit deutlich breiterem Obergriff als schulterbreit – verkürzt den Bewegungsweg und betont den äußeren Latissimus stärker. Zusatzgewicht optional – ohne einfach 0 eintragen."},
 {id:"latpull",     n:"Latzug",                   t:"load", pat:"pull_v", e:"Kabelzug", p:["tg_rueck_lat"], s:["tg_bizeps","tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_rueck_teres_major"], std:"row",sf:0.97, how:"Am Kabelzug sitzend, Stange etwas breiter als schulterbreit greifen. Zur oberen Brust ziehen, Schulterblätter nach unten/hinten, dann kontrolliert zurückführen."},
 {id:"latpull_close",n:"Latzug enger Griff",      t:"load", pat:"pull_v", e:"Kabelzug", p:["tg_rueck_lat","tg_bizeps"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_rueck_teres_major"], std:"row",sf:0.90,est:true, how:"Wie Latzug, mit engem (V-)Griff. Der geringere Griffabstand erhöht die Bewegungsamplitude und beteiligt den unteren Latissimus stärker."},
-{id:"pullup_neg",  n:"Negativ-Klimmzüge",        t:"reps", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_bizeps","tg_unterarm_beug","tg_rueck_teres_major"], std:"pullup",sf:1.8,est:true, how:"Auf die Stange steigen oder springen, Kinn über der Stange, dann so langsam wie möglich (3–5 Sekunden) ablassen – für alle, die noch keinen vollen Klimmzug schaffen."},
+{id:"pullup_neg",  n:"Negativ-Klimmzüge",        t:"load", wt:"body", pat:"pull_v", e:"Klimmzugstange", p:["tg_rueck_lat"], s:["tg_bizeps","tg_unterarm_beug","tg_rueck_teres_major"], std:"pullup",sf:1.8,est:true, how:"Auf die Stange steigen oder springen, Kinn über der Stange, dann so langsam wie möglich (3–5 Sekunden) ablassen – für alle, die noch keinen vollen Klimmzug schaffen."},
 // pat "iso": Passives Hängen ist kein Zug-/Kraftmuster (kein "pull_v"), sondern hält primär
 // den Unterarm-Griff (Primärmuskel wrist_flex) – zählt daher zur Kraftstufe "Arme", nicht "Rücken".
 {id:"deadhang",    n:"Passives Hängen",          t:"sec",  pat:"iso", e:"Klimmzugstange", p:["tg_unterarm_beug"], s:["tg_rueck_lat","tg_rueck_trapez_unt","tg_rueck_rhomb","tg_rueck_teres_major"], std:"hang",sf:1.0,est:true, how:"Einfach entspannt an der Stange hängen, Schultern lang lassen (nicht aktiv hochziehen). Trainiert Griffkraft und dehnt die Wirbelsäule/Schultern."},
@@ -279,7 +278,7 @@ var EX=[
 {id:"tri_skull",   n:"French Press",             t:"load", pat:"iso",    e:"Langhantel", p:["tg_trizeps_lang"], s:[], std:"bench",sf:0.4,est:true, how:"Rückenlage, Langhantel (meist EZ-Stange) über der Stirn/dem Kopf mit gebeugten Ellbogen absenken, dann durch Strecken der Ellbogen wieder nach oben drücken – Oberarme bleiben dabei möglichst senkrecht."},
 {id:"tri_over",    n:"Trizeps über Kopf",        t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_trizeps_lang"], s:[], std:"bench",sf:0.32,est:true, how:"Kurzhantel mit beiden Händen hinter dem Kopf halten, Ellbogen zeigen nach oben. Unterarme nach oben strecken, dann kontrolliert wieder hinter den Kopf absenken."},
 {id:"tri_kick",    n:"Trizeps-Kickbacks",        t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_trizeps_lat"], s:[], std:"bench",sf:0.11,est:true, uni:true, how:"Oberkörper vorgebeugt, Oberarm parallel zum Rücken fixiert. Unterarm mit der Kurzhantel nach hinten strecken, bis der Arm ganz gerade ist, dann kontrolliert zurückführen."},
-{id:"dips_bench",  n:"Bankdips",                 t:"reps", pat:"iso",    e:"Körpergewicht", p:["tg_trizeps_lat"], s:["tg_brust_unten","tg_schulter_vorn"], std:"dips",sf:1.60, how:"Hände auf einer Bank hinter dem Körper abstützen, Fersen auf dem Boden oder einer zweiten Bank. Gesäß vor der Bank absenken, bis die Ellbogen etwa 90° erreichen, dann hochdrücken."},
+{id:"dips_bench",  n:"Bankdips",                 t:"load", wt:"body", pat:"iso",    e:"Körpergewicht", p:["tg_trizeps_lat"], s:["tg_brust_unten","tg_schulter_vorn"], std:"dips",sf:1.60, how:"Hände auf einer Bank hinter dem Körper abstützen, Fersen auf dem Boden oder einer zweiten Bank. Gesäß vor der Bank absenken, bis die Ellbogen etwa 90° erreichen, dann hochdrücken. Zusatzgewicht optional (z. B. Hantelscheibe auf dem Schoß) – ohne einfach 0 eintragen."},
 {id:"wrist_curl",  n:"Handgelenk-Curls",         t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_unterarm_beug"], s:[], std:"bench",sf:0.25,est:true, wt:"side", how:"Unterarme auf den Oberschenkeln oder einer Bank abstützen, Handflächen nach oben, Handgelenke mit der Kurzhantel nach oben curlen, dann kontrolliert absenken."},
 {id:"wrist_curl_rev",n:"Reverse Handgelenk-Curls",t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_unterarm_streck"], s:[], std:"bench",sf:0.2,est:true, wt:"side", how:"Wie Handgelenk-Curls, aber mit Handflächen nach unten – trainiert die Streckseite des Unterarms."},
 {id:"farmers",     n:"Farmer's Walk",            t:"sec",  pat:"iso",    e:"Kurzhantel", p:["tg_unterarm_beug","tg_rueck_trapez_ob"], s:["tg_bauch_gerade","tg_bauch_schraeg","tg_rueck_rhomb","tg_nacken","tg_bauch_tief"], std:"plank",sf:0.6,est:true, wt:"side", how:"Schwere Kurzhanteln oder Trap-Bar in beiden Händen nehmen und mit aufrechtem Oberkörper und angespanntem Rumpf eine festgelegte Strecke oder Zeit gehen."},
@@ -394,7 +393,31 @@ var LEVELS=["F","E","D","C","B","A","S","S+"];
    Standards mit "bw:false" (Rumpf: plank, legraise): dort sind die Werte absolute Sekunden/
    Wiederholungen ohne Koerpergewichts-Skalierung, siehe Kommentar dort. Achtung: jede Uebung mit
    demselben "std" haengt automatisch an dieser Leiter (ueber ihren sf-Faktor) - nicht nur die
-   Leitübung selbst. Mit Rumpf sind alle geplanten Bereiche abgedeckt. */
+   Leitübung selbst. Mit Rumpf sind alle 6 urspruenglich geplanten Bereiche abgedeckt.
+   Ergaenzung ab 27.09.2026 (Phase 7): die reinen Koerpergewichts-/Calisthenics-Uebungen
+   (Klimmzuege, Dips, Liegestuetze, Kniebeuge frei), die vorher noch auf der ganz alten,
+   gleichmaessig gestreckten 8-Stufen-Tabelle liefen (siehe STANDARDS oben), sind jetzt
+   ebenfalls hier. Zwei unterschiedliche Ansaetze je nachdem, was Strength Level an Daten
+   hergibt:
+   - pullup/dips: Strength Level fuehrt fuer genau diese beiden Uebungen eine eigene "1RM
+     Weight"-Tabelle (das ZUSAETZLICHE Gewicht - auch negativ/unterstuetzend moeglich - fuer
+     eine einzelne Wiederholung). Daraus wurde die effektive Gesamtlast (Koerpergewicht bei
+     Referenz + Zusatzgewicht) als Vielfaches des Koerpergewichts gebildet - dieselbe Einheit
+     wie bei Bankdruecken & Co., also normale bw-Skalierung (kein bw:false). Live in der App
+     gilt seitdem: Klimmzug/Dip-Uebungen sind "load"-Uebungen mit optionalem Zusatzgewicht-Feld
+     (wt:"body" - effectiveKg() rechnet Koerpergewicht automatisch dazu, siehe 01-grundlagen.js).
+   - pushup/bwsquat: fuer diese beiden gibt es bei Strength Level KEINE "1RM Weight"-Tabelle,
+     nur Wiederholungszahlen - und die reichen bei hohen Perzentilen so weit (84 bzw. 128 Wdh.),
+     dass eine effektive-Last-Umrechnung über dieselbe e1RM-Formel unzuverlaessig waere. Diese
+     beiden bleiben daher reine Wiederholungs-Skalen mit bw:false (wie Plank/Beinheben) - an
+     der jeweiligen Uebung selbst (t:"reps") aendert sich nichts, nur der Standard springt von
+     der alten 8-Stufen-Tabelle auf diese 19-Werte-Leiter.
+   - Klimmzuege mit Zusatzgewicht (vorher eine eigene Uebung "pullup_weight") sind mit dem
+     normalen Klimmzug ("pullup") zusammengelegt - eine Uebung, Zusatzgewicht optional. Schon
+     geloggte Saetze der alten Uebung werden beim Laden einmalig umbenannt (siehe
+     mergeLegacyBuiltinEx() in app/14-start.js), damit nichts verloren geht.
+   - Wand-Handstand, L-Sit, Passives Haengen bleiben unveraendert auf der alten Tabelle - fuer
+     sie listet Strength Level keine Daten (weder Wdh./Sek. noch 1RM Weight). */
 var RANK_LADDER={
   bench:{
     m:[0.25,0.36,0.47,0.59,0.70,0.82,0.94,1.04,1.13,1.23,1.34,1.44,1.55,1.66,1.78,1.89,2.01,2.13,2.25],
@@ -485,6 +508,56 @@ var RANK_LADDER={
        (lineare Rueckrechnung liefe ins Negative). Kein Weltrekord-Beleg fuer diese Uebung. */
     m:[0.12,0.15,0.20,0.26,0.33,0.44,0.55,0.65,0.75,0.85,0.97,1.09,1.21,1.35,1.49,1.63,1.73,1.84,1.94],
     w:[0.10,0.13,0.16,0.20,0.25,0.37,0.48,0.58,0.68,0.78,0.91,1.04,1.17,1.31,1.45,1.58,1.68,1.78,1.88]
+  },
+  pullup:{
+    /* Leitübung: Klimmzug Obergriff, jetzt "load" mit optionalem Zusatzgewicht (wt:"body" -
+       siehe effectiveKg() in 01-grundlagen.js). Werte sind die effektive Gesamtlast
+       (Koerpergewicht + Zusatzgewicht) als Vielfaches des Koerpergewichts, normale bw-Skalierung
+       wie bei Bankdruecken. Anker aus Strength Levels eigener "1RM Weight"-Tabelle fuer
+       Klimmzuege (5./20./50./80./95. Perzentil bei 80 kg M / 60 kg F: -2/14/33/54/75 kg
+       Zusatzgewicht bzw. -16/-4/9/23/38 kg bei Frauen - jeweils in (Referenzgewicht+Zusatz)/
+       Referenzgewicht umgerechnet), Legende = Faktor 1,19 auf das 95. Perzentil. Keine
+       Sonderbehandlung der untersten 4 Stufen noetig (lineare Rueckrechnung bleibt hier positiv,
+       anders als bei Curl/Plank/Beinheben/Kabel-Crunch). Zusammengelegt: die vorherige eigene
+       Uebung "Klimmzüge mit Zusatzgewicht" (pullup_weight) ist jetzt Teil dieser Uebung -
+       bereits geloggte Saetze werden beim Laden einmalig umbenannt (14-start.js). */
+    m:[0.57,0.67,0.77,0.88,0.98,1.08,1.18,1.25,1.33,1.41,1.50,1.59,1.68,1.76,1.85,1.94,2.06,2.18,2.31],
+    w:[0.45,0.52,0.59,0.66,0.73,0.83,0.93,1.01,1.08,1.15,1.23,1.31,1.38,1.47,1.55,1.63,1.74,1.84,1.94]
+  },
+  dips:{
+    /* Leitübung: Dips, jetzt "load" mit optionalem Zusatzgewicht (wt:"body"), gleiches Prinzip
+       wie pullup oben. Anker aus Strength Levels "1RM Weight"-Tabelle fuer Dips (80 kg M / 60 kg
+       F: 5/26/52/81/111 kg bzw. -15/0/17/37/58 kg Zusatzgewicht bei Frauen), gleich umgerechnet
+       in effektive Gesamtlast/Koerpergewicht. Legende = Faktor 1,19 auf das 95. Perzentil, keine
+       Sonderbehandlung der untersten 4 Stufen noetig (bleibt linear positiv). */
+    m:[0.54,0.67,0.80,0.93,1.06,1.19,1.33,1.43,1.54,1.65,1.77,1.89,2.01,2.14,2.26,2.39,2.54,2.69,2.84],
+    w:[0.40,0.49,0.57,0.66,0.75,0.88,1.00,1.09,1.19,1.28,1.39,1.51,1.62,1.73,1.85,1.97,2.09,2.22,2.34]
+  },
+  pushup:{
+    /* Leitübung: Liegestütze, bleibt reine Wiederholungs-Uebung (t:"reps") - "bw:false" wie
+       Plank/Beinheben (siehe dort fuer die Begruendung: kein belegter positiver Zusammenhang
+       zwischen Koerpergewicht und Wiederholungszahl, und fuer Liegestuetze gibt es bei Strength
+       Level anders als bei Klimmzug/Dips auch keine "1RM Weight"-Tabelle, die eine effektive-
+       Last-Umrechnung stuetzen wuerde - bei den hier ueblichen hohen Wiederholungszahlen waere
+       eine e1RM-Hochrechnung ueber die vorhandene Formel zudem unzuverlaessig). Werte absolute
+       Wiederholungen bei 80 kg (M) / 60 kg (F) aus Strength Level (5./20./50./80./95. Perzentil:
+       6/20/38/60/84 bzw. <1/7/18/32/47 bei Frauen - "<1" wie bei Beinheben als Anker 1 behandelt,
+       die tatsaechliche Spanne darunter bilden die geometrisch zurueckgerechneten untersten 4
+       Stufen ab), Legende = Faktor 1,19 auf das 95. Perzentil. Unterste 4 Stufen bei beiden
+       Geschlechtern geometrisch zurueckgerechnet (lineare Rueckrechnung liefe ins Negative). */
+    bw:false,
+    m:[0.54,0.99,1.80,3.29,6,13,20,26,32,38,45,53,60,68,76,84,89,95,100],
+    w:[0.07,0.13,0.26,0.51,1,4,7,11,14,18,23,27,32,37,42,47,50,53,56]
+  },
+  bwsquat:{
+    /* Leitübung: Kniebeuge ohne Gewicht, wie pushup bw:false (Wiederholungs-Standard, keine "1RM
+       Weight"-Tabelle bei Strength Level vorhanden, sehr hohe Wiederholungszahlen bei hohen
+       Perzentilen). Werte absolute Wiederholungen bei 80 kg (M) / 60 kg (F) aus Strength Level
+       (5./20./50./80./95. Perzentil: 3/23/53/88/128 bzw. <1/13/40/75/115 bei Frauen), Legende =
+       Faktor 1,19 auf das 95. Perzentil. Unterste 4 Stufen geometrisch zurueckgerechnet. */
+    bw:false,
+    m:[0.05,0.14,0.39,1.08,3,13,23,33,43,53,65,76,88,101,115,128,136,144,152],
+    w:[0.03,0.07,0.17,0.41,1,7,13,22,31,40,52,63,75,88,102,115,122,130,137]
   }
 };
 var BW_REF={m:80,w:60};    // Referenzgewicht je Geschlecht, an dem die Ladder-Werte oben gelten

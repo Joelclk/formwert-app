@@ -584,7 +584,7 @@ function renderSessionInner(){
     var unitLab2=ex.t==="sec"?"Sek.":"Wdh.";
     var hd=el("div","wo-row head");
     hd.appendChild(el("span",null,"Satz"));hd.appendChild(el("span",null,"Vorher"));
-    if(ex.t==="load")hd.appendChild(el("span",null,"kg"));
+    if(ex.t==="load")hd.appendChild(el("span",null,ex.wt==="body"?"+kg":"kg"));
     if(ex.uni){hd.appendChild(el("span",null,unitLab2+" L"));hd.appendChild(el("span",null,unitLab2+" R"));}
     else hd.appendChild(el("span",null,unitLab2));
     hd.appendChild(el("span",null,"Reserve"));
@@ -597,7 +597,7 @@ function renderSessionInner(){
       var r=el("div","wo-row"+(st.done?" done":"")+(st.done&&st.pr&&st.pr.length?" pr":""));r.setAttribute("data-s",String(si));
       r.appendChild(el("span","wo-n",String(si+1)));
       var pv=prevSets[si],pvUni=(ex.uni&&pv&&pv.repsL!=null&&pv.repsR!=null)?(pv.repsL+"/"+pv.repsR):null;
-      r.appendChild(el("span","wo-prev",pv?(ex.t==="load"?pv.kg+"×"+(pvUni||pv.reps):(pvUni||pv.reps)+(ex.t==="sec"?" s":"")):"–"));
+      r.appendChild(el("span","wo-prev",pv?(ex.t==="load"?(ex.wt==="body"&&!pv.kg?(pvUni||pv.reps):(ex.wt==="body"?"+":"")+pv.kg+"×"+(pvUni||pv.reps)):(pvUni||pv.reps)+(ex.t==="sec"?" s":"")):"–"));
       var kgI=null;
       // Leere Felder bleiben leer (null) - als Orientierung steht der Wert vom letzten Mal als
       // blasser Platzhalter darin, uebernommen wird er aber erst, wenn man ihn eintippt.
@@ -653,7 +653,7 @@ function renderSessionInner(){
         var reps=ex.uni?Math.min(repsL,repsR):(parseInt(rpI.value,10)||0);
         // Ein leeres Gewichtsfeld wird nicht stillschweigend als 0 kg gespeichert - wer ohne
         // Zusatzgewicht trainiert, traegt bewusst 0 ein.
-        if(kgI&&String(kgI.value).trim()===""){toast("Gewicht eintragen (0 = ohne Gewicht)");try{kgI.focus();}catch(e){}return;}
+        if(kgI&&String(kgI.value).trim()===""){toast(ex.wt==="body"?"Zusatzgewicht eintragen (0 = ohne)":"Gewicht eintragen (0 = ohne Gewicht)");try{kgI.focus();}catch(e){}return;}
         if(reps<=0){toast(ex.t==="sec"?"Sekunden eintragen":"Wiederholungen eintragen");try{(ex.uni?rpLI:rpI).focus();}catch(e){}return;}
         ck.classList.add("on");
         st.kg=kg;st.reps=reps;st.done=true;if(ex.uni){st.repsL=repsL;st.repsR=repsR;}

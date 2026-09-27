@@ -92,6 +92,8 @@ function wtInfoText(ex){
   if(ex.t==="load"){
     lines.push(ex.wt==="side"
       ? "Gewicht zählt pro Seite: Trag das Gewicht EINER Hantel ein (z. B. 10 kg pro Kurzhantel). Für Bestwert und Kraftstufe wird automatisch die Gesamtlast verwendet – hier also 20 kg."
+      : ex.wt==="body"
+      ? "Zusatzgewicht ist optional: Trag nur das zusätzliche Gewicht ein (Gürtel, Kurzhantel o. Ä.) – ohne Zusatzgewicht einfach 0 lassen. Dein Körpergewicht wird für Bestwert und Kraftstufe automatisch mit eingerechnet."
       : "Gewicht zählt als Gesamtgewicht: Trag die komplette bewegte Last ein, so wie sie an Langhantel oder Maschine eingestellt ist.");
   } else if(ex.t==="sec"){
     lines.push("Gezählt werden die gehaltenen Sekunden.");
@@ -137,12 +139,25 @@ function exInfoBtn(box){
   return btn;
 }
 
-/* ---- 1RM: drei Formeln, jede in ihrem validierten Bereich, weich gemischt ---- */
-function e1rm(kg,reps){
+/* ---- 1RM: drei Formeln, jede in ihrem validierten Bereich, weich gemischt ----
+   capR begrenzt, bis zu welcher Wiederholungszahl noch geglättet/hochgerechnet wird - Standard
+   15 (unveraendert fuer alle Langhantel-/Maschinen-Uebungen). Koerpergewichts-Uebungen mit
+   optionalem Zusatzgewicht (wt:"body": Klimmzuege, Dips) erreichen im unbelasteten Bereich
+   deutlich hoehere, durchaus reale Wiederholungszahlen (Elite-Werte laut Strength Level: 29
+   Klimmzuege, 42 Dips) - mit dem alten Deckel bei 15 waeren solche Saetze nicht von einem Satz
+   mit nur 15 Wdh. zu unterscheiden gewesen, obwohl die Rangleiter-Anker selbst aus ungedeckelten
+   Perzentil-Daten stammen. Ein hoeherer Deckel nur fuer diese Uebungen behebt das, ohne
+   bestehende Gewichts-Uebungen zu beruehren (deren Aufrufe lassen capR weg -> weiterhin 15).
+   Rechnerisch unbedenklich: ab r>~17 sind we/wb/ww ohnehin schon 0 (die Epley-/Brzycki-Anteile
+   fallen laengst raus), die Funktion läuft dann automatisch rein auf die Wathen-Formel hinaus,
+   die auch bei sehr hohen Wiederholungszahlen glatt bleibt (keine Division durch 0 möglich,
+   da s<=0 vorher abfängt). */
+function e1rm(kg,reps,capR){
   var r=(reps||0);
   if(kg<=0)return 0;
   if(r<=1)return kg;
-  if(r>15)r=15;
+  var cap=capR||15;
+  if(r>cap)r=cap;
   var epley  = kg*(1+r/30);
   var brzycki= kg*36/(37-r);
   var wathen = 100*kg/(48.8+53.8*Math.exp(-0.075*r));
@@ -156,14 +171,34 @@ function e1rm(kg,reps){
 // Bei "pro Seite" geloggten Übungen (typischerweise Kurzhanteln) hält man zwei Gewichte
 // gleichzeitig – die tatsächlich bewegte Last fürs Einer-Maximum ist dann das Doppelte des
 // eingetragenen (Einzel-)Gewichts. Bei "Gesamtgewicht" (Langhantel, Maschine) bleibt es unverändert.
-function effectiveKg(ex,kg){return (ex.wt==="side")?(kg||0)*2:(kg||0);}
+// Bei wt:"body" (Klimmzüge, Dips) ist das eingetragene Gewicht nur das ZUSÄTZLICHE Gewicht -
+// die tatsächlich bewegte Last ist das eigene Körpergewicht plus dieses Zusatzgewicht (auch bei
+// 0 kg Zusatzgewicht, also reinen Körpergewichts-Sätzen). Ohne Profil/Körpergewicht (sollte nach
+// Einrichtung nicht vorkommen) wird mit 80 kg als Rückfallwert gerechnet.
+function effectiveKg(ex,kg){
+  if(ex.wt==="side")return (kg||0)*2;
+  if(ex.wt==="body"){var bw=(state.profile&&state.profile.bodyweight)||80;return bw+(kg||0);}
+  return (kg||0);
+}
 // Kehrt effectiveKg um: aus einem Gesamtwert (z. B. dem gespeicherten Bestwert/e1RM, der bei
 // "pro Seite" schon verdoppelt ist) wieder das einzutragende Einzel-/Rohgewicht schätzen.
-function rawKg(ex,effKg){return (ex.wt==="side")?(effKg||0)/2:(effKg||0);}
+// Bei wt:"body" wird das Körpergewicht wieder abgezogen, damit das Ergebnis (wie beim Eintragen)
+// nur das Zusatzgewicht ist.
+function rawKg(ex,effKg){
+  if(ex.wt==="side")return (effKg||0)/2;
+  if(ex.wt==="body"){var bw=(state.profile&&state.profile.bodyweight)||80;return (effKg||0)-bw;}
+  return (effKg||0);
+}
 // Vorschlag fürs Eintragen eines neuen Satzes: ~80 % des zuletzt erreichten Bestwerts, auf
 // 2,5 kg gerundet. Der Bestwert ist immer die Gesamtlast (e1RM) – bei "pro Seite" muss der
 // Vorschlag also erst zurückgerechnet werden, sonst wäre er doppelt so schwer wie beabsichtigt.
-function suggestedKg(ex,bestVal){return bestVal?Math.round(rawKg(ex,bestVal)*0.8/2.5)*2.5:20;}
+// Bei wt:"body" ohne bisherigen Bestwert ist 0 (kein Zusatzgewicht) der richtige Start - anders
+// als bei echten Gewichts-Übungen, wo 20 kg ein sinnvoller erster Vorschlag ist, wäre "20 kg
+// Zusatzgewicht" für den allerersten geloggten Klimmzug/Dip fast immer zu viel.
+function suggestedKg(ex,bestVal){
+  if(ex.wt==="body")return bestVal?Math.max(0,Math.round(rawKg(ex,bestVal)*0.8/2.5)*2.5):0;
+  return bestVal?Math.round(rawKg(ex,bestVal)*0.8/2.5)*2.5:20;
+}
 // Dasselbe Prinzip wie suggestedKg, nur für Wdh./Sek.-Übungen: ohne das gab es beim Eintragen
 // immer nur einen festen Startwert (30 s bzw. 8 Wdh) – unabhängig vom tatsächlichen Bestwert,
 // wodurch die Live-Vorschau (Stufe für den Vorschlagswert) nichts mit der echten Kraftstufe zu
@@ -179,14 +214,20 @@ function suggestedReps(ex,bestVal){
   return Math.max(1,Math.round(bestVal));
 }
 function setValue(ex,s){
-  if(ex.t==="load")return e1rm(effectiveKg(ex,s.kg),s.reps||1);
+  if(ex.t==="load")return e1rm(effectiveKg(ex,s.kg),s.reps||1,ex.wt==="body"?40:15);
   return (s.reps||0);
 }
 // Lesbare Kurzform eines geloggten Satzes für Listen (Heute, Verlauf, "Vorher"-Spalte im
 // Training). Bei einseitigen Übungen wird links/rechts getrennt angezeigt, sofern erfasst.
+// Bei wt:"body" ohne Zusatzgewicht (kg 0/leer) wirkt "0×8" wie "mit 0 kg", dabei wurde ja das
+// volle Körpergewicht bewegt - dort stattdessen nur die Wdh. zeigen; mit Zusatzgewicht ein "+"
+// davor, damit klar bleibt: das ist nur das Zusätzliche, nicht die Gesamtlast.
 function setLabel(ex,s){
   var uniPart=(ex.uni&&s.repsL!=null&&s.repsR!=null)?(s.repsL+"/"+s.repsR+(ex.t==="sec"?" s":" Wdh")):null;
-  if(ex.t==="load")return s.kg+"×"+(uniPart||s.reps);
+  if(ex.t==="load"){
+    if(ex.wt==="body"&&!s.kg)return uniPart||(s.reps+" Wdh");
+    return (ex.wt==="body"?"+":"")+s.kg+"×"+(uniPart||s.reps);
+  }
   return uniPart||(s.reps+(ex.t==="sec"?" s":" Wdh"));
 }
 
