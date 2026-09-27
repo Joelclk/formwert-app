@@ -7,6 +7,8 @@
 #
 # Weitere Optionen gehen an faserfix.py, z. B. --muskeln M1,M2 --armatur Rig
 set -euo pipefail
+# ${@+"$@"} statt "$@": Bash 3.2 (macOS) meldet sonst bei set -u ohne
+# Zusatzoptionen "unbound variable".
 
 BLENDER="${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}"
 DATEI="${1:?Pfad zur .blend-Datei angeben}"
@@ -21,11 +23,11 @@ lauf() {
     "$@" --aus "$AUS" 2>&1 | tee "$AUS/$log"
 }
 
-lauf 1_diagnose_vorher.log  diagnose --tag vorher "$@"
-lauf 2_render_vorher.log    render   --tag vorher "$@"
-lauf 3_fix.log              fix                   "$@"
-lauf 4_render_nachher.log   render   --tag nachher "$@"
-lauf 5_diagnose_nachher.log diagnose --tag nachher "$@"
+lauf 1_diagnose_vorher.log  diagnose --tag vorher ${@+"$@"}
+lauf 2_render_vorher.log    render   --tag vorher ${@+"$@"}
+lauf 3_fix.log              fix                   ${@+"$@"}
+lauf 4_render_nachher.log   render   --tag nachher ${@+"$@"}
+lauf 5_diagnose_nachher.log diagnose --tag nachher ${@+"$@"}
 
 echo
 echo "Fertig. Ergebnisse in: $AUS"
