@@ -1,3 +1,5 @@
 # Sicherungskopien der Werkzeuge (je rund 13 MB) - gehoeren nicht ins Repo
 *.vorher
 __pycache__/
+node_modules/
+package-lock.json
