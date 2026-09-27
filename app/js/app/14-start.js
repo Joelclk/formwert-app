@@ -126,7 +126,7 @@ function connect(){
       // Ab hier steht fest, ob es ein gespeichertes Profil gibt - der Startbildschirm
       // darf weg. Tage und Einheiten kommen gleich danach und rendern nochmal.
       fwBootReady();
-      return d.collection("days").limit(400).get();
+      return fwLoadDays(d);
     }).then(function(qs){
       if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(!b)return;
         if(doc.id===TODAY&&state.days[TODAY]&&(state.days[TODAY].sets||[]).length)return;

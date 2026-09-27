@@ -352,6 +352,10 @@ function woMoveEx(from,to){
   var it=workout.exercises.splice(from,1)[0];
   workout.exercises.splice(to,0,it);
   if(seen){var ni=workout.exercises.indexOf(seen);if(ni>=0)woPage=ni;}
+    // Zwei gleiche Übungen zu tauschen ergibt denselben woShapeKey. Ohne erzwungenen Neuaufbau
+  // blieben Eingabefelder und Knöpfe an der alten Reihenfolge hängen, und "Übung entfernen"
+  // träfe die falsche Übung.
+  woShape=null;
   saveWorkout();renderSession();
   return true;
 }
@@ -493,7 +497,9 @@ function renderSessionInner(){
   workout.exercises.forEach(function(we,ei){
     var ex=exById(we.ex);if(!ex)return;
     var w=el("article","wo-page");w.setAttribute("data-i",String(ei));
-    var isCardio=ex.t==="cardio";
+        // Nur mit Ausdauer-Datensatz als Ausdauer zeigen: Ein gespeichertes Training kann aus
+    // derselben Zeit noch Sätze für eine Ausdauer-Übung enthalten.
+    var isCardio=ex.t==="cardio"&&!!we.cardioRec;
     var h=el("div","wo-pagehead");
     var title=el("div","main");title.appendChild(el("b",null,ex.n));
     if(isCardio){
@@ -541,10 +547,11 @@ function renderSessionInner(){
     w.appendChild(infoBoxS);
     if(isCardio){
       var grid=el("div","grid2");grid.style.marginTop="4px";
-      // Sollte der Datensatz nicht (mehr) in einem Tag stehen - etwa weil der Tag
-      // zwischendurch aus der Cloud neu geschrieben wurde -, wieder eintragen: sonst
-      // laufen die Minuten ins Leere und zaehlen auf kein Wochenziel.
-      if(!cardioDayOf(we.cardioRec)){day(TODAY).cardio.push(we.cardioRec);touch(TODAY);}
+            // Sollte der Datensatz nicht (mehr) in einem Tag stehen - etwa weil der Tag
+      // zwischendurch aus der Cloud neu geschrieben wurde -, erst die Kopie im Tag suchen
+      // (gleiche Uebung, gleiches Training) und nur ohne Treffer neu eintragen. Blindes
+      // Eintragen setzte ihn neben die Cloud-Kopie und zaehlte die Minuten doppelt.
+      if(!cardioDayOf(we.cardioRec))relinkCardio(workout);
       var touchCardio=function(){touch(cardioDayOf(we.cardioRec)||TODAY);};
       var minF=numField("Minuten",we.cardioRec.min,"5",0),kmF=numField("Kilometer (optional)",we.cardioRec.km,"0.5",0);
       grid.appendChild(minF);grid.appendChild(kmF);w.appendChild(grid);
@@ -617,17 +624,17 @@ function renderSessionInner(){
       var rirBtn=el("button","wo-rir"+(st.done?" done":""));rirBtn.type="button";
       rirBtn.innerHTML='<b>'+rirText(st.rir!=null?st.rir:null)+'</b>';
       rirBtn.setAttribute("aria-label","Wiederholungen in Reserve für diesen Satz");
-      if(st.done){
-        rirBtn.disabled=true;
-      }else{
-        rirBtn.onclick=function(ev){
-          ev.preventDefault();ev.stopPropagation();
-          var cur=st.rir!=null?st.rir:null;
-          st.rir=(cur==null)?0:(cur>=5?null:cur+1);
-          saveWorkoutSoon();
-          rirBtn.querySelector("b").textContent=rirText(st.rir);
-        };
-      }
+            if(st.done)rirBtn.disabled=true;
+      // Der Handler hängt immer, auch an abgehakten Sätzen: Wird ein Satz zurückgenommen,
+      // gibt woUpdate() den Knopf nur wieder frei, ohne die Zeile neu aufzubauen.
+      rirBtn.onclick=function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        if(st.done)return;
+        var cur=st.rir!=null?st.rir:null;
+        st.rir=(cur==null)?0:(cur>=5?null:cur+1);
+        saveWorkoutSoon();
+        rirBtn.querySelector("b").textContent=rirText(st.rir);
+      };
       r.appendChild(rirBtn);
       var ck=el("button","wo-check"+(st.done?" on":""));ck.type="button";ck.setAttribute("aria-label",st.done?"Satz zurücknehmen":"Satz abhaken");
       ck.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5 6 12l7.5-8"/></svg>';
@@ -730,19 +737,54 @@ function prevSetsFor(exid){
    die während des Trainings geloggt wurden (sie tragen dessen wid). Beides wird entfernt –
    auch Sätze, die nach Mitternacht auf dem Folgetag gelandet sind. */
 function workoutSetCount(wo){var n=0;for(var k in state.days){(state.days[k].sets||[]).forEach(function(st){if(st.wid===wo.id)n++;});}return n;}
+function workoutCardioCount(wo){var n=0;for(var k in state.days){(state.days[k].cardio||[]).forEach(function(c){if(c.wid===wo.id)n++;});}return n;}
+// Ausdauer gehört genauso zum Training wie die Sätze – die Trainingsansicht zeigt sie mit an.
+// Bliebe sie beim Löschen stehen, zählte ein gelöschtes Training weiter aufs Ausdauer-Wochenziel.
 function deleteWorkout(dateKey,wo){
-  for(var k in state.days){var dd=state.days[k],before=(dd.sets||[]).length;
+  for(var k in state.days){var dd=state.days[k],before=(dd.sets||[]).length,beforeC=(dd.cardio||[]).length;
     dd.sets=(dd.sets||[]).filter(function(st){return st.wid!==wo.id;});
-    if(dd.sets.length!==before)touch(k);}
+    dd.cardio=(dd.cardio||[]).filter(function(c){return c.wid!==wo.id;});
+    if(dd.sets.length!==before||dd.cardio.length!==beforeC)touch(k);}
   var d=day(dateKey);d.workouts=(d.workouts||[]).filter(function(w){return w.id!==wo.id;});touch(dateKey);
   renderAll();toast("Training gelöscht");
 }
 function confirmDeleteWorkout(dateKey,wo){
-  var n=workoutSetCount(wo);
-  askConfirm("Training löschen?","„"+wo.name+"“ vom "+deDate(dateKey)+(n?" samt "+(n===1?"einem geloggten Satz":n+" geloggten Sätzen"):"")+" wird dauerhaft entfernt.","Löschen",function(){deleteWorkout(dateKey,wo);},true);
+  var n=workoutSetCount(wo),c=workoutCardioCount(wo),teile=[];
+  if(n)teile.push(n===1?"einem geloggten Satz":n+" geloggten Sätzen");
+  if(c)teile.push(c===1?"einem Ausdauer-Eintrag":c+" Ausdauer-Einträgen");
+  askConfirm("Training löschen?","„"+wo.name+"“ vom "+deDate(dateKey)+(teile.length?" samt "+teile.join(" und "):"")+" wird dauerhaft entfernt.","Löschen",function(){deleteWorkout(dateKey,wo);},true);
+}
+/* Ein Satz aus dem laufenden Training steht zweimal: als Datensatz im Tag (day.sets) und im
+   Training (st.rec). Wird er außerhalb des Trainings gelöscht oder bearbeitet (Heute-Tab,
+   Satz bearbeiten, Tag leeren), muss das Training nachziehen – sonst zeigt es den Satz weiter
+   als abgehakt und "Beenden" zählt ihn mit den alten Werten. Nach einem Neuladen ist st.rec
+   nur eine Kopie, darum wird zusätzlich über den Zeitstempel verglichen. */
+function syncWorkoutRec(rec,removed){
+  if(!workout||!rec||rec.wid!==workout.id)return;
+  var hit=false;
+  workout.exercises.forEach(function(we){(we.sets||[]).forEach(function(st){
+    if(!st.rec||!(st.rec===rec||(rec.ts&&st.rec.ts===rec.ts)))return;
+    hit=true;
+    if(removed){st.done=false;st.rec=null;}
+    else{st.kg=rec.kg;st.reps=rec.reps;if(rec.repsL!=null){st.repsL=rec.repsL;st.repsR=rec.repsR;}st.rec=rec;}
+  });});
+  if(hit)saveWorkout();
+}
+// Dasselbe für Ausdauer: Wird der Eintrag außerhalb des Trainings gelöscht, fliegt auch die
+// Übung aus dem Training. Sonst trüge das Training ihn beim nächsten Aufbau wieder in den Tag ein.
+function dropWorkoutCardio(rec){
+  if(!workout||!rec||rec.wid!==workout.id)return;
+  var n=workout.exercises.length;
+  workout.exercises=workout.exercises.filter(function(we){return we.cardioRec!==rec;});
+  if(workout.exercises.length===n)return;
+  if(woPage>workout.exercises.length)woPage=workout.exercises.length;
+  saveWorkout();
 }
 function deleteDay(dateKey){
-  var d=day(dateKey);d.sets=[];d.cardio=[];d.workouts=[];d.mobility=false;touch(dateKey);renderAll();toast("Tag geleert");
+  var d=day(dateKey);
+  (d.sets||[]).forEach(function(st){syncWorkoutRec(st,true);});
+  (d.cardio||[]).forEach(function(c){dropWorkoutCardio(c);});
+  d.sets=[];d.cardio=[];d.workouts=[];d.mobility=false;touch(dateKey);renderAll();toast("Tag geleert");
 }
 // Vorne/Hinten-Figur mit den an diesem Tag tatsächlich trainierten Muskeln (Primär kräftig,
 // Sekundär heller) – dieselbe Einfärbung wie bei einer einzelnen Übung, nur über den ganzen Tag

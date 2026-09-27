@@ -172,7 +172,12 @@ function renderSection(id){
   // Entdecken hängt an keinen Tageswerten (c) – unabhängig davon rendern, damit ein noch
   // fehlendes lastC (z. B. ganz am Anfang) den Übungskatalog nicht blockiert.
   if(id==="tab-entdecken"){renderEntdecken();secDirty.entdecken=false;return;}
-  var c=lastC,pk=state.profile.peaks||{};if(!c)return;
+    var c=lastC,pk=state.profile.peaks||{};
+  // Während eines Trainings rechnet renderLight() bewusst nicht alles neu, sondern setzt nur
+  // heuteDirty. Körper und Werte brauchen aber den aktuellen Stand – sonst fehlen dort die
+  // gerade abgehakten Sätze, bis man einmal den Heute-Tab öffnet.
+  if(heuteDirty&&id!=="tab-training")c=lastC=compute(TODAY);
+  if(!c)return;
   if(id==="tab-koerper"){renderBody(c.ms);renderMuscleList(c.ms);secDirty.koerper=false;}
   else if(id==="tab-werte"){renderSkills(c,pk);try{renderErfolge();}catch(e){}renderStrength(c);renderCardio(c);renderFormula(c);renderSpark();renderHistory();renderSettings();secDirty.werte=false;}
   else if(id==="tab-training"){renderRoutines();renderSession();secDirty.training=false;}
@@ -222,7 +227,7 @@ function persist(){
   saveLocal();if(!db)return;
   var p=Object.keys(state.dirty);state.dirty={};
   p.forEach(function(d){var b=state.days[d];if(!b)return;
-    db.doc("days/"+d).set({sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}).then(cloudOk,function(){state.dirty[d]=true;cloudFail();});});
+    db.doc("days/"+d).set({d:d,sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}).then(cloudOk,function(){state.dirty[d]=true;cloudFail();});});
   var r=Object.keys(state.dirtyRoutines);state.dirtyRoutines={};
   r.forEach(function(id){var redo=function(){state.dirtyRoutines[id]=true;cloudFail();};
     if(state.routines[id])db.doc("routines/"+id).set(state.routines[id]).then(cloudOk,redo);else db.doc("routines/"+id).delete().then(cloudOk,redo);});

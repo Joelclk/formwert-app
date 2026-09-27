@@ -225,7 +225,11 @@ function applyExOverrides(){
     var base=EX_BASE[id],ex=exById(id);if(!base||!ex)return;
     var merged=Object.assign({},base);
     delete merged.mob;delete merged.wt;delete merged.uni;
-    Object.assign(merged,state.exOverrides[id]);
+        Object.assign(merged,state.exOverrides[id]);
+    // Ältere Fassungen des Formulars haben bei Ausdauer-Übungen Art und Bewegungsmuster leer
+    // gespeichert. Leer ist nie gewollt – dann gilt wieder das Original.
+    if(!merged.t)merged.t=base.t;
+    if(!merged.pat)merged.pat=base.pat;
     Object.keys(ex).forEach(function(k){delete ex[k];});
     Object.assign(ex,merged);
   });

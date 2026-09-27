@@ -19,7 +19,10 @@ function mainList(){var o=[];for(var k in ob.main)if(ob.main[k])o.push(ob.main[k
 function obProfile(){return {age:ob.age,sex:ob.sex,bodyweight:ob.bw,restHr:ob.hr,cooper:0};}
 function baseValue(id){
   var e=exById(id);if(!e)return 0;
-  if(e.t==="load"){if(ob.mode[id]==="max")return ob.kg[id]||0;return e1rm(effectiveKg(e,ob.kg[id]),ob.val[id]||0);}
+    // Gespeichert wird das eingetragene Gewicht; gewertet wird es später mit effectiveKg (bei
+  // "pro Seite" verdoppelt). Die Vorschau muss genauso rechnen, sonst springt die Stufe nach dem
+  // Abschluss.
+  if(e.t==="load"){if(ob.mode[id]==="max")return effectiveKg(e,ob.kg[id]);return e1rm(effectiveKg(e,ob.kg[id]),ob.val[id]||0);}
   return (ob.val[id]||0);
 }
 function drawOb(){
@@ -82,7 +85,7 @@ function drawOb(){
       function nfield(lab,val,step,cb){var f=el("div","field");f.appendChild(el("label",null,lab));
         var n=document.createElement("input");n.type="number";n.inputMode="decimal";n.step=step;n.min="0";n.value=val||"";n.placeholder="0";
         n.oninput=function(){cb(parseFloat(n.value.replace(",","."))||0);upd();};f.appendChild(n);return f;}
-      if(e.t==="load")grid.appendChild(nfield(isMax?"Einer-Maximum (kg)":"Gewicht (kg)",ob.kg[id],"2.5",function(v){ob.kg[id]=v;}));
+            if(e.t==="load")grid.appendChild(nfield((isMax?"Einer-Maximum":"Gewicht")+(e.wt==="side"?" pro Seite":"")+" (kg)",ob.kg[id],"2.5",function(v){ob.kg[id]=v;}));
       if(!isMax)grid.appendChild(nfield(e.t==="sec"?"Sekunden":"Wiederholungen",ob.val[id],"1",function(v){ob.val[id]=v;}));
       card.appendChild(grid);
       var out=el("div","calcout");card.appendChild(out);
@@ -168,7 +171,12 @@ function preview(){
   c.kraft=kraft;c.fitness=Math.round(W.kraft*kraft+W.konst*c.konst+W.deckung*c.deckung+W.ausdauer*c.ausdauer+W.mob*c.mob);c.grades=grades;return c;
 }
 function finishOnboarding(){
-  state.profile=buildProfile();var d=day(TODAY);
+  // Das Assessment fragt nur Eckdaten, Hauptübungen und Ziele ab. Beim Wiederholen bleibt
+  // alles andere am Profil erhalten: Cooper-Test, persönliche Korridore, Sprache, Startdatum
+  // (daran hängen die Auswertungsfenster) und Bestwerte.
+  var old=state.profile,neu=buildProfile();
+  if(old&&old.version>=3){for(var k in old){if(!(k in neu)||k==="cooper"||k==="peaks"||k==="startedAt")neu[k]=old[k];}}
+  state.profile=neu;var d=day(TODAY);
   mainList().forEach(function(id){
     var e=exById(id),v=baseValue(id);if(v<=0)return;
     if(d.sets.some(function(s){return s.ex===id;}))return;

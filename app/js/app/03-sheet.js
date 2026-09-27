@@ -197,12 +197,17 @@ function exerciseForm(b,existing){
   [["load","Gewicht × Wdh"],["reps","Wiederholungen"],["sec","Sekunden halten"]].forEach(function(o){
     var op=document.createElement("option");op.value=o[0];op.textContent=o[1];typeSel.appendChild(op);
   });
+    // Ausdauer-Übungen lassen sich bearbeiten, aber nicht neu anlegen – darum fehlt die Option
+  // sonst. Ohne sie würde das Feld leer, und die Übung verlöre beim Speichern ihre Art: Sie
+  // verschwand aus der Ausdauer-Auswahl und wurde wie eine Kraftübung behandelt.
+  if(existing&&existing.t==="cardio"){var opT=document.createElement("option");opT.value="cardio";opT.textContent="Ausdauer (Minuten)";typeSel.appendChild(opT);}
   if(existing)typeSel.value=existing.t;
   typeF.appendChild(typeSel);grid.appendChild(typeF);
 
   var patF=el("div","field");patF.appendChild(el("label",null,"Bewegungsmuster"));
   var patSel=document.createElement("select");
   movementGroups().forEach(function(p){var op=document.createElement("option");op.value=p.id;op.textContent=p.name;patSel.appendChild(op);});
+    if(existing&&existing.pat==="cardio"){var opP=document.createElement("option");opP.value="cardio";opP.textContent="Ausdauer";patSel.appendChild(opP);}
   if(existing)patSel.value=existing.pat;
   patF.appendChild(patSel);grid.appendChild(patF);
   b.appendChild(grid);

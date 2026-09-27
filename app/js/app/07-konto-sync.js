@@ -27,16 +27,33 @@ function saveBackup(){
 }
 // Anders als persist() bildet diese Funktion keinen Teilstand ab, sondern ersetzt den
 // Konto-Inhalt bewusst vollständig. Das ist für eine Backup-Wiederherstellung wichtig:
+/* Alle Tage aus der Cloud laden. Ohne Sortierung liefert die Datenbank nach Dokument-ID,
+   also nach Datum aufsteigend, und eine Abfrage bringt höchstens 1000 Dokumente. Früher
+   stand hier fest limit(400): ab dem 401. gespeicherten Tag fehlten auf einem neuen Gerät
+   ausgerechnet die neuesten Tage. Weitere Seiten laufen über das Feld "d" (Datum), das jeder
+   Tag beim Speichern mitbekommt. Ältere Dokumente ohne "d" sind die ältesten und liegen
+   deshalb immer auf der ersten Seite. */
+function fwLoadDays(d){
+  var alle=[],SEITE=1000;
+  function weiter(qs){
+    var docs=(qs&&qs.docs)||[];
+    alle=alle.concat(docs);
+    if(docs.length<SEITE)return {docs:alle};
+    var letzte=docs[docs.length-1].id;
+    return d.collection("days").where("d",">",letzte).orderBy("d").limit(SEITE).get().then(weiter);
+  }
+  return d.collection("days").limit(SEITE).get().then(weiter);
+}
 // Dokumente, die im Backup fehlen, dürfen beim nächsten Start nicht wieder auftauchen.
 function replaceCloudFromState(d){
   if(!d)return Promise.reject(new Error("keine Cloud-Verbindung"));
   var days=state.days||{},routines=state.routines||{};
-  return Promise.all([d.collection("days").get(),d.collection("routines").get()]).then(function(q){
+  return Promise.all([fwLoadDays(d),d.collection("routines").get()]).then(function(q){
     var jobs=[];
     (q[0]&&q[0].docs||[]).forEach(function(doc){if(!days[doc.id])jobs.push(d.doc("days/"+doc.id).delete());});
     (q[1]&&q[1].docs||[]).forEach(function(doc){if(!routines[doc.id])jobs.push(d.doc("routines/"+doc.id).delete());});
     Object.keys(days).forEach(function(id){var b=days[id]||{};
-      jobs.push(d.doc("days/"+id).set({sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}));});
+      jobs.push(d.doc("days/"+id).set({d:id,sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}));});
     Object.keys(routines).forEach(function(id){jobs.push(d.doc("routines/"+id).set(routines[id]));});
     jobs.push(d.doc("state/profile").set(state.profile));
     jobs.push(d.doc("state/exoverrides").set({v:state.exOverrides||{}}));

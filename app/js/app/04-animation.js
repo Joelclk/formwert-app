@@ -190,13 +190,13 @@ function sheetEditLoggedSet(ex,date,setIdx,onChange){
       s.kg=kgF?(parseFloat(kgF.input.value)||0):0;
       s.reps=reps;
       if(ex.uni){s.repsL=parseInt(repLF.input.value,10)||0;s.repsR=parseInt(repRF.input.value,10)||0;}
-      touch(date);saveLocal();closeSheet();renderAll();onChange();
+            syncWorkoutRec(s,false);touch(date);saveLocal();closeSheet();renderAll();onChange();
     };
     b.appendChild(save);
     var del=el("button","btn ghost block","Satz löschen");del.style.marginTop="8px";
     del.onclick=function(){
       askConfirm("Satz löschen?","Dieser Satz vom "+deDate(date)+" wird entfernt.","Löschen",function(){
-        state.days[date].sets.splice(setIdx,1);touch(date);saveLocal();closeSheet();renderAll();onChange();
+                syncWorkoutRec(state.days[date].sets.splice(setIdx,1)[0],true);touch(date);saveLocal();closeSheet();renderAll();onChange();
       },true);
     };
     b.appendChild(del);

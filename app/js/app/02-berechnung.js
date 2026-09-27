@@ -102,9 +102,21 @@ function levelFromScore(score){
   if(idx<0)return {idx:-1,name:"unter "+LEVELS[0],score:s,next:null,pct:clamp(s/step,0,1)};
   return {idx:idx,name:LEVELS[idx],score:s,next:null,pct:clamp((s-(idx+1)*step)/step,0,1)};
 }
-function bestFor(exid,asOf,win){
+// pool (optional): die Saetze dieser Uebung im Fenster als [{d,s}], in derselben Reihenfolge,
+// in der die Schleife unten sie faende. compute() sammelt sie in einem Durchgang fuer alle
+// Uebungen - sonst liefe jede Uebung erneut ueber alle Tage und Saetze, und der Werte-Tab
+// (90 Tage Verlauf) wuerde mit jeder Trainingswoche spuerbar langsamer.
+function bestFor(exid,asOf,win,pool){
   var ex=exById(exid);if(!ex)return {best:null,last:null,bestSet:null};
   var from=shiftDays(asOf,-(win-1)),best=null,last=null,bestSet=null;
+  if(pool){
+    for(var j=0;j<pool.length;j++){
+      var ps=pool[j].s,pv=setValue(ex,ps);
+      if(best==null||pv>best){best=pv;bestSet=ps;}
+      if(last==null||pool[j].d>last)last=pool[j].d;
+    }
+    return {best:best,last:last,bestSet:bestSet};
+  }
   for(var d in state.days){
     if(d<from||d>asOf)continue;
     var sets=state.days[d].sets||[];
@@ -448,18 +460,25 @@ function compute(asOf){
   // eine zusätzlich ausgeführte Übung kann einen Bereich also anheben, aber nie abwerten.
   var recs=[],unrated=[],seenEx={};
   var fromS=shiftDays(asOf,-(WIN_STRENGTH-1));
+    // Ein Durchgang sammelt alle Saetze je Uebung, danach wird jede Uebung einmal bewertet
+  // (Reihenfolge wie bisher: nach erstem Auftreten).
+  var pools={},order=[];
   for(var dk in state.days){
     if(dk<fromS||dk>asOf)continue;
     (state.days[dk].sets||[]).forEach(function(s){
-      if(seenEx[s.ex])return;
-      var ex=exById(s.ex);if(!ex)return;
-      var cid=catOfEx(ex);if(!cid)return;
-      seenEx[s.ex]=true;
-      if(!ex.std){unrated.push({ex:ex,cat:cid});return;}
-      var r=bestFor(s.ex,asOf,WIN_STRENGTH),g=r.best!=null?grade(ex,r.best):null;
-      recs.push({ex:ex,best:r.best,bestSet:r.bestSet,last:r.last,grade:g,score:g?g.score:0,cat:cid});
+      if(!pools[s.ex]){pools[s.ex]=[];order.push(s.ex);}
+      pools[s.ex].push({d:dk,s:s});
     });
   }
+  order.forEach(function(exid){
+    if(seenEx[exid])return;
+    var ex=exById(exid);if(!ex)return;
+    var cid=catOfEx(ex);if(!cid)return;
+    seenEx[exid]=true;
+    if(!ex.std){unrated.push({ex:ex,cat:cid});return;}
+    var r=bestFor(exid,asOf,WIN_STRENGTH,pools[exid]),g=r.best!=null?grade(ex,r.best):null;
+    recs.push({ex:ex,best:r.best,bestSet:r.bestSet,last:r.last,grade:g,score:g?g.score:0,cat:cid});
+  });
   recs.sort(function(a,b){return b.score-a.score;});
   // Pro Bereich zählt jetzt der Durchschnitt ALLER dort geloggten, bewertbaren Übungen (nicht
   // mehr nur die stärkste) – eine zusätzliche schwache Übung kann den Bereich also auch senken.

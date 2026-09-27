@@ -74,6 +74,16 @@
   UI_RX.push([/^Gesamtstärke (\d+) %( → (\d+) %)?$/g,function(m,a,b,c){return "Overall strength "+a+" %"+(c?" → "+c+" %":"");}]);
   UI_RX.push([/^(\d+) % bis (.+)$/g,"$1 % to $2"]);
   UI_RX.push([/^Nächste Medaille: /g,"Next medal: "]);
+  // Nachtrag 27.09.: beim Rundgang in englischer Sprache noch deutsch
+  (function(){var m={"Noch keine Medaille – die erste gibt es schon ab 10 Trainingstagen oder 5 Dips am Stück.":"No medal yet – the first one comes at 10 training days or 5 dips in a row.",
+    "Noch keine Medaille – die erste holst du dir mit deinem nächsten Training.":"No medal yet – you earn the first one with your next workout.",
+    "Pause: gilt für jede Einheit ohne eigene Pausenzeit und fürs freie Training. Vorschläge: Gewicht und Wiederholungen stehen im Training schon im Feld – aus deinem letzten Mal, leicht gesteigert.":"Rest: applies to every session without its own rest time and to free training. Suggestions: weight and reps are already filled in during training – from your last time, slightly increased.",
+    "Notiz zur Übung hinzufügen":"Add note to exercise"};for(var k in m)if(!UI_EN[k])UI_EN[k]=m[k];})();
+  UI_RX.push([/^Notiz bearbeiten: /g,"Edit note: "]);
+  // Rest hinter "Next medal: … – noch 46 Punkte"; allgemeine Regeln davor machen "Tage" evtl. schon zu "days"
+  UI_RX.push([/^(Next medal: .+) – noch (.+?)(?: (Punkte?|Wochen?|Tage?|days?|Rekorde?))?$/g,function(m,a,z,e){
+    var en={Punkt:"point",Punkte:"points",Woche:"week",Wochen:"weeks",Tag:"day",Tage:"days",day:"day",days:"days",Rekord:"record",Rekorde:"records"}[e];
+    return a+" – "+z+(en?" "+en:"")+" to go";}]);
   UI_RX.push([/^(Bestwert|Stand) /g,function(m,a){return a==="Bestwert"?"Best ":"Now ";}]);
   (function(){var m={"Maximales Gewicht":"Heaviest weight","Geschätztes Maximum":"Estimated max","Bestes Satzvolumen":"Best set volume","Meiste Wdh.":"Most reps","Längste Zeit":"Longest time"};for(var k in m)if(!UI_EN[k])UI_EN[k]=m[k];})();
   UI_RX.push([/^Maximales Gewicht(: | – )/g,"Heaviest weight$1"]);

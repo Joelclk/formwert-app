@@ -218,7 +218,7 @@ function renderToday(){
       // Satzes.
       del.onclick=function(){var idx=arr[arr.length-1].i;
         askConfirm("Letzten Satz löschen?",ex.n+" · "+setLabel(ex,d.sets[idx])+" wird entfernt.","Löschen",function(){
-          d.sets.splice(idx,1);touch(dateKey);renderAll();
+                    syncWorkoutRec(d.sets.splice(idx,1)[0],true);touch(dateKey);renderAll();
         },true);};r.appendChild(del);
     }
     tb.appendChild(r);
@@ -247,7 +247,7 @@ function renderToday(){
       var del=el("button","iconbtn");del.setAttribute("aria-label","Löschen");del.innerHTML=svgIcon(IC_TRASH,1.6);
       del.onclick=function(){
         askConfirm("Eintrag löschen?",(ex?ex.n:c.ex)+" · "+c.min+" Minuten wird entfernt.","Löschen",function(){
-          d.cardio.splice(i,1);touch(dateKey);renderAll();
+                    dropWorkoutCardio(d.cardio.splice(i,1)[0]);touch(dateKey);renderAll();
         },true);};r.appendChild(del);
     }
     cb.appendChild(r);
@@ -417,11 +417,16 @@ function placeCallout(ms){
   var co=$("callout");
   var selFine=effFine(),selSet=effSet();   // lokale Sicht auf die offene Ebene
   if(!selFine&&!selSet){co.innerHTML='<span class="co-hint">Tipp einen Muskel an – oder wähl oben eine Region.</span>';return;}
-  if(selFine&&FINE[selFine]){
-    var f=FINE[selFine],m=muscleById(f.g),v=Math.round((ms[f.g]||0)*10)/10,z=zoneOf(v,m),em=emphasisSets(selFine,TODAY);
+    if(selFine&&FINE[selFine]){
+    var f=FINE[selFine],m=muscleById(f.g);
+    // Hand, Fuß, Hals, tiefe Wade usw. sind im 3D-Modell antippbar, gehören aber zu keiner
+    // gezählten Muskelgruppe. Ohne diese Abfrage brach zoneOf() ab und die Anzeige blieb stehen.
+    if(!m){co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em>Wird im Training nicht eigens gezählt</em>';return;}
+    var v=Math.round((ms[f.g]||0)*10)/10,z=zoneOf(v,m),em=emphasisSets(selFine,TODAY);
     co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em class="z'+z+'">'+reizPct(v,m)+' % Reiz · '+v+' Sätze · '+zoneLabel(z)+(em!=null?' · '+em+' mit Betonung hier':'')+'</em>';
   } else {
-    var ids=[];selSet.forEach(function(k){var g=FINE[k].g;if(ids.indexOf(g)<0)ids.push(g);});
+    var ids=[];selSet.forEach(function(k){var g=FINE[k].g;if(ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
+    if(!ids.length){co.innerHTML='<b>'+selLabel+'</b><em>Wird im Training nicht eigens gezählt</em>';return;}
     var tot=0,ok=0;ids.forEach(function(id){var mm=muscleById(id),vv=ms[id]||0;tot+=vv;var zz=zoneOf(vv,mm);if(zz===1)ok++;});
     var names=ids.map(function(id){return muscleById(id).name;}).join(" · ");
     co.innerHTML='<b>'+selLabel+'</b>'+(names!==selLabel?'<span>'+names+'</span>':'')+'<em class="'+(ok?"z1":"z0")+'">'+(Math.round(tot*10)/10)+' Sätze · '+ok+' von '+ids.length+' im Korridor</em>';
