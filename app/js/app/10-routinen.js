@@ -206,14 +206,14 @@ function sheetEditor(id,preset){
         sw.onclick=function(ev){
           ev.preventDefault();ev.stopPropagation();
           ed.name=ni.value;ed.rest=readRest();closeSheet();
-          var rg=null;if(ex){var p0=(ex.p||[])[0];rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;}
+          var rg=null;if(ex&&ex.mob)rg=MOB_REGION;else if(ex){var p0=(ex.p||[])[0];rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;}
           setTimeout(function(){openSheet(function(bb){
             sheetTitle(bb,"Übung tauschen");
             if(ex)bb.appendChild(el("p","note","Statt „"+ex.n+"“ – "+it.sets+(it.sets===1?" Satz bleibt.":" Sätze bleiben.")));
             exPicker(bb,null,function(e){
               if(e.id!==it.ex){it.ex=e.id;it.reps=null;it.kg=null;}
               closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);
-            },{region:rg});
+            },{region:rg,mob:true});
           });},180);
         };
         side.appendChild(sw);
@@ -233,7 +233,7 @@ function sheetEditor(id,preset){
     addBtn.onclick=function(){
       ed.name=ni.value;ed.rest=readRest();closeSheet();
       setTimeout(function(){openSheet(function(bb){sheetTitle(bb,"Übung hinzufügen");
-        exPicker(bb,null,function(e){ed.items.push({ex:e.id,sets:3,reps:null,kg:null});closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);});});},180);
+        exPicker(bb,null,function(e){ed.items.push({ex:e.id,sets:e.mob?2:3,reps:null,kg:null});closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);},{mob:true});});},180);
     };
     b.appendChild(addBtn);
     var fh=el("h2","sec","Welche Muskeln trainiert diese Einheit?");fh.style.margin="18px 0 8px";b.appendChild(fh);

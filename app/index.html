@@ -97,8 +97,10 @@
       </div>
       <div class="mdetail" id="mdetail">Tipp eine Muskelgruppe an.</div>
     </div>
-    <h2 class="sec">Nach Körperregion <span>letzte 7 Tage · antippen für Details</span></h2>
+    <h2 class="sec">Nach Körperregion <span id="mlisthead">letzte 7 Tage · antippen für Details</span></h2>
+    <div class="chipbar" id="mlistmode"><button type="button" class="fchip" data-m="train" aria-pressed="true">Training</button><button type="button" class="fchip" data-m="mob" aria-pressed="false">Mobilität</button></div>
     <div class="card flush" id="mlist"></div>
+    <div class="card flush" id="moblist" hidden></div>
     <details class="infobox"><summary>Wie wird gezählt?</summary><div>
     <p class="note">Primärmuskeln zählen 1,0 Sätze, Sekundärmuskeln 0,5. Brust (oben/mitte/unten) und Schulter (vorn/seitlich/hinten) werden einzeln erfasst und auf der Figur entlang ihres Faserverlaufs getrennt dargestellt – diese Liste zeigt jede Gruppe mit ihren Marken für Minimum, Optimum und Erholungsgrenze.</p>
     <p class="note" style="padding:0 4px">Körperillustration: <a href="https://github.com/crmapache/js-rich-body-highlighter" target="_blank" rel="noopener" style="color:var(--ink-3)">js-rich-body-highlighter</a>, MIT-Lizenz.</p>

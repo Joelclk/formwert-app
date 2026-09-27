@@ -59,7 +59,8 @@ function vitrineData(){
   var bestE={},bestKg={},big3Last=0,big3Hist=[];
   days.forEach(function(k){
     var sets=state.days[k].sets||[];if(!sets.length)return;
-    trainDays.push(k);
+    // Tage nur mit Mobilitätsübungen zählen nicht als Trainingstag (wie beim Formwert).
+    if(isTrainDay(state.days[k]))trainDays.push(k);
     var seenToday={};
     sets.forEach(function(s){
       var ex=exById(s.ex);if(!ex)return;

@@ -440,15 +440,51 @@ function cardioMinutes(asOf,win){
   return {eq:eq,raw:raw};
 }
 
+/* ================= Mobilität ================= */
+/* Mobilität wird nicht abgehakt, sondern aus den eingetragenen Mobilitätsübungen gemessen –
+   gehaltene Dehnungen und bewegte Übungen (Drehen, Kreisen, 90/90) zählen gleich. 10 Minuten
+   an einem Tag sind eine volle Einheit. Mehr zählt am selben Tag nicht weiter: eine lange
+   Sitzung soll eine Woche ohne Mobilität nicht aufwiegen, denn Beweglichkeit kommt aus
+   Regelmäßigkeit. */
+var MOB_UNIT_MIN=10;
+// Übungen in Wiederholungen: geschätzte Sekunden je Wiederholung (sonst 4 s).
+var MOB_SEK_WDH={mob_catcow:6,mob_wgs:15,mob_legswing:2,mob_9090:4,mob_wrist_circ:3};
+// Einnehmen der Position und Seitenwechsel kosten Zeit, die zur Einheit gehört.
+var MOB_WECHSEL_S=10;
+// "je Seite" in der Anleitung heißt: der eingetragene Wert gilt für jede Seite einzeln.
+function mobSides(ex){return (ex.uni||/je (Richtung und )?Seite/.test(ex.how||""))?2:1;}
+function mobSetSec(ex,s){
+  var n=(ex.uni&&s.repsL!=null&&s.repsR!=null)?(+s.repsL||0)+(+s.repsR||0):(+s.reps||0)*mobSides(ex);
+  if(n<=0)return 0;
+  return (ex.t==="sec"?n:n*(MOB_SEK_WDH[ex.id]||4))+MOB_WECHSEL_S*mobSides(ex);
+}
+/* Mobilität eines Tages: Minuten, Anzahl Übungen, erreichter Anteil einer Einheit (0–1). */
+function mobDay(dd){
+  var o={min:0,exs:0,units:0,legacy:false},seen={},sec=0;
+  if(!dd)return o;
+  (dd.sets||[]).forEach(function(s){var ex=exById(s.ex);if(!ex||!ex.mob)return;
+    sec+=mobSetSec(ex,s);if(!seen[ex.id]){seen[ex.id]=1;o.exs++;}});
+  o.min=sec/60;o.units=Math.min(o.min/MOB_UNIT_MIN,1);
+  // Ältere Stände kennen nur den Haken "Mobilität erledigt" – der zählt weiter als volle Einheit.
+  if(dd.mobility){o.legacy=true;o.units=1;}
+  return o;
+}
+/* Trainingstag nur mit mindestens einem Satz, der keine Mobilitätsübung ist – reines Dehnen
+   zählt für Mobilität, nicht für Konstanz. */
+function isTrainDay(dd){
+  return !!dd&&(dd.sets||[]).some(function(s){var ex=exById(s.ex);return !ex||!ex.mob;});
+}
+function fmtMobUnits(u){return String(Math.round(u*10)/10).replace(".",",");}
+
 /* ================= Formwert ================= */
 function compute(asOf){
   var p=state.profile,win=windowDays(asOf),f=win/7;
-  var from=shiftDays(asOf,-(win-1)),trainDays=0,mobDays=0;
+  var from=shiftDays(asOf,-(win-1)),trainDays=0,mobDays=0,mobMin=0;
   for(var d in state.days){
     if(d<from||d>asOf)continue;
-    var dd=state.days[d];
-    if((dd.sets||[]).length>0)trainDays++;
-    if(dd.mobility)mobDays++;
+    var dd=state.days[d],md=mobDay(dd);
+    if(isTrainDay(dd))trainDays++;
+    mobDays+=md.units;mobMin+=md.min;
   }
   var konst=p.goals.days>0?clamp(trainDays/(p.goals.days*f)*100,0,100):0;
   var mob=p.goals.mob>0?clamp(mobDays/(p.goals.mob*f)*100,0,100):100;
@@ -500,5 +536,5 @@ function compute(asOf){
   var ausdauer=vp!=null?0.5*who+0.5*vp:who;
   var fitness=Math.round(W.kraft*kraft+W.konst*konst+W.deckung*deckung+W.ausdauer*ausdauer+W.mob*mob);
   return {fitness:fitness,kraft:kraft,konst:konst,deckung:deckung,ausdauer:ausdauer,mob:mob,win:win,
-          trainDays:trainDays,mobDays:mobDays,recs:recs,cats:cats,ms:ms,cm:cm,vo2:vo2,vpct:vp,who:who,asOf:asOf};
+          trainDays:trainDays,mobDays:mobDays,mobMin:mobMin,recs:recs,cats:cats,ms:ms,cm:cm,vo2:vo2,vpct:vp,who:who,asOf:asOf};
 }

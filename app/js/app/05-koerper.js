@@ -84,7 +84,9 @@ function renderWeek(){
   var off=(parseIso(heuteDate).getDay()+6)%7;
   for(var i=0;i<7;i++){
     var d=shiftDays(heuteDate,i-off),dd=state.days[d];
-    var sets=dd?(dd.sets||[]).length:0,mobd=dd&&dd.mobility,cardio=dd?(dd.cardio||[]).length:0;
+    // Im Kreis stehen nur Kraftsätze; Mobilitätsübungen zeigt der grüne Punkt darunter.
+    var sets=dd?(dd.sets||[]).filter(function(s){var e=exById(s.ex);return !e||!e.mob;}).length:0,
+        mobd=mobDay(dd).units>0,cardio=dd?(dd.cardio||[]).length:0;
     var w=el("button","wd"+(sets?" done":"")+(mobd?" mob":"")+(d===TODAY?" today":"")+(d===heuteDate?" viewing":""));
     w.type="button";
     w.appendChild(el("b",null,WD[parseIso(d).getDay()]));
@@ -115,8 +117,8 @@ function weekStats(ref){
   var off=(parseIso(ref).getDay()+6)%7,o={train:0,mob:0,cardio:0,start:shiftDays(ref,-off)};
   o.end=shiftDays(o.start,6);
   for(var i=0;i<7;i++){var k=shiftDays(o.start,i),dd=state.days[k];if(!dd)continue;
-    if((dd.sets||[]).length)o.train++;
-    if(dd.mobility)o.mob++;
+    if(isTrainDay(dd))o.train++;
+    o.mob+=mobDay(dd).units;
     (dd.cardio||[]).forEach(function(cc){o.cardio+=cc.min||0;});
   }
   return o;
@@ -126,10 +128,12 @@ function renderWeekGoals(){
   var box=$("weekgoals");if(!box||!state.profile)return;box.innerHTML="";
   var w=weekStats(heuteDate),g=state.profile.goals||{};
   var ws=$("weeksum");if(ws)ws.textContent=shortDate(w.start)+" – "+shortDate(w.end);
-  [["Training",w.train,g.days||0," Tage"],["Mobilität",w.mob,g.mob||0,"×"],["Ausdauer",Math.round(w.cardio),g.cardio||0," min"]].forEach(function(r){
+  // Mobilität in Einheiten mit einer Nachkommastelle: 5 Minuten sind eine halbe Einheit.
+  var mobU=Math.round(w.mob*10)/10;
+  [["Training",w.train,g.days||0," Tage"],["Mobilität",mobU,g.mob||0,"×"],["Ausdauer",Math.round(w.cardio),g.cardio||0," min"]].forEach(function(r){
     var row=el("div","wg"),ok=r[2]>0&&r[1]>=r[2];
     row.appendChild(el("b",null,r[0]));
-    var v=el("span",ok?"ok":null,(ok?"✓ ":"")+r[1]+" / "+r[2]+r[3]);row.appendChild(v);
+    var v=el("span",ok?"ok":null,(ok?"✓ ":"")+String(r[1]).replace(".",",")+" / "+r[2]+r[3]);row.appendChild(v);
     var bar=el("div","pbar"+(ok?" good":"")),fi=el("i");
     fi.style.width=(r[2]>0?clamp(100*r[1]/r[2],0,100):0)+"%";bar.appendChild(fi);
     bar.setAttribute("role","progressbar");bar.setAttribute("aria-label",r[0]);
@@ -166,15 +170,16 @@ function renderToday(){
   // die Trainingskarte fasst sie zusammen, Details gibt's per Antippen auf der eigenen Seite.
   // Nur "lose" (ohne Training) protokollierte Sätze erscheinen weiterhin direkt in der Liste.
   var wIds={};(d.workouts||[]).forEach(function(wo){wIds[wo.id]=true;});
-  var groups={},order=[];
-  d.sets.forEach(function(s,i){if(s.wid&&wIds[s.wid])return;if(!groups[s.ex]){groups[s.ex]=[];order.push(s.ex);}groups[s.ex].push({s:s,i:i});});
+  // Lose Mobilitätsübungen stehen in der Mobilitätskarte, nicht beim Training.
+  var groups={},order=[],mobOrder=[];
+  d.sets.forEach(function(s,i){if(s.wid&&wIds[s.wid])return;if(!groups[s.ex]){groups[s.ex]=[];var ex0=exById(s.ex);(ex0&&ex0.mob?mobOrder:order).push(s.ex);}groups[s.ex].push({s:s,i:i});});
 
   /* ---- Training ---- */
-  var nWo=(d.workouts||[]).length,nSets=d.sets.length;
+  var nWo=(d.workouts||[]).length,nSets=d.sets.filter(function(s){var e=exById(s.ex);return !e||!e.mob||(s.wid&&wIds[s.wid]);}).length;
   var tb=secCard("training","Training",nSets?(nSets+" Sätze"+(nWo?" · "+nWo+(nWo===1?" Einheit":" Einheiten"):"")):null,"M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12");
   // Dieselbe Vorder-/Rückfigur wie früher im separaten Tages-Detail-Sheet: alle an diesem Tag
   // trainierten Muskeln auf einen Blick.
-  var hasStrength=d.sets.some(function(s){var ex=exById(s.ex);return ex&&ex.t!=="cardio";});
+  var hasStrength=d.sets.some(function(s){var ex=exById(s.ex);return ex&&ex.t!=="cardio"&&!ex.mob;});
   var figs=null;
   if(hasStrength){figs=dayFigs(dateKey);tb.appendChild(figs);}
   (d.workouts||[]).slice().reverse().forEach(function(wo){
@@ -187,7 +192,7 @@ function renderToday(){
     wr.onclick=function(){sheetWorkoutDetail(dateKey,wo);};
     tb.appendChild(wr);
   });
-  order.forEach(function(exid){
+  function exRows(ord,target){ord.forEach(function(exid){
     var ex=exById(exid);if(!ex)return;
     var arr=groups[exid],r=el("div","row"),m=el("div","main");
     m.appendChild(el("b",null,ex.n));
@@ -208,7 +213,8 @@ function renderToday(){
     r.appendChild(m);
     var best=bestFor(exid,dateKey,WIN_STRENGTH);
     var tbv=Math.max.apply(null,arr.map(function(o){return setValue(ex,o.s);}));
-    if(best.best!=null&&tbv>=best.best-0.01)r.appendChild(el("span","pill pr","Best"));
+    // Bei Dehnungen ist längeres Halten kein Rekord, den man feiern müsste.
+    if(!ex.mob&&best.best!=null&&tbv>=best.best-0.01)r.appendChild(el("span","pill pr","Best"));
     if(viewingToday){
       var add=el("button","iconbtn");add.setAttribute("aria-label","Satz ergänzen");add.innerHTML=svgIcon("M12 5v14M5 12h14",2);
       add.onclick=function(){sheetAddSet(ex);};r.appendChild(add);
@@ -221,8 +227,9 @@ function renderToday(){
                     syncWorkoutRec(d.sets.splice(idx,1)[0],true);touch(dateKey);renderAll();
         },true);};r.appendChild(del);
     }
-    tb.appendChild(r);
-  });
+    target.appendChild(r);
+  });}
+  exRows(order,tb);
   if(!nWo&&!order.length){
     if(viewingToday&&!workout){
       tb.appendChild(estate("Heute noch kein Training","Starte eine deiner Einheiten oder trainiere frei – jeder Satz landet automatisch hier.",
@@ -258,18 +265,35 @@ function renderToday(){
     else cb.appendChild(el("p","estate-quiet","Keine Ausdauer an diesem Tag."));
   }
 
-  /* ---- Mobilität: ein Schalter, der Zustand steht zusätzlich als Text daneben ---- */
-  var mr=el("div","card dsec dsec-inline dsec-mob"+(d.mobility?" on":""));
-  mr.setAttribute("role","switch");mr.setAttribute("aria-checked",String(!!d.mobility));mr.tabIndex=0;
-  var mic=el("span","dsec-ic");mic.innerHTML=svgIcon("M4 17c4-8 12-8 16 0M8 13.5V10M16 13.5V10M12 12V7",1.9);mr.appendChild(mic);
-  var mm=el("div","main");
-  mm.appendChild(el("b",null,"Mobilität"));mm.appendChild(el("span",null,d.mobility?(viewingToday?"heute erledigt":"erledigt"):"noch offen"));
-  mr.appendChild(mm);
-  mr.appendChild(el("span","pill "+(d.mobility?"l2":"l0"),d.mobility?"✓ erledigt":"offen"));
-  mr.appendChild(el("span","mtoggle"+(d.mobility?" on":"")));
-  mr.onclick=function(){d.mobility=!d.mobility;touch(dateKey);renderAll();};
-  mr.onkeydown=function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();mr.onclick();}};
-  box.appendChild(mr);
+  /* ---- Mobilität: kein Schalter mehr, sondern gemessen aus den eingetragenen Übungen ---- */
+  var md=mobDay(d),mfull=md.units>=1;
+  var MOB_IC="M4 17c4-8 12-8 16 0M8 13.5V10M16 13.5V10M12 12V7";
+  var mtxt=md.exs?Math.round(md.min)+" min · "+md.exs+(md.exs===1?" Übung":" Übungen"):md.legacy?"abgehakt":null;
+  if(mobOrder.length){
+    // Mit eingetragenen Übungen: Karte wie beim Training, darunter die Übungen selbst.
+    var mb0=secCard("mob","Mobilität",mtxt,MOB_IC);
+    if(md.units>0)mb0.parentNode.classList.add("on");
+    var pr=el("div","mobprog"),pb=el("div","minibar"),pbi=el("i");
+    pbi.style.width=Math.round(md.units*100)+"%";pbi.style.background="var(--good)";pb.appendChild(pbi);
+    pr.appendChild(pb);pr.appendChild(el("span",null,mfull?"✓ volle Einheit":Math.round(md.units*100)+" % einer Einheit · noch "+Math.max(1,Math.ceil(MOB_UNIT_MIN-md.min))+" min"));
+    mb0.appendChild(pr);
+    exRows(mobOrder,mb0);
+    if(viewingToday){var mob2=el("button","btn ghost small mobmore","+ Mobilität eintragen");mob2.type="button";mob2.onclick=function(){sheetMob();};mb0.appendChild(mob2);}
+  } else {
+    var mr=el("div","card dsec dsec-inline dsec-mob"+(md.units>0?" on":""));
+    var mic=el("span","dsec-ic");mic.innerHTML=svgIcon(MOB_IC,1.9);mr.appendChild(mic);
+    var mm=el("div","main");
+    mm.appendChild(el("b",null,"Mobilität"));
+    mm.appendChild(el("span",null,mtxt||(viewingToday?"noch nichts – "+MOB_UNIT_MIN+" min sind eine volle Einheit":"keine Mobilität")));
+    mr.appendChild(mm);
+    if(viewingToday){
+      mr.setAttribute("role","button");mr.tabIndex=0;mr.setAttribute("aria-label","Mobilität eintragen");
+      var madd=el("span","chev");madd.innerHTML=svgIcon("M12 5v14M5 12h14",2);mr.appendChild(madd);
+      mr.onclick=function(){sheetMob();};
+      mr.onkeydown=function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();mr.onclick();}};
+    }
+    box.appendChild(mr);
+  }
 
   /* ---- Tagesnotiz ---- */
   var nr=el("div","card dsec dsec-inline dsec-note");nr.setAttribute("role","button");nr.tabIndex=0;
@@ -281,7 +305,9 @@ function renderToday(){
   nr.onkeydown=function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();sheetNote(dateKey);}};
   box.appendChild(nr);
 
-  $("todaysum").textContent=d.sets.length+" Sätze"+(mins?" · "+mins+" min":"");
+  var sumParts=[];if(nSets||!(mins||md.min>=1))sumParts.push(nSets+" Sätze");if(mins)sumParts.push(mins+" min");
+  if(md.min>=1)sumParts.push(Math.round(md.min)+" min Mobilität");
+  $("todaysum").textContent=sumParts.join(" · ");
   var lbl=$("todaylabel");if(lbl)lbl.textContent=viewingToday?"Heute":deDate(dateKey);
   $("fab").hidden=(tab!=="tab-heute")||!viewingToday;
 }

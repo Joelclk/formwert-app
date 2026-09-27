@@ -145,7 +145,9 @@ function fitLevel(v){
 function renderHeroNext(){
   var box=$("fitnext");if(!box||!state.profile)return;box.innerHTML="";box.className="hero-next";
   var viewingToday=heuteDate===TODAY,d=state.days[heuteDate]||emptyDay();
-  var trained=(d.sets||[]).length>0||(d.workouts||[]).length>0;
+  // Ein Training nur aus Mobilitätsübungen ist kein Trainingstag; eines ohne Sätze (nur Ausdauer) schon.
+  var trained=isTrainDay(d)||(d.workouts||[]).some(function(wo){return !(d.sets||[]).some(function(s){return s.wid===wo.id;});});
+  var mobDone=mobDay(d).units>=1;
   var w=weekStats(heuteDate),goal=state.profile.goals.days||0,txt="",btn=null;
   if(workout){
     txt="<b>"+esc(workout.name)+"</b> läuft – Zeit und Fortschritt siehst du direkt darunter.";
@@ -156,9 +158,9 @@ function renderHeroNext(){
     txt=w.train<goal?"<b>Nächster Schritt: Training.</b> Diese Woche "+w.train+" von "+goal+" Trainingstagen.":
       "<b>Wochenziel erreicht.</b> Heute ist Raum für ein Zusatztraining – oder für Erholung.";
     btn=["Training starten",function(){selectTab("tab-training");window.scrollTo(0,0);},w.train<goal];
-  } else if(!d.mobility){
+  } else if(!mobDone){
     txt="<b>Training erledigt.</b> Zum Abschluss ein paar Minuten Mobilität.";
-    btn=["Mobilität abhaken",function(){var dd=day(TODAY);dd.mobility=true;touch(TODAY);renderAll();},false];
+    btn=["Mobilität eintragen",function(){sheetMob();},false];
   } else {
     box.className="hero-next done";
     txt="<span><b>Alles erledigt für heute.</b> Training und Mobilität sind drin – gute Arbeit.</span>";
@@ -178,7 +180,7 @@ function renderSection(id){
   // gerade abgehakten Sätze, bis man einmal den Heute-Tab öffnet.
   if(heuteDirty&&id!=="tab-training")c=lastC=compute(TODAY);
   if(!c)return;
-  if(id==="tab-koerper"){renderBody(c.ms);renderMuscleList(c.ms);secDirty.koerper=false;}
+  if(id==="tab-koerper"){renderBody(c.ms);renderMuscleList(c.ms);renderBodyListMode();secDirty.koerper=false;}
   else if(id==="tab-werte"){renderSkills(c,pk);try{renderErfolge();}catch(e){}renderStrength(c);renderCardio(c);renderFormula(c);renderSpark();renderHistory();renderSettings();secDirty.werte=false;}
   else if(id==="tab-training"){renderRoutines();renderSession();secDirty.training=false;}
 }

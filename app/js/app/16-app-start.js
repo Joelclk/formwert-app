@@ -108,6 +108,45 @@
 })();
 LANG=detectLang();applyLangData();document.documentElement.setAttribute("lang",LANG);
 setTimeout(function(){applyUiLang(document.body);},0);
+/* Englische Texte fuer die gemessene Mobilitaet (Minuten aus Uebungen statt Haken) und die
+   Mobilitaetsansicht im Koerper-Tab. */
+(function(){
+  var AREA_EN={"Hüfte":"Hips","Wirbelsäule":"Spine","Schultern & Brust":"Shoulders & chest","Oberschenkel":"Thighs",
+    "Waden & Sprunggelenk":"Calves & ankles","Nacken":"Neck","Arme & Handgelenke":"Arms & wrists"};
+  var add={"Mobilität eintragen":"Log mobility",
+    "Dehnen und Mobilisieren – 10 min sind eine volle Einheit":"Stretching and mobility work – 10 min make a full session",
+    "Gehaltene Dehnungen und bewegte Übungen zählen gleich. 10 Minuten am Tag sind eine volle Einheit.":"Held stretches and moving drills count the same. 10 minutes a day make a full session.",
+    "abgehakt":"ticked off","noch nichts – 10 min sind eine volle Einheit":"nothing yet – 10 min make a full session",
+    "keine Mobilität":"no mobility","✓ Einheit":"✓ Session",
+    "Trag im Heute-Tab eine Mobilitätsübung ein – 10 Minuten am Tag sind eine volle Einheit.":"Log a mobility exercise in the Today tab – 10 minutes a day make a full session.",
+    "je 10 Minuten Dehnen oder Mobilisieren":"10 minutes of stretching or mobility each",
+    "Noch keine Mobilität":"No mobility yet",
+    "Trag Dehn- oder Mobilisationsübungen ein – hier siehst du dann, welche Bereiche du bewegt hast und welche lange nicht dran waren.":"Log stretching or mobility exercises – this then shows which areas you have moved and which have been left out for a while.",
+    "Gemacht":"Done","Passt dazu":"Good fits","gehalten":"static","bewegt":"dynamic",
+    "zuletzt heute":"today","zuletzt gestern":"yesterday","✓ volle Einheit":"✓ full session",
+    "+ Mobilität eintragen":"+ Log mobility"};
+  for(var a in AREA_EN)add[a]=AREA_EN[a];
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+  var cnt={};for(var k1 in UI_EN){var v=UI_EN[k1];cnt[v]=(cnt[v]||0)+1;}
+  for(var k2 in add){var v2=UI_EN[k2];if(cnt[v2]===1&&!UI_DE[v2])UI_DE[v2]=k2;}
+  // Nach vorn, damit allgemeinere Muster ("Tagen", "seit") diese Saetze nicht vorher zerlegen.
+  UI_RX.unshift([/([\d,]+) Einheiten \((\d+) min\) in (\d+) Tagen/g,function(m,a,b,c){return a.replace(",",".")+" sessions ("+b+" min) in "+c+" days";}]);
+  UI_RX.unshift([/(\d+) Übung$/g,"$1 exercise"]);
+  UI_RX.unshift([/^(\d+|<1) min an (\d+) Tag(en)?$/g,function(m,a,b,c){return a+" min on "+b+(c?" days":" day");}]);
+  UI_RX.unshift([/^([\d,]+) von (\d+) Einheiten · 10 min am Tag sind eine volle$/g,function(m,a,b){return a.replace(",",".")+" of "+b+" sessions · 10 min a day make a full one";}]);
+  UI_RX.unshift([/(\d+|<1) min gedehnt/g,"$1 min static"]);
+  UI_RX.unshift([/(\d+|<1) min bewegt/g,"$1 min dynamic"]);
+  UI_RX.unshift([/zuletzt vor (\d+) Tagen/g,"$1 days ago"]);
+  UI_RX.unshift([/seit (\d+) Tagen nicht/g,"not in $1 days"]);
+  UI_RX.unshift([/^letzte (\d+) Tage · antippen für Übungen$/g,"last $1 days · tap for exercises"]);
+  UI_RX.unshift([/^Länger nicht dran: (.+)\. Tipp einen Bereich an – dort stehen passende Übungen\.$/g,function(m,l){
+    return "Not done for a while: "+l.split(", ").map(function(n){return AREA_EN[n]||n;}).join(", ")+". Tap an area to see fitting exercises.";}]);
+  UI_RX.unshift([/\n(\s+)1 Einheit = 10 min am Tag, höchstens 1 pro Tag/g,function(m,sp){return "\n"+sp+"1 session = 10 min a day, at most 1 per day";}]);
+  UI_RX.unshift([/(\d+) min Mobilität/g,"$1 min mobility"]);
+  UI_RX.unshift([/^(\d+) % einer Einheit · noch (\d+) min$/g,"$1 % of a session · $2 min to go"]);
+  // Satzanzeige "10 Wdh" bzw. "8/8 Wdh" (links/rechts) – blieb bisher auch bei Kraftübungen deutsch.
+  UI_RX.push([/(\d+(?:\/\d+)?) Wdh(?![.\w])/g,"$1 reps"]);
+})();
 (function(){var a=$("btn-newex");if(a){
   a.innerHTML=svgIcon("M12 5v14M5 12h14",2.1);
   /* Neue Uebung anlegen - direkt aus der Kopfzeile, aber nur dort, wo es hingehoert:

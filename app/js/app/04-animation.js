@@ -221,11 +221,20 @@ function sheetEditLoggedSet(ex,date,setIdx,onChange){
     b.appendChild(cancel);
   });
 }
+/* Mobilität eintragen: dieselbe Übungsauswahl, gleich auf Mobilität gefiltert. Jeder Satz zählt
+   mit seinen Sekunden bzw. Wiederholungen auf die Minuten des Tages (siehe mobDay). */
+function sheetMob(){
+  openSheet(function(b){
+    sheetTitle(b,"Mobilität eintragen");
+    b.appendChild(el("p","note","Gehaltene Dehnungen und bewegte Übungen zählen gleich. "+MOB_UNIT_MIN+" Minuten am Tag sind eine volle Einheit."));
+    exPicker(b,null,function(e){closeSheet();setTimeout(function(){sheetAddSet(e);},180);},{region:MOB_REGION,mob:true});
+  });
+}
 function sheetAddSet(preEx){
   openSheet(function(b){
     if(!preEx){
       sheetTitle(b,"Übung wählen");
-      exPicker(b,null,function(e){closeSheet();setTimeout(function(){sheetAddSet(e);},180);});
+      exPicker(b,null,function(e){closeSheet();setTimeout(function(){sheetAddSet(e);},180);},{mob:true});
       return;
     }
     var ex=preEx;
@@ -352,7 +361,7 @@ function sheetActions(){
     list.appendChild(el("div","sheet-sep"));
     row("Einzelnen Satz eintragen","Ohne Training, z. B. nachgetragen",function(){closeSheet();setTimeout(function(){sheetAddSet(null);},180);});
     row("Ausdauer","Laufen, Rad, Rudern – zählt auf die Wochenminuten",function(){closeSheet();setTimeout(sheetCardio,180);});
-    row(d.mobility?"Mobilität zurücknehmen":"Mobilität abhaken","Dehnen, Hüfte, Schulter für heute",function(){d.mobility=!d.mobility;touch(TODAY);closeSheet();renderAll();});
+    row("Mobilität eintragen","Dehnen und Mobilisieren – "+MOB_UNIT_MIN+" min sind eine volle Einheit",function(){closeSheet();setTimeout(sheetMob,180);});
     row("Notiz","Was heute los war",function(){closeSheet();setTimeout(sheetNote,180);});
     b.appendChild(list);
   });

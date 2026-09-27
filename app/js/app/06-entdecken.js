@@ -579,7 +579,7 @@ function renderSkills(c,pk){
     konst:c.trainDays+" Trainingstage in "+c.win+" Tagen · Ziel "+Math.round(state.profile.goals.days*c.win/7),
     deckung:CORE_MUSCLES.filter(function(id){return (c.ms[id]||0)>=corr(muscleById(id)).mev;}).length+" von "+CORE_MUSCLES.length+" Muskelgruppen über dem Minimum",
     ausdauer:Math.round(c.cm.raw)+" Minuten in "+c.win+" Tagen"+(c.vo2!=null?" · VO2max ≈ "+Math.round(c.vo2):""),
-    mob:c.mobDays+" Einheiten in "+c.win+" Tagen · Ziel "+Math.round(state.profile.goals.mob*c.win/7)
+    mob:fmtMobUnits(c.mobDays)+" Einheiten ("+Math.round(c.mobMin||0)+" min) in "+c.win+" Tagen · Ziel "+Math.round(state.profile.goals.mob*c.win/7)
   };
   // Fehlt ein Wert, steht dort, mit welcher Handlung er zum ersten Mal berechenbar wird -
   // statt einer leeren Null, die nichts erklärt.
@@ -588,7 +588,7 @@ function renderSkills(c,pk){
     konst:c.trainDays?null:"Jeder Trainingstag zählt hier – schon der erste bringt den Wert in Gang.",
     deckung:c.deckung>0?null:"Trainiere ein paar Sätze – jede Muskelgruppe über ihrem Minimum hebt diesen Wert.",
     ausdauer:c.cm.raw>0?null:"Trag eine Ausdauereinheit ein, etwa 20 Minuten Laufen oder Rad – dann zählt sie hier.",
-    mob:c.mobDays?null:"Hak im Heute-Tab einmal Mobilität ab – dann steigt dieser Wert."
+    mob:c.mobDays?null:"Trag im Heute-Tab eine Mobilitätsübung ein – "+MOB_UNIT_MIN+" Minuten am Tag sind eine volle Einheit."
   };
   SKILLDEF.forEach(function(sd){
     var v=c[sd.key],p=(pk&&pk[sd.key])||0;
@@ -794,4 +794,116 @@ function renderSettings(){
   var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);r.appendChild(ch);
   r.onclick=function(){openSettingsPage();};
   box.appendChild(r);
+}
+
+/* ================= Körper-Tab: was du mobilisiert hast ================= */
+/* Gegenstück zur Muskel-Übersicht. Mobilität denkt in Gelenken und Zonen statt in einzelnen
+   Muskeln, deshalb eigene, gröbere Bereiche. Eine Übung zählt mit ihrer vollen Zeit für jeden
+   Bereich ihrer Hauptmuskeln und mit halber Zeit für Bereiche, die sie nur mitnimmt – der
+   World's Greatest Stretch bewegt eben Hüfte, Wirbelsäule und Schulter zugleich. */
+var MOB_AREAS=[
+ {name:"Hüfte",ids:["tg_huefte","tg_adduktoren","tg_gesaess_haupt","tg_gesaess_med","tg_gesaess_min"]},
+ {name:"Wirbelsäule",ids:["tg_rueck_strecker","tg_bauch_schraeg","tg_bauch_gerade","tg_bauch_tief","tg_rueck_rhomb","tg_rueck_trapez_mit"]},
+ {name:"Schultern & Brust",ids:["tg_schulter_vorn","tg_schulter_seit","tg_schulter_hint","tg_schulter_rot_infra","tg_schulter_rot_teres_min","tg_schulter_rot_sub","tg_schulter_rot_supra","tg_brust_ober","tg_brust_mitte","tg_brust_unten","tg_brust_serratus","tg_rueck_lat","tg_rueck_teres_major","tg_rueck_trapez_unt"]},
+ {name:"Oberschenkel",ids:["tg_quadrizeps","tg_kniesehnen"]},
+ {name:"Waden & Sprunggelenk",ids:["tg_wade_gastro","tg_wade_soleus","tg_wade_fussheber"]},
+ {name:"Nacken",ids:["tg_nacken","tg_rueck_trapez_ob","tg_hals_nacken"]},
+ {name:"Arme & Handgelenke",ids:["tg_bizeps","tg_brachialis","tg_trizeps_lang","tg_trizeps_lat","tg_unterarm_beug","tg_unterarm_streck"]}
+];
+var MOB_WIN=30,bodyListMode="train",mobOpen=null;
+function mobAreaWeight(ex,area){
+  var hit=function(l){return (l||[]).some(function(id){return area.ids.indexOf(id)>=0;});};
+  return hit(ex.p)?1:hit(ex.s)?0.5:0;
+}
+function mobAreaStats(asOf){
+  var from=shiftDays(asOf,-(MOB_WIN-1)),out=MOB_AREAS.map(function(a){return {a:a,min:0,stat:0,dyn:0,last:null,exs:{}};});
+  var tot={min:0,units:0,days:0};
+  for(var d in state.days){
+    if(d<from||d>asOf)continue;
+    var dd=state.days[d],md=mobDay(dd);
+    tot.min+=md.min;tot.units+=md.units;if(md.units>0)tot.days++;
+    (dd.sets||[]).forEach(function(s){var ex=exById(s.ex);if(!ex||!ex.mob)return;
+      var m=mobSetSec(ex,s)/60;if(!m)return;
+      out.forEach(function(o){var w=mobAreaWeight(ex,o.a);if(!w)return;
+        o.min+=m*w;if(ex.mk==="dyn")o.dyn+=m*w;else o.stat+=m*w;
+        if(!o.last||d>o.last)o.last=d;
+        o.exs[ex.id]=(o.exs[ex.id]||0)+m;});
+    });
+  }
+  return {areas:out,tot:tot};
+}
+function fmtMin(m){return m>0&&m<1?"<1":String(Math.round(m));}
+function renderBodyListMode(){
+  var bar=$("mlistmode");if(!bar)return;
+  Array.prototype.forEach.call(bar.querySelectorAll("button"),function(b){
+    b.setAttribute("aria-pressed",String(b.getAttribute("data-m")===bodyListMode));
+    b.onclick=function(){bodyListMode=b.getAttribute("data-m");renderBodyListMode();};
+  });
+  var mob=bodyListMode==="mob";
+  $("mlist").hidden=mob;$("moblist").hidden=!mob;
+  var hs=$("mlisthead");if(hs)hs.textContent=mob?"letzte "+MOB_WIN+" Tage · antippen für Übungen":"letzte 7 Tage · antippen für Details";
+  if(mob)renderMobView();
+}
+function renderMobView(){
+  var box=$("moblist");if(!box)return;box.innerHTML="";
+  var st=mobAreaStats(TODAY),goal=(state.profile.goals.mob||0)*MOB_WIN/7;
+  if(!st.tot.min&&!st.tot.units){
+    var e=el("div","estate");e.appendChild(el("b",null,"Noch keine Mobilität"));
+    e.appendChild(el("p",null,"Trag Dehn- oder Mobilisationsübungen ein – hier siehst du dann, welche Bereiche du bewegt hast und welche lange nicht dran waren."));
+    var br=el("div","btnrow"),bt=el("button","btn small primary","Mobilität eintragen");bt.type="button";bt.onclick=function(){sheetMob();};
+    br.appendChild(bt);e.appendChild(br);box.appendChild(e);return;
+  }
+  var head=el("div","row mobsum"),hm=el("div","main");
+  hm.appendChild(el("b",null,fmtMin(st.tot.min)+" min an "+st.tot.days+(st.tot.days===1?" Tag":" Tagen")));
+  hm.appendChild(el("span",null,fmtMobUnits(st.tot.units)+" von "+Math.round(goal)+" Einheiten · "+MOB_UNIT_MIN+" min am Tag sind eine volle"));
+  head.appendChild(hm);box.appendChild(head);
+  var max=0;st.areas.forEach(function(o){if(o.min>max)max=o.min;});
+  var stale=[];
+  st.areas.forEach(function(o){
+    var ago=o.last?daysBetween(o.last,TODAY):null,isOpen=mobOpen===o.a.name;
+    if(ago==null||ago>14)stale.push(o.a.name);
+    var r=el("div","row tap"),m=el("div","main");
+    m.appendChild(el("b",null,o.a.name));
+    var bar=el("div","minibar mobbar");bar.style.marginTop="7px";
+    // Zwei Teile in einem Balken: gehalten (Dehnen) und bewegt (Drehen, Kreisen, Pendeln).
+    var fs=el("i","st"),fd=el("i","dy");
+    fs.style.width=(max?o.stat/max*100:0)+"%";fd.style.left=fs.style.width;fd.style.width=(max?o.dyn/max*100:0)+"%";
+    bar.appendChild(fs);bar.appendChild(fd);m.appendChild(bar);
+    var parts=[];
+    if(o.min>0){if(o.stat>0.05)parts.push(fmtMin(o.stat)+" min gedehnt");if(o.dyn>0.05)parts.push(fmtMin(o.dyn)+" min bewegt");}
+    parts.push(ago==null?"seit "+MOB_WIN+" Tagen nicht":ago===0?"zuletzt heute":ago===1?"zuletzt gestern":"zuletzt vor "+ago+" Tagen");
+    m.appendChild(el("span",null,parts.join(" · ")));
+    r.appendChild(m);
+    var v=el("div","val",fmtMin(o.min));v.appendChild(el("em",null," min"));r.appendChild(v);
+    var ch=el("span","chev");ch.innerHTML=svgIcon(isOpen?"M5 9l7 7 7-7":IC_CHEV);r.appendChild(ch);
+    r.setAttribute("aria-expanded",String(isOpen));
+    r.onclick=function(){mobOpen=isOpen?null:o.a.name;renderMobView();};
+    box.appendChild(r);
+    if(isOpen)box.appendChild(mobAreaDetail(o));
+  });
+  if(stale.length&&stale.length<MOB_AREAS.length){
+    box.appendChild(el("p","note mobhint","Länger nicht dran: "+stale.join(", ")+". Tipp einen Bereich an – dort stehen passende Übungen."));
+  }
+}
+function mobAreaDetail(o){
+  var w=el("div","mobdet");
+  var done=Object.keys(o.exs).sort(function(a,b){return o.exs[b]-o.exs[a];});
+  if(done.length){
+    w.appendChild(el("div","grouplab","Gemacht"));
+    done.forEach(function(id){var ex=exById(id);if(!ex)return;
+      var r=el("div","mobdet-row");r.appendChild(el("span",null,ex.n));r.appendChild(el("b",null,fmtMin(o.exs[id])+" min"));w.appendChild(r);});
+  }
+  // Vorschläge: Übungen mit diesem Bereich als Hauptziel, die du hier noch nicht gemacht hast –
+  // bewegte zuerst, falls bisher nur gedehnt wurde, und umgekehrt.
+  var wantDyn=o.dyn<o.stat;
+  var sug=EX.filter(function(ex){return ex.mob&&!o.exs[ex.id]&&mobAreaWeight(ex,o.a)===1;})
+    .sort(function(a,b){return ((b.mk==="dyn")===wantDyn)-((a.mk==="dyn")===wantDyn);}).slice(0,4);
+  if(sug.length){
+    w.appendChild(el("div","grouplab","Passt dazu"));
+    var cb=el("div","chipbar wrap");
+    sug.forEach(function(ex){var c=el("button","fchip",ex.n+(ex.mk==="dyn"?" · bewegt":" · gehalten"));c.type="button";
+      c.onclick=function(){sheetAddSet(ex);};cb.appendChild(c);});
+    w.appendChild(cb);
+  }
+  return w;
 }

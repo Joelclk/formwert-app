@@ -409,7 +409,8 @@ function exPicker(b,kinds,onPick,opts){
   var chips=el("div","disc-mgrid"),sub=el("div","chipbar sub");
   function regionChips(){
     chips.innerHTML="";
-    REGIONS.concat(opts.cardio?[CARDIO_REGION,MOB_REGION]:[]).forEach(function(rg){
+    // opts.mob: Mobilitätsübungen gehören auch ins Training und in Einheiten, Ausdauer nicht.
+    REGIONS.concat(opts.cardio?[CARDIO_REGION,MOB_REGION]:opts.mob?[MOB_REGION]:[]).forEach(function(rg){
       var card=el("button","disc-mcard");card.type="button";
       card.setAttribute("aria-pressed",String(reg===rg));
       if(rg.cardio){

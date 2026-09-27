@@ -165,7 +165,33 @@ async function main() {
     await s.ctx.close();
   });
 
-  // 7) 3D-Betrachter: Seite lässt sich auspacken und ist vollständig.
+  // 7) Mobilität wird aus Übungen gemessen: Minuten zählen bis 10 min als eine Einheit,
+  //    reine Mobilitätstage sind kein Trainingstag, der alte Haken zählt weiter voll.
+  await test("Mobilität aus Übungen", async () => {
+    const h = iso(new Date()), g = new Date(); g.setDate(g.getDate() - 1); const G = iso(g), v = new Date(); v.setDate(v.getDate() - 2); const V = iso(v);
+    const days = {
+      [h]: Object.assign(tagLeer(""), { sets: [{ ex: "mob_couch", reps: 45 }, { ex: "mob_couch", reps: 45 }, { ex: "mob_9090", reps: 10 }, { ex: "mob_frog", reps: 60 }, { ex: "mob_pigeon", reps: 45 }, { ex: "mob_hipflex", reps: 45 }, { ex: "mob_wgs", reps: 5 }] }),
+      [G]: Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 60, reps: 8 }, { ex: "mob_chest", reps: 40 }] }),
+      [V]: Object.assign(tagLeer(""), { mobility: true })
+    };
+    const s = await seite({ days });
+    const r = await s.page.evaluate(d => { const c = compute(TODAY);
+      return { h: mobDay(state.days[d[0]]), g: mobDay(state.days[d[1]]), v: mobDay(state.days[d[2]]), tHeute: isTrainDay(state.days[d[0]]), tGestern: isTrainDay(state.days[d[1]]), trainDays: c.trainDays, mobDays: c.mobDays }; }, [h, G, V]);
+    pruefe(r.h.units === 1 && r.h.min > 10 && r.h.exs === 6, "heute: " + JSON.stringify(r.h));
+    pruefe(r.g.units > 0 && r.g.units < 1, "gestern: " + JSON.stringify(r.g));
+    pruefe(r.v.units === 1 && r.v.legacy, "alter Haken: " + JSON.stringify(r.v));
+    pruefe(!r.tHeute && r.tGestern && r.trainDays === 1, "Trainingstage: " + JSON.stringify(r));
+    pruefe(Math.abs(r.mobDays - (2 + r.g.units)) < 1e-9, "Einheiten: " + r.mobDays);
+    await s.page.evaluate(() => { document.getElementById("tab-koerper").click(); });
+    await s.warte(900);
+    await s.page.evaluate(() => document.querySelector('#mlistmode [data-m="mob"]').click());
+    const n = await s.page.evaluate(() => document.querySelectorAll("#moblist .row.tap").length);
+    pruefe(n === 7, "Bereiche in der Mobilitätsansicht: " + n);
+    pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
+    await s.ctx.close();
+  });
+
+  // 8) 3D-Betrachter: Seite lässt sich auspacken und ist vollständig.
   await test("3D-Betrachter lädt", async () => {
     const s = await seite({});
     const r = await s.page.evaluate(async () => { const h = await fw3dHtml(); const h2 = await fw3dHtml(); return { len: h.length, anfang: h.slice(0, 15), gleich: h === h2 }; });

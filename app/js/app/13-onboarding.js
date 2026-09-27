@@ -110,7 +110,7 @@ function drawOb(){
     w.appendChild(el("h2","","Welchen Rhythmus hältst du?"));
     w.appendChild(el("p","intro","Der Maßstab für Konstanz, Mobilität und Ausdauer. Nimm die normale Woche, nicht die Idealwoche – ein Ziel, das du zu 90 % erfüllst, trägt dich; eins, das du zu 40 % erfüllst, zermürbt."));
     w.appendChild(prog);
-    [["days","Trainingstage pro Woche","Tage","jeder Tag mit mindestens einem Satz",1,7,"1"],["mob","Mobilität pro Woche","×","Dehnen, Hüfte, Schulter",0,7,"1"],["cardio","Ausdauerminuten pro Woche","min","WHO empfiehlt 150 moderate Minuten",0,600,"15"]].forEach(function(g){
+    [["days","Trainingstage pro Woche","Tage","jeder Tag mit mindestens einem Satz",1,7,"1"],["mob","Mobilität pro Woche","×","je 10 Minuten Dehnen oder Mobilisieren",0,7,"1"],["cardio","Ausdauerminuten pro Woche","min","WHO empfiehlt 150 moderate Minuten",0,600,"15"]].forEach(function(g){
       var r=el("div","qrow"),q=el("div","q");q.innerHTML="<b>"+g[1]+"</b><span>"+g[3]+"</span>";var qi=el("div","qin");
       var n=document.createElement("input");n.type="number";n.inputMode="numeric";n.min=g[4];n.max=g[5];n.step=g[6];n.value=ob.goals[g[0]];n.oninput=function(){ob.goals[g[0]]=parseInt(n.value,10)||0;};
       qi.appendChild(n);qi.appendChild(el("span","unit",g[2]));r.appendChild(q);r.appendChild(qi);w.appendChild(r);});

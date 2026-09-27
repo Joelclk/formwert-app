@@ -408,7 +408,7 @@ function woSwapEx(ei){
   var we=workout&&workout.exercises[ei];if(!we||!we.sets)return;
   var old=exById(we.ex);if(!old)return;
   var done=we.sets.filter(function(x){return x.done;}).length,open=we.sets.length-done;
-  var rg=null,p0=(old.p||[])[0];if(p0)rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;
+  var rg=null,p0=(old.p||[])[0];if(old.mob)rg=MOB_REGION;else if(p0)rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;
   openSheet(function(bb){
     sheetTitle(bb,"Übung tauschen");
     bb.appendChild(el("p","note",done
@@ -432,7 +432,7 @@ function woSwapEx(ei){
       }
       saveWorkout();renderSession();
       toast("„"+e.n+"“ statt „"+old.n+"“");
-    },{region:rg});
+    },{region:rg,mob:true});
   });
 }
 function woAddPage(){
