@@ -507,7 +507,7 @@ function renderSessionInner(){
     }else{
       var best=bestFor(ex.id,TODAY,WIN_STRENGTH);
       var sub=el("span",null,"Übung "+(ei+1)+" von "+workout.exercises.length+" · "+(best.best!=null?"Best "+fmtVal(best.best,ex.t):"neu")+" · Pause "+we.restSec+" s");
-      try{var wrk=exRank(ex);if(wrk){var rc=rankChip(wrk,18,function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)));});rc.setAttribute("data-ex",ex.id);sub.insertBefore(rc,sub.firstChild);}}catch(e){}
+      try{var wrk=exRank(ex);if(wrk){var rc=rankChip(wrk,18,function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)),ex);});rc.setAttribute("data-ex",ex.id);sub.insertBefore(rc,sub.firstChild);}}catch(e){}
       title.appendChild(sub);
     }
     h.appendChild(title);

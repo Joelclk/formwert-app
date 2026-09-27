@@ -151,11 +151,14 @@ function rankCard(rk,opts){
   }else tx.appendChild(el("span","rk-next","Höchster Rang erreicht"));
   card.appendChild(tx);
   var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);card.appendChild(ch);
-  card.onclick=function(){sheetRankLadder(rk,opts.ladderTitle||"Rangleiter",opts.hint);};
+  card.onclick=function(){sheetRankLadder(rk,opts.ladderTitle||"Rangleiter",opts.hint,opts.ex);};
   return card;
 }
-/* Rangleiter: alle Raenge von oben (Legende) nach unten (Holz I), eigener Rang hervorgehoben. */
-function sheetRankLadder(rk,title,hint){
+/* Rangleiter: alle Raenge von oben (Legende) nach unten (Holz I), eigener Rang hervorgehoben.
+   Mit ex (Uebung) zusaetzlich je Stufe der dafuer noetige Rohwert (kg/Wdh./Sek.) - "was brauche
+   ich fuer Silber, Gold usw." Ohne ex (z. B. Gesamtstaerke) bleibt die Spalte leer, weil es dafuer
+   keine einzelne Einheit gibt. */
+function sheetRankLadder(rk,title,hint,ex){
   openSheet(function(b){
     sheetTitle(b,title||"Rangleiter");
     var list=el("div","rk-ladder"),cur=null;
@@ -164,7 +167,9 @@ function sheetRankLadder(rk,title,hint){
       row.style.setProperty("--rkc",x.t.leg?"#C04C9A":x.t.m);
       var lab=el("div","rk-row-l");lab.appendChild(el("b",null,x.name));lab.appendChild(el("span",null,x.title));row.appendChild(lab);
       var bw=el("div","rk-row-b");bw.innerHTML=rankBadge(x,rk&&r===rk.r?68:52);row.appendChild(bw);
-      var you=el("div","rk-row-y");if(rk&&r===rk.r){you.appendChild(el("span","rk-you","Du"));you.appendChild(el("span","rk-you-p",Math.round(rk.pct*100)+" %"));}
+      var you=el("div","rk-row-y");
+      if(rk&&r===rk.r){you.appendChild(el("span","rk-you","Du"));you.appendChild(el("span","rk-you-p",Math.round(rk.pct*100)+" %"));}
+      if(ex){var vlab=exRankValueLabel(ex,r);if(vlab)you.appendChild(el("span","rk-row-v",vlab));}
       row.appendChild(you);
       if(rk&&r===rk.r)cur=row;
       list.appendChild(row);
@@ -173,10 +178,40 @@ function sheetRankLadder(rk,title,hint){
     if(rk&&rk.next!=null){var nx=rankByIndex(rk.r+1);
       b.appendChild(el("p","note rk-ladder-foot","Nächster Rang: "+nx.name+" · "+nx.title+(hint?" – "+hint:"")));}
     b.appendChild(el("p","note","Jede Stufe hat ihren eigenen Titel – von Lauch bis Weltenheber. Grundlage ist deine Kraft im Verhältnis zu Körpergewicht, Alter und Geschlecht (beste Sätze der letzten 90 Tage)."));
+    if(ex)b.appendChild(el("p","note",exRankValueNote(ex)));
     if(cur)setTimeout(function(){try{cur.scrollIntoView({block:"center"});}catch(e){}},60);
   });
 }
 function exRankHint(ex,rk){var h=rankNextHint(ex,rk);return h&&h.txt?"z. B. "+h.txt+" für "+h.rank.name:null;}
+/* Rohwert (kg/Wdh./Sek.), den man fuer Rangstufe r EINTRAGEN muesste - die Umkehrung von
+   valueForScore(), zusaetzlich fuer Gewichts-Uebungen durch rawKg() zurueckgerechnet (bei
+   wt:"body"/"side" ist der Score-interne Wert die effektive Last, nicht die eingetragene Zahl).
+   Bei Gewichts-Uebungen ist das immer als EINMALIGE Maximalleistung (1 Wiederholung) zu lesen -
+   das ist genau die Einheit, in der die Rangleiter selbst verankert ist (Strength Levels eigene
+   1RM-Tabelle bzw., bei den alten 8-Stufen-Uebungen, deren Skalierung). */
+function exRankRawValue(ex,r){
+  if(!ex||!ex.std)return null;
+  var score=r>=RANK_N?100:r*100/RANK_N;
+  var val=valueForScore(ex,score);
+  if(val==null)return null;
+  return ex.t==="load"?rawKg(ex,val):val;
+}
+/* Lesbare Kurzform des Rohwerts fuer eine Zeile der Rangleiter. */
+function exRankValueLabel(ex,r){
+  var v=exRankRawValue(ex,r);if(v==null)return null;
+  if(ex.t==="load"){
+    if(ex.wt==="body"){var vv=Math.round(v*2)/2;return vv<=0?"Körpergewicht":"+"+fmtNum(vv)+" kg";}
+    return fmtNum(Math.round(v*2)/2)+" kg"+(ex.wt==="side"?" pro Seite":"");
+  }
+  if(ex.t==="sec")return Math.round(v)+" s";
+  return Math.round(v)+" Wdh.";
+}
+/* Erklaerender Zusatz im Fuss der Rangleiter, wenn Rohwerte angezeigt werden. */
+function exRankValueNote(ex){
+  if(ex.t==="load")return "Die Gewichte gelten als einmalige Maximalleistung (1 Wiederholung)"+(ex.wt==="body"?", als Zusatzgewicht zum Körpergewicht":ex.wt==="side"?", pro Hantel/Seite":"")+".";
+  if(ex.t==="sec")return "Die Zeiten gelten für einen einzelnen möglichst langen Halt.";
+  return "Die Wiederholungszahlen gelten für einen einzelnen Satz bis ans Limit.";
+}
 
 /* ---------- Aufstieg beim Abhaken ---------- */
 function rankOnTick(ex,rec){
@@ -190,7 +225,7 @@ function rankOnTick(ex,rec){
     ka=compute(TODAY).kraft;}catch(e){}
   // Rang-Chip auf der Uebungsseite im Training gleich auffrischen.
   try{Array.prototype.forEach.call(document.querySelectorAll('.wo-page .rk-chip[data-ex="'+ex.id+'"]'),function(old){
-    var nc=rankChip(after,18,function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)));});nc.setAttribute("data-ex",ex.id);old.parentNode.replaceChild(nc,old);});}catch(e){}
+    var nc=rankChip(after,18,function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)),ex);});nc.setAttribute("data-ex",ex.id);old.parentNode.replaceChild(nc,old);});}catch(e){}
   prQ.push({rank:true,ex:ex,from:before,to:after,kb:kb,ka:ka});
   if(!prBusy)prNext();
 }

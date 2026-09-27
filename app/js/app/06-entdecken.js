@@ -643,7 +643,10 @@ function sheetKraftCat(catId,c){
       if(r.grade&&r.grade.next){var bar=el("div","minibar");bar.style.marginTop="7px";
         var xrk=rankFromScore(r.score),fi=el("i");fi.style.width=clamp(xrk.pct*100,0,100)+"%";fi.style.background=xrk.t.leg?"#C04C9A":xrk.t.m;bar.appendChild(fi);main.appendChild(bar);}
       it.appendChild(main);
-      it.appendChild(r.grade?rankChip(rankFromScore(r.score),20):el("span","pill gnone","verfallen"));
+      if(r.grade){
+        var xrk=rankFromScore(r.score);xrk.best=r.best;xrk.bestSet=r.bestSet;
+        it.appendChild(rankChip(xrk,20,function(){sheetRankLadder(xrk,"Rangleiter · "+r.ex.n,exRankHint(r.ex,xrk),r.ex);}));
+      }else it.appendChild(el("span","pill gnone","verfallen"));
       it.onclick=function(){closeSheet();setTimeout(function(){sheetAddSet(r.ex);},180);};
       list.appendChild(it);
     });

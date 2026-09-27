@@ -112,8 +112,13 @@ function sheetExerciseDetail(ex){
   body.appendChild(infoBoxD);
   // Rang dieser Uebung (Wappen, Titel, naechster Schritt) - nur bei Uebungen mit Kraftstandard.
   try{var xrk=exRank(ex);
-    if(xrk)body.appendChild(rankCard(xrk,{eyebrow:"Dein Rang",hint:exRankHint(ex,xrk),ladderTitle:"Rangleiter · "+ex.n}));
-    else if(ex.std)body.appendChild(el("p","note rk-none","Noch kein Rang – ein Satz in den letzten 90 Tagen stuft dich ein."));}catch(e){}
+    if(xrk)body.appendChild(rankCard(xrk,{eyebrow:"Dein Rang",hint:exRankHint(ex,xrk),ladderTitle:"Rangleiter · "+ex.n,ex:ex}));
+    else if(ex.std){
+      body.appendChild(el("p","note rk-none","Noch kein Rang – ein Satz in den letzten 90 Tagen stuft dich ein."));
+      var rkBtn=el("button","btn ghost small","Werte je Stufe ansehen");rkBtn.type="button";rkBtn.style.margin="-6px 0 10px";
+      rkBtn.onclick=function(){sheetRankLadder(null,"Rangleiter · "+ex.n,null,ex);};
+      body.appendChild(rkBtn);
+    }}catch(e){}
   if(ex.t==="load"||ex.t==="reps"||ex.t==="sec"){
     var rg=sugRange(ex),rgr=el("button","exd-range");rgr.type="button";
     rgr.appendChild(el("span",null,"Zielbereich"));

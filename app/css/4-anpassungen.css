@@ -234,6 +234,7 @@ button.rk-chip{cursor:pointer;touch-action:manipulation}
 .rk-row-y{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding-left:10px}
 .rk-you{font-size:12px;font-weight:800;color:#fff;background:var(--rkc);border-radius:999px;padding:3px 10px}
 .rk-you-p{font-size:11.5px;color:var(--ink-2)}
+.rk-row-v{font-size:12.5px;font-weight:700;color:var(--ink-2);white-space:nowrap}
 .rk-ladder-foot{margin-top:12px;font-weight:600;color:var(--ink-2)}
 .pr-burst[data-t="rank"]{--prc:var(--rkc)}
 .pr-thumb.rk{background:none}
