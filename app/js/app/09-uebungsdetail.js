@@ -207,8 +207,15 @@ var EX_PLUS={"bench":["rotator_sehnen", "g_schulter"],
   "mob_legswing":["beweglichkeit", "g_huefte"],
   "mob_9090":["beweglichkeit", "g_huefte"],
   "mob_wrist_circ":["beweglichkeit", "g_handgelenk"]};
+// Mobilitätsübungen ohne eigenen Eintrag: Beweglichkeit plus die Gelenke ihrer Bereiche.
+var MOB_AREA_STRUCT={"Hüfte":"g_huefte","Wirbelsäule":"g_wirbelsaeule","Schultern & Brust":"g_schulter","Waden & Sprunggelenk":"g_sprunggelenk","Arme & Handgelenke":"g_handgelenk"};
+function mobPlusOf(ex){
+  var out=["beweglichkeit"];
+  MOB_AREAS.forEach(function(a){var g=MOB_AREA_STRUCT[a.name];if(g&&mobAreaWeight(ex,a)===1&&out.indexOf(g)<0)out.push(g);});
+  return out;
+}
 function exPlusList(ex){
-  var ids=EX_PLUS[ex&&ex.id]||[];
+  var ids=EX_PLUS[ex&&ex.id]||(ex&&ex.mob?mobPlusOf(ex):[]);
   return ids.filter(function(id){return !!STRUCT[id];});
 }
 /* ================= Übungsdetail: Tabs Info/Verlauf/Fortschritt/Rekorde ================= */

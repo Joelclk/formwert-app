@@ -12,10 +12,13 @@
 // schnelle Durchstöbern; Details/Rückansicht gibt's weiter per Tap im Übungskatalog-Sheet).
 // discMk: bei der Mobilitaets-Kachel steht hier "stat" oder "dyn" statt eines Muskels -
 // die beiden Arten schliessen sich gegenseitig aus, deshalb ein eigener Zustand.
-var discRegion=null, discQuery="", discFine=null, discMk=null, discObserver=null, discEquip=[];
+// discMobArea: bei Mobilität zusätzlich ein Körperbereich (MOB_AREAS), sonst null.
+var discRegion=null, discQuery="", discFine=null, discMk=null, discMobArea=null, discObserver=null, discEquip=[];
 // Die beiden Arten von Mobilitaetsarbeit. null = beide zusammen.
-var MOB_KINDS=[[null,"Alles"],["stat","Statisch"],["dyn","Dynamisch"]];
-function mobKindLabel(mk){return mk==="dyn"?"Dynamisch":mk==="stat"?"Statisch":"";}
+// "Gehalten" (Dehnen) und "bewegt" (Kreisen, Drehen, Pendeln) - dieselben Worte wie in der
+// Mobilitätsansicht des Körper-Tabs.
+var MOB_KINDS=[[null,"Alles"],["stat","Gehalten"],["dyn","Bewegt"]];
+function mobKindLabel(mk){return mk==="dyn"?"Bewegt":mk==="stat"?"Gehalten":"";}
 function regionInvolve(region){
   var inv={};region.ids.forEach(function(id){inv[id]=1;});
   return inv;
@@ -149,7 +152,7 @@ function discExList(){
   // Regionen), sondern ueber ex.mob und die gewaehlte Art.
   var ids=mobMode?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
   return EX.filter(function(e){
-    if(mobMode){if(!e.mob)return false;if(discMk&&e.mk!==discMk)return false;}
+    if(mobMode){if(!e.mob)return false;if(discMk&&e.mk!==discMk)return false;if(discMobArea&&mobAreaWeight(e,discMobArea)!==1)return false;}
     else if(e.mob)return false;
     else if(cardioMode){if(e.t!=="cardio")return false;}
     else if(e.t==="cardio")return false;
@@ -223,7 +226,7 @@ function renderDiscMuscleGrid(){
       card.appendChild(sv);
     }
     card.appendChild(el("span",null,rg.name));
-    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;discMk=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
+    card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;discMk=null;discMobArea=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
     mgrid.appendChild(card);
   });
   discLazyObserve(mgrid);
@@ -232,7 +235,12 @@ function renderDiscMuscleGrid(){
 // (z.B. Brust → Obere/Mittlere/Untere Brust), damit man gezielter als nach grober Region suchen kann.
 function renderDiscSubChips(){
   var sub=$("disc-subchips");sub.innerHTML="";sub.hidden=!discRegion;
+  // Zweite Zeile nur bei Mobilität: Körperbereiche. Wird bei Bedarf einmal angelegt.
+  var sub2=$("disc-mobareas");
+  if(!sub2){sub2=el("div","chipbar sub");sub2.id="disc-mobareas";sub.parentNode.insertBefore(sub2,sub.nextSibling);}
+  sub2.innerHTML="";sub2.hidden=!(discRegion&&discRegion.mobility);
   if(!discRegion)return;
+  if(discRegion.mobility)mobAreaChips(sub2,discMobArea,function(a){discMobArea=a;renderDiscSubChips();renderDiscExGrid();});
   // Unter der Mobilitaets-Kachel stehen keine Einzelmuskeln, sondern die zwei Arten:
   // gehalten (Dehnen) und bewegt (Mobilisieren). Das ist der eigentliche Unterschied -
   // nach Muskeln sortiert waere hier fast jede Uebung ueberall dabei.
@@ -319,7 +327,7 @@ function discExCard(ex,onPick,onDelete){
 function renderDiscExGrid(){
   var exgrid=$("disc-exgrid");exgrid.innerHTML="";
   var name=discFine?muscleById(discFine).name:(discRegion?discRegion.name:null);
-  if(discRegion&&discRegion.mobility&&discMk)name=discRegion.name+" · "+mobKindLabel(discMk);
+  if(discRegion&&discRegion.mobility&&(discMk||discMobArea))name=[discRegion.name,discMobArea&&discMobArea.name,discMk&&mobKindLabel(discMk)].filter(Boolean).join(" · ");
   var list=discExList();
   var hd=$("disc-exheading");hd.textContent="";
   hd.appendChild(el("span","sec-t",name||"Alle Übungen"));
@@ -333,6 +341,8 @@ function renderDiscExGrid(){
     exgrid.appendChild(e);return;
   }
   var ids=(discRegion&&discRegion.mobility)?null:(discFine?[discFine]:(discRegion?discRegion.ids:null));
+  // Mobilität ohne gewählten Bereich: nach Bereichen gegliedert, damit die lange Liste lesbar bleibt.
+  if(discRegion&&discRegion.mobility&&!discMobArea){mobGrouped(list,exgrid,function(ex){return discExCard(ex);});discLazyObserve(exgrid);return;}
   if(!ids){list.forEach(function(ex){exgrid.appendChild(discExCard(ex));});discLazyObserve(exgrid);return;}
   // Bei aktivem Muskel-/Regionsfilter zuerst die Übungen mit starkem Fokus zeigen (Primärmuskel
   // trifft), danach die, die den Bereich nur mittrainieren.
@@ -364,12 +374,13 @@ function renderDiscActive(){
     b.appendChild(el("span",null,label));b.insertAdjacentHTML("beforeend",X);b.onclick=fn;box.appendChild(b);}
   function all(){renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();renderDiscEquipChips();}
   var n=0;
-  if(discRegion){n++;chip(discRegion.name,function(){discRegion=null;discFine=null;discMk=null;all();});}
+  if(discRegion){n++;chip(discRegion.name,function(){discRegion=null;discFine=null;discMk=null;discMobArea=null;all();});}
   if(discFine&&muscleById(discFine)){n++;chip(muscleById(discFine).name,function(){discFine=null;all();});}
   if(discMk){n++;chip(mobKindLabel(discMk),function(){discMk=null;all();});}
+  if(discMobArea){n++;chip(discMobArea.name,function(){discMobArea=null;all();});}
   discEquip.slice().forEach(function(eq){n++;chip(eq,function(){var i=discEquip.indexOf(eq);if(i>=0)discEquip.splice(i,1);all();});});
   if(n>1){var c=el("button","achip clear","Alle zurücksetzen");c.type="button";
-    c.onclick=function(){discRegion=null;discFine=null;discMk=null;discEquip.length=0;all();};box.appendChild(c);}
+    c.onclick=function(){discRegion=null;discFine=null;discMk=null;discMobArea=null;discEquip.length=0;all();};box.appendChild(c);}
 }
 
 /* Übungsart in Worten - für die Kurzinfo auf der Karte. */
@@ -906,4 +917,34 @@ function mobAreaDetail(o){
     w.appendChild(cb);
   }
   return w;
+}
+
+/* Bereich, unter dem eine Mobilitätsübung in Listen steht: der erste, den ihre Hauptmuskeln
+   treffen. Im Filter taucht sie dagegen unter jedem Bereich ihrer Hauptmuskeln auf. */
+function mobAreaOf(ex){
+  var p=ex.p||[];
+  for(var i=0;i<p.length;i++)for(var j=0;j<MOB_AREAS.length;j++)if(MOB_AREAS[j].ids.indexOf(p[i])>=0)return MOB_AREAS[j];
+  return null;
+}
+function mobAreaChips(box,cur,onPick){
+  var all=el("button","fchip","Alle Bereiche");all.type="button";all.setAttribute("aria-pressed",String(!cur));
+  all.onclick=function(){onPick(null);};box.appendChild(all);
+  MOB_AREAS.forEach(function(a){
+    var n=EX.filter(function(e){return e.mob&&mobAreaWeight(e,a)===1;}).length;if(!n)return;
+    var c=el("button","fchip",a.name);c.type="button";c.setAttribute("aria-pressed",String(cur===a));
+    c.onclick=function(){onPick(cur===a?null:a);};box.appendChild(c);
+  });
+  centerChip(box);
+}
+function mobGrouped(list,target,mkItem){
+  var groups=MOB_AREAS.map(function(a){return {a:a,items:[]};}),rest=[];
+  list.forEach(function(ex){var a=mobAreaOf(ex),g=null;
+    for(var i=0;i<groups.length;i++)if(groups[i].a===a)g=groups[i];
+    (g?g.items:rest).push(ex);});
+  groups.push({a:{name:"Sonstiges"},items:rest});
+  groups.forEach(function(g){
+    if(!g.items.length)return;
+    target.appendChild(el("div","grouplab",g.a.name+" · "+g.items.length));
+    g.items.forEach(function(ex){target.appendChild(mkItem(ex));});
+  });
 }

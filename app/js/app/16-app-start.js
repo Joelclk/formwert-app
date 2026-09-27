@@ -106,6 +106,63 @@
   if(!UI_EN["weniger"])UI_EN["weniger"]="less";if(!UI_EN["Weniger anzeigen"])UI_EN["Weniger anzeigen"]="Show less";
   UI_RX.push([/Satzpause (angehalten )?([\d:]+) – antippen zum Steuern/g,function(m,p,t){return "Rest "+(p?"paused ":"")+t+" – tap to control";}]);
 })();
+/* Englische Namen der zusätzlichen Mobilitätsübungen (data.js, 27.09.2026). */
+  EX_EN["mob_hipcar_knee"]="Standing hip circles, bent knee";
+  EX_EN["mob_legraise_circ"]="Straight-leg raise with circles";
+  EX_EN["mob_hipcircle_4pt"]="Quadruped hip circles";
+  EX_EN["mob_gate"]="Hip gate opener and closer";
+  EX_EN["mob_hip_airplane"]="Hip airplane";
+  EX_EN["mob_cossack"]="Cossack squat";
+  EX_EN["mob_deepsquat"]="Deep squat hold";
+  EX_EN["mob_butterfly"]="Butterfly stretch";
+  EX_EN["mob_lizard"]="Lizard stretch";
+  EX_EN["mob_9090_hold"]="90/90 hold";
+  EX_EN["mob_wiper"]="Lying windshield wipers";
+  EX_EN["mob_happybaby"]="Happy baby";
+  EX_EN["mob_frog_rock"]="Frog rocks";
+  EX_EN["mob_add_rock"]="Adductor rock-backs";
+  EX_EN["mob_lunge_reach"]="Lunge with overhead reach";
+  EX_EN["mob_legcradle"]="Standing leg cradle";
+  EX_EN["mob_pigeon_dyn"]="Pigeon with forward folds";
+  EX_EN["mob_threadneedle"]="Thread the needle";
+  EX_EN["mob_openbook"]="Open book";
+  EX_EN["mob_rolldown"]="Standing roll-down";
+  EX_EN["mob_child"]="Child's pose";
+  EX_EN["mob_sidebend"]="Standing side bend";
+  EX_EN["mob_trunkcircle"]="Torso circles";
+  EX_EN["mob_seatedtwist"]="Seated spinal twist";
+  EX_EN["mob_sphinx"]="Sphinx pose";
+  EX_EN["mob_pelvictilt"]="Pelvic tilts";
+  EX_EN["mob_jeffcurl"]="Jefferson curl";
+  EX_EN["mob_quadreach"]="Quadruped T-spine rotation";
+  EX_EN["mob_shouldercar"]="Shoulder CARs";
+  EX_EN["mob_passthrough"]="Band or stick pass-throughs";
+  EX_EN["mob_wallslide"]="Wall slides";
+  EX_EN["mob_scappushup"]="Scapular push-ups";
+  EX_EN["mob_sleeper"]="Sleeper stretch";
+  EX_EN["mob_armcircles"]="Arm circles";
+  EX_EN["mob_ytw"]="Prone Y-T-W raises";
+  EX_EN["mob_puppy"]="Puppy pose";
+  EX_EN["mob_towel"]="Towel shoulder stretch";
+  EX_EN["mob_hugopen"]="Arm hugs and openers";
+  EX_EN["mob_bandpullapart"]="Band pull-aparts";
+  EX_EN["mob_neckcircle"]="Neck half circles";
+  EX_EN["mob_chintuck"]="Chin tucks";
+  EX_EN["mob_levator"]="Levator scapulae stretch";
+  EX_EN["mob_neckrot"]="Neck rotations";
+  EX_EN["mob_hamfloss"]="Dynamic hamstring flossing";
+  EX_EN["mob_inchworm"]="Inchworm";
+  EX_EN["mob_downdog_pedal"]="Down dog pedaling";
+  EX_EN["mob_forwardfold"]="Standing forward fold";
+  EX_EN["mob_halfsplit"]="Half split";
+  EX_EN["mob_quad_prone"]="Prone quad stretch";
+  EX_EN["mob_anklecircle"]="Ankle circles";
+  EX_EN["mob_toesquat"]="Toe squat";
+  EX_EN["mob_downdog"]="Downward dog hold";
+  EX_EN["mob_ankle_rock"]="Half-kneeling ankle rocks";
+  EX_EN["mob_wristcircle"]="Wrist circles";
+  EX_EN["mob_prayer"]="Prayer stretch";
+  EX_EN["mob_forearmrot"]="Forearm rotations";
 LANG=detectLang();applyLangData();document.documentElement.setAttribute("lang",LANG);
 setTimeout(function(){applyUiLang(document.body);},0);
 /* Englische Texte fuer die gemessene Mobilitaet (Minuten aus Uebungen statt Haken) und die
@@ -124,7 +181,7 @@ setTimeout(function(){applyUiLang(document.body);},0);
     "Trag Dehn- oder Mobilisationsübungen ein – hier siehst du dann, welche Bereiche du bewegt hast und welche lange nicht dran waren.":"Log stretching or mobility exercises – this then shows which areas you have moved and which have been left out for a while.",
     "Gemacht":"Done","Passt dazu":"Good fits","gehalten":"static","bewegt":"dynamic",
     "zuletzt heute":"today","zuletzt gestern":"yesterday","✓ volle Einheit":"✓ full session",
-    "+ Mobilität eintragen":"+ Log mobility"};
+    "+ Mobilität eintragen":"+ Log mobility","Gehalten":"Static","Bewegt":"Dynamic","Alle Bereiche":"All areas","Sonstiges":"Other"};
   for(var a in AREA_EN)add[a]=AREA_EN[a];
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
   var cnt={};for(var k1 in UI_EN){var v=UI_EN[k1];cnt[v]=(cnt[v]||0)+1;}
