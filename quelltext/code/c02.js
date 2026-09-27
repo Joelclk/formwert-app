@@ -1,9 +1,20 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: BRACHIORAD_FRONT bis cardioDayOf()
+   Enthaelt: LATS_UPPER_SHAPE bis defaultSet()
 */
 
-// großer Rundmuskel
+// kleiner Rundmuskel
+// Der Umriss der "lats"-Maske besteht oben aus einem eigenen, separat gezeichneten Teilpfad (neben
+// dem großen Lat-Dreieck) – er deckt Untergräten- und kleinen Rundmuskel ab, reicht aber medial
+// (zur Wirbelsäule hin) noch etwas über SCAP_INFRA/SCAP_TMIN hinaus: ein schmaler Zwickel direkt an
+// der Nahtlinie zum Trapezius, der zu keinem der beiden Muskeln gehört. Direkt aus diesem Teilpfad
+// übernommen (nicht neu geschätzt), damit die Kontur exakt passt. Per "exclude" aus der Lat-Restfläche
+// herausgeschnitten, ohne einem Muskel zugeordnet zu sein – sichtbares Ergebnis: an dieser Stelle
+// bleibt die Grundzeichnung ungefärbt statt fälschlich als Lat-Fläche eingefärbt zu werden.
+var LATS_UPPER_SHAPE=[[0.584,0.357],[0.6,0.356],[0.353,0.2],[0.21,0.083],[0.205,0.074],[0.199,0.077],[0.146,0.1],[0.1,0.12],[0.176,0.09],[0.26,0.151],[0.283,0.17],[0.269,0.175],[0.091,0.124],[0.084,0.127],[0.057,0.139],[0.238,0.182],[0.301,0.2],[0.367,0.23],[0.471,0.289],[0.56,0.357]];
+
+var SCAP_TMAJ=[[-0.001,0.174],[0.01,0.204],[0.054,0.26],[0.125,0.294],[0.167,0.309],[0.226,0.326],[0.317,0.342],[0.447,0.354],[0.56,0.357],[0.471,0.289],[0.367,0.23],[0.301,0.2],[0.238,0.182],[0.048,0.137],[0.006,0.155]];
+         // großer Rundmuskel
 // Unterarm vorn: der Oberarmspeichenmuskel ist hier nicht als eigener Umriss gezeichnet (anders
 // als am Rücken, siehe "bysize" unten). Die Außenkante folgt der Speichenseiten-Kontur der Maske,
 // die Innenkante der in der Illustration selbst durchgezeichneten Furche zwischen der radialen
@@ -1720,7 +1731,7 @@ function applyBackup(o){
   // im Konto neben dem wiederhergestellten Stand weiterleben.
   workout=null;try{localStorage.removeItem("formwert-workout");}catch(e){warnSaveFailed();}
   if(stTimer){clearTimeout(stTimer);stTimer=null;}
-  state.dirty={};state.dirtyRoutines={};
+  state.dirty={};state.dirtyRoutines={};state.dirtyExtras=0;state.extrasGone={};
   markCloudReplacePending(true);saveLocal();closeSheet();renderAll();
   if(!db){toast("Backup lokal eingespielt – Konto folgt beim nächsten Verbinden");return;}
   setSync("","Backup wird übertragen");
@@ -1846,7 +1857,7 @@ function setRoutineOrder(ids){
   var changed=false;
   ids.forEach(function(id,i){
     var r=state.routines[id];if(!r)return;
-    if(r.ord!==i){r.ord=i;state.dirtyRoutines[id]=true;changed=true;}
+    if(r.ord!==i){r.ord=i;markRoutineDirty(id);changed=true;}
   });
   if(changed)persist();
 }
@@ -2017,11 +2028,4 @@ function defaultSet(ex,prev){
   var b=bestFor(ex.id,TODAY,WIN_STRENGTH);
   if(ex.t==="load")return {kg:suggestedKg(ex,b.best),reps:8,done:false};
   return {kg:0,reps:suggestedReps(ex,b.best),done:false};
-}
-
-/* In welchem Tag steht dieser Ausdauer-Datensatz? (Objektvergleich, nicht Inhalt.) */
-function cardioDayOf(rec){
-  if(!rec)return null;
-  for(var k in state.days){if((state.days[k].cardio||[]).indexOf(rec)>=0)return k;}
-  return null;
 }

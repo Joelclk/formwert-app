@@ -1,7 +1,14 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: relinkCardio() bis woAddPage()
+   Enthaelt: cardioDayOf() bis woAddPage()
 */
+
+/* In welchem Tag steht dieser Ausdauer-Datensatz? (Objektvergleich, nicht Inhalt.) */
+function cardioDayOf(rec){
+  if(!rec)return null;
+  for(var k in state.days){if((state.days[k].cardio||[]).indexOf(rec)>=0)return k;}
+  return null;
+}
 
 /* Ein Ausdauer-Eintrag im Training zeigt auf DENSELBEN Datensatz wie der Tag (day.cardio) -
    die Minuten werden direkt darin geaendert, dadurch zaehlen sie aufs Wochenziel. Beim
@@ -38,6 +45,10 @@ function startWorkout(routineId){
   var r=routineId?state.routines[routineId]:null;
   workout={id:rid(),name:r?r.name:"Training",routineId:r?routineId:null,startedAt:Date.now(),pausedMs:0,paused:false,pauseStart:0,rest:{endAt:0,len:90},exercises:[]};
   if(r)r.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
+    // Ausdauer hat keine Sätze und gehört nicht in Vorlagen. Steht sie trotzdem drin (aus der
+    // Zeit, als "Laufen & Co." nach dem Bearbeiten als Kraftübung galten), wird sie hier
+    // übersprungen – mit Sätzen angelegt brach die Trainingsansicht ab.
+    if(ex.t==="cardio")return;
     var sets=[];for(var i=0;i<it.sets;i++)sets.push({kg:it.kg||0,reps:it.reps,done:false});
     workout.exercises.push({ex:it.ex,restSec:90,sets:sets});});
   woPage=0;woShape=null;
@@ -55,7 +66,27 @@ function flushWorkoutSave(){if(swT){clearTimeout(swT);swT=null;saveWorkout();}}
 // Hintergrund geschickt oder der Tab geschlossen, bevor die 500ms-Verzögerung von
 // saveWorkoutSoon() abgelaufen ist, würde dieser letzte Tastendruck sonst verloren gehen.
 // Bei jedem Sichtbarkeits-/Fokuswechsel und beim Schließen sofort speichern.
-document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){flushWorkoutSave();flushLocalSave();}});
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){flushWorkoutSave();flushLocalSave();}else refreshToday();});
+
+
+// TODAY wird beim Laden bestimmt. Auf dem Handy bleibt die App aber oft über Nacht offen –
+// ohne diesen Abgleich landen Einträge vom nächsten Morgen auf dem Vortag. Geprüft wird beim
+// Zurückholen der App und minütlich, falls sie über Mitternacht im Vordergrund bleibt.
+function refreshToday(){
+  var t=iso(new Date());
+  if(t===TODAY)return;
+  var alt=TODAY;TODAY=t;
+  // Wer auf "heute" stand, landet auf dem neuen Tag; ein bewusst angesehener früherer Tag
+  // bleibt stehen.
+  if(heuteDate===alt)heuteDate=t;
+  if(state.profile&&state.profile.version>=3)renderAll();
+}
+
+
+setInterval(refreshToday,60000);
+
+
+addEventListener("pageshow",refreshToday);
 
 addEventListener("pagehide",function(){flushWorkoutSave();flushLocalSave();});
 
@@ -1398,6 +1429,7 @@ function woUpdate(){
       var r=pg.querySelector('.wo-row[data-s="'+si+'"]');if(!r)return;
       if(st.done)r.classList.add("done");else r.classList.remove("done");
       var ck=r.querySelector(".wo-check");if(ck){if(st.done)ck.classList.add("on");else ck.classList.remove("on");}
+      var rb=r.querySelector(".wo-rir");if(rb){rb.disabled=!!st.done;if(st.done)rb.classList.add("done");else rb.classList.remove("done");}
       Array.prototype.forEach.call(r.querySelectorAll("input"),function(inp){
         inp.disabled=!!st.done;
         if(document.activeElement!==inp){
@@ -1979,6 +2011,10 @@ function woMoveEx(from,to){
   var it=workout.exercises.splice(from,1)[0];
   workout.exercises.splice(to,0,it);
   if(seen){var ni=workout.exercises.indexOf(seen);if(ni>=0)woPage=ni;}
+  // Zwei gleiche Übungen zu tauschen ergibt denselben woShapeKey. Ohne erzwungenen Neuaufbau
+  // blieben Eingabefelder und Knöpfe an der alten Reihenfolge hängen, und "Übung entfernen"
+  // träfe die falsche Übung.
+  woShape=null;
   saveWorkout();renderSession();
   return true;
 }
