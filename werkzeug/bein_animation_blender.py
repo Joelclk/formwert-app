@@ -286,11 +286,23 @@ def aktion_bauen(name, fn, pose, ax):
         f = i + 1
         pose.pb["thigh.R"].keyframe_insert("rotation_quaternion", frame=f)
         pose.pb["shin.R"].keyframe_insert("rotation_quaternion", frame=f)
-    for fc in act.fcurves:
+    for fc in alle_fcurves(act):
         for kp in fc.keyframe_points:
             kp.interpolation = "LINEAR"
     act.use_fake_user = True
     return act
+
+
+def alle_fcurves(act):
+    """Bis Blender 4.x liegen die Kurven direkt an der Aktion, ab 5.0 in Ebene/Streifen/Kanalkorb."""
+    if hasattr(act, "fcurves"):
+        return list(act.fcurves)
+    kurven = []
+    for layer in act.layers:
+        for strip in layer.strips:
+            for cb in strip.channelbags:
+                kurven.extend(cb.fcurves)
+    return kurven
 
 
 # ------------------------------------------------------------------ Export
@@ -340,7 +352,9 @@ def main():
         if not bpy.data.filepath:
             out("ABBRUCH: Datei zuerst speichern (das Skript lädt sie am Ende neu).")
             return
-        if bpy.data.is_dirty:
+        # Im Hintergrundbetrieb (--background, bpy-Modul) gibt es keine ungesicherte Arbeit;
+        # dort gilt die Datei auf der Platte. Blender meldet sie direkt nach dem Laden oft als geändert.
+        if bpy.data.is_dirty and not bpy.app.background:
             out("ABBRUCH: ungespeicherte Änderungen – bitte erst speichern (Strg/Cmd+S), dann erneut starten.")
             return
     arm = rig_finden()
@@ -397,6 +411,9 @@ def main():
     for name, act in aktionen:
         tr = ad.nla_tracks.new(); tr.name = name
         st = tr.strips.new(name, 1, act); st.name = name
+        # Ab Blender 4.4 haben Aktionen "Slots"; der Streifen braucht den passenden.
+        if hasattr(st, "action_slot") and getattr(act, "slots", None) and len(act.slots) and not st.action_slot:
+            st.action_slot = act.slots[0]
         tr.mute = False
     if NUR_VORSCHAU:
         # Zum Anschauen: erste Bewegung als aktive Aktion, die Spuren stumm (sonst doppelt).
