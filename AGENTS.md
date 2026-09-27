@@ -1,5 +1,24 @@
 # Arbeitsanweisung für Chat-Assistenten
 
+## Stand ab 27.09.2026 – bitte zuerst lesen
+
+Die App ist **aufgeteilt** und liegt unter **`app/`** (`index.html`, `css/`, `js/data.js`,
+`js/app/01-…16-…js`, `assets/`). Das ist dieselbe Fassung wie im Artifact (Version 408).
+Die Einzeldatei `formwert_app.html` und `quelltext/` weiter unten sind **veraltet** (Version 267).
+
+- Änderungen direkt in den Dateien unter `app/` machen, so klein wie möglich.
+- **Vor dem Veröffentlichen immer den Live-Stand lesen.** Mehrere Sitzungen arbeiten
+  parallel. Hat jemand inzwischen veröffentlicht, dessen Dateien holen und per
+  `git merge-file` zusammenführen, nie einfach überschreiben.
+- Beim Veröffentlichen nur die geänderten Dateien mitschicken.
+- Alte Patches (für die Einzeldatei) lassen sich mit `werkzeug/patch_uebertragen.py`
+  auf `app/` übertragen.
+- Plan und offene Punkte: `PLAN-app-veroeffentlichen.md`.
+
+Die Regeln für den Code weiter unten gelten unverändert.
+
+---
+
 Diese Datei richtet sich an ChatGPT, Claude oder jeden anderen Assistenten,
 der an dieser App arbeiten soll. Bitte vollständig lesen, bevor du etwas
 vorschlägst.

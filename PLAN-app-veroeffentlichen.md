@@ -23,7 +23,7 @@ Rechenwegen, nicht am fehlenden Framework (siehe Abschnitt 4).
 
 Stattdessen in Schritten, jeder für sich lauffähig:
 
-1. **Repo wird die Quelle.** Die 80 Live-Dateien kommen ins Repo, veröffentlicht wird nur
+1. **Repo wird die Quelle.** (Erledigt: `app/`, siehe `AGENTS.md`.) Die 80 Live-Dateien kommen ins Repo, veröffentlicht wird nur
    noch aus dem Repo. Dann sehen alle Sitzungen denselben Stand, und jede Änderung ist
    nachvollziehbar. `AGENTS.md` muss dafür angepasst werden, denn sie verbietet bisher
    Aufteilen und Build-Werkzeuge.
@@ -67,8 +67,8 @@ Messung am Live-Stand: ein Jahr Testdaten (365 Tage, 3.536 Sätze), CPU 4× gedr
 | Entdecken, erstes Öffnen | **0,65–0,8 s** | 2.019 DOM-Elemente: alle Übungskarten mit Figuren auf einmal |
 | Tabs erneut öffnen | 35–130 ms | ok |
 
-**Erledigt (Patch fertig, noch nicht live):** `patches/2026-09-27-werte-tab-schneller.md`.
-Werte-Tab 429 → 224 ms, `bestFor` 197 → 20 ms, Ergebnisse identisch (120 von 120 Stichtagen).
+**Erledigt, live seit Version 408:** Werte-Tab 472 → 236 ms, `bestFor` 225 → 20 ms,
+Ergebnisse identisch (120 von 120 Stichtagen).
 
 **Als Nächstes:**
 1. Entdecken: nur sichtbare Übungskarten aufbauen, den Rest beim Scrollen
@@ -79,7 +79,12 @@ Werte-Tab 429 → 224 ms, `bestFor` 197 → 20 ms, Ergebnisse identisch (120 von
    rund ein Viertel kleiner, kein Dekodieren beim Start. Betrifft `assets/3d-viewer.js`
    (11 MB) und `assets/fig-*.js` (17 MB).
 
-## 5. Offene Fehler im Live-Stand
+## 5. Fehler im Live-Stand – erledigt mit Version 408 (27.09.2026)
+
+Alles unten ist behoben und live. Dazu kam ein neuer Fehler aus der Klimmzug-Umstellung:
+Die Einrichtung trug bei „0 Wdh.“ einen erfundenen Satz „Klimmzug 0 kg × 1“ ein.
+
+
 
 1. **Cloud lädt höchstens 400 Tage** (`collection("days").limit(400)`, unsortiert, in
    `js/app/14-start.js`). Wer mehr gespeicherte Tage hat, verliert auf einem neuen Gerät
