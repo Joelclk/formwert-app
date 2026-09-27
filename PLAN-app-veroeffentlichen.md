@@ -129,6 +129,15 @@ und `connect()` überschreibt markierte Tage und Einheiten nicht mehr
 (`01-grundlagen.js`, `12-navigation.js`, `14-start.js`). Im Browser geprüft: vorher
 verloren, nachher erhalten; eine neuere Änderung von einem anderen Gerät kommt weiterhin an.
 
+**Live seit Version 425 (27.09.2026): Mobilität aus Übungen gemessen.**
+Der Haken „Mobilität erledigt“ ist weg. Gezählt werden die eingetragenen Mobilitätsübungen
+(gehalten und bewegt gleich): Sekunden bzw. Wiederholungen, „je Seite“ doppelt, dazu
+Umbauzeit je Satz. 10 Minuten an einem Tag sind eine volle Einheit, mehr zählt am selben Tag
+nicht. Alte Haken zählen weiter als volle Einheit. Tage nur mit Mobilitätsübungen sind kein
+Trainingstag. Neu im Körper-Tab: Umschalter „Training | Mobilität“ mit Bereichen (Hüfte,
+Wirbelsäule, …), gedehnt/bewegt, zuletzt, Vorschlägen. Einheiten und Training bieten
+Mobilitätsübungen in der Auswahl an. Kern: `mobDay()`, `isTrainDay()` in `02-berechnung.js`.
+
 ## 6. Zusammenarbeit zwischen Sitzungen
 
 - **Nur eine Sitzung veröffentlicht** das Artifact. Die anderen liefern Patches.
