@@ -86,6 +86,13 @@ Ergebnisse identisch (120 von 120 Stichtagen).
    je 0,75–1,3 s. Jetzt 0 ms, nur noch das Laden der Datei (~0,2 s). Beide Dateien
    (`04-animation.js`, `assets/3d-viewer.js`) müssen zusammen veröffentlicht werden; jede
    funktioniert zur Not auch mit der alten Fassung der anderen (getestet).
+   **Figuren (`fig-*.js`, 16,7 MB) – geprüft und verworfen (27.09.2026):** Einzeldateien
+   gehen nicht (608 Bilder, das Artifact erlaubt höchstens 511 Dateien je Version). Gebündelte
+   Binärpakete (12,5 MB) hätten per `fetch` + `blob:` funktioniert, aber das Artifact liefert
+   `.bin` nicht aus (nur Web-Formate: Bilder, Schriften, .js/.json/.wasm …). Gemessen war der
+   Gewinn ohnehin klein: Entdecken bis alle Figuren stehen 3,7–3,9 s → 3,5–3,7 s (CPU 4×,
+   10 Mbit/s); beim reinen Dekodieren war `blob:` sogar langsamer als `data:`. Nicht weiter
+   verfolgt, solange es keinen sauber ausgelieferten Binärtyp gibt.
    **Offen:** In der Seite stecken noch 7,7 MB base64 (Modell 4,7 MB, Knochen 2,2 MB,
    Draco-Decoder 0,7 MB). Als echte Binärdateien wären das rund 5,8 MB. Dafür müsste der
    Betrachter die Daten per `fetch` oder `postMessage` bekommen – vorher klären, ob die
