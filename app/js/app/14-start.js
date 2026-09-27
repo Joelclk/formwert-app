@@ -158,11 +158,14 @@ function connect(){
       return fwLoadDays(d);
     }).then(function(qs){
       if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(!b)return;
+        // Lokal geändert, aber noch nicht übertragen (z. B. offline): Der Cloud-Stand ist älter
+        // und darf den Tag nicht überschreiben. persist() weiter unten lädt ihn hoch.
+        if(state.dirty[doc.id])return;
         if(doc.id===TODAY&&state.days[TODAY]&&(state.days[TODAY].sets||[]).length)return;
         state.days[doc.id]={sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""};localTouchDay(doc.id);});
       return d.doc("state/workout").get().then(function(ws){if(ws.exists&&!workout){workout=validWorkout(cloneWritable(ws.data()));if(!workout)d.doc("state/workout").delete().catch(function(){});else{try{refreshWorkoutSuggestions();}catch(e){}secDirty.training=true;if(tab==="tab-training")renderSession();renderBanner();}}}).catch(function(){}).then(function(){return fw_syncPullExtras(d);}).then(function(){return d.collection("routines").limit(100).get();});
     }).then(function(qs){
-      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id)state.routines[b.id]=b;});
+      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id&&!state.dirtyRoutines[b.id])state.routines[b.id]=b;});
       mergeDuplicateCustomEx();
       mergeLegacyBuiltinEx();
       if(state.profile&&state.profile.version>=3)renderAll();persist();

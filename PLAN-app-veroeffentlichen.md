@@ -101,6 +101,15 @@ Die Einrichtung trug bei „0 Wdh.“ einen erfundenen Satz „Klimmzug 0 kg × 
      etwa 600.
    Schon live, in eigener Fassung: Sync-Datenverlust und die restlichen englischen Texte.
 
+**Nach Version 408 im Repo korrigiert, noch nicht veröffentlicht (27.09.2026):**
+Die Live-Fassung des Sync-Schutzes wiederholte fehlgeschlagene Übertragungen nur innerhalb
+einer Sitzung. Nach einem Neustart überschrieb der ältere Cloud-Stand einen offline
+geänderten früheren Tag oder eine Einheit – die Änderung war weg, lokal wie im Konto.
+Jetzt werden die Markierungen `dirty`/`dirtyRoutines` im Hauptschlüssel mitgespeichert,
+und `connect()` überschreibt markierte Tage und Einheiten nicht mehr
+(`01-grundlagen.js`, `12-navigation.js`, `14-start.js`). Im Browser geprüft: vorher
+verloren, nachher erhalten; eine neuere Änderung von einem anderen Gerät kommt weiterhin an.
+
 ## 6. Zusammenarbeit zwischen Sitzungen
 
 - **Nur eine Sitzung veröffentlicht** das Artifact. Die anderen liefern Patches.
