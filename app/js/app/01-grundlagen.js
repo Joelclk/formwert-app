@@ -307,6 +307,9 @@ function loadLocalMonths(days){
 }
 function loadLocal(){try{var r=localStorage.getItem(LSK)||localStorage.getItem("formwert-v2");
   if(r){var o=JSON.parse(r);if(o&&o.profile){state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];state.exOverrides=o.exOverrides||{};
+    // Noch nicht ins Konto übertragene Tage/Einheiten: ohne diese Markierung überschrieb der
+    // ältere Cloud-Stand sie beim nächsten Start (siehe connect()).
+    state.dirty=o.dirty||{};state.dirtyRoutines=o.dirtyRoutines||{};
     loadLocalMonths(state.days);
     if(!o.days&&localStorage.getItem(LSK))lsMetaStr=r;
     lsDaysRef=state.days;}}}
@@ -351,7 +354,8 @@ function saveLocal(full){try{
   }
   // Erst wenn alle Monate sicher geschrieben sind, den Hauptschluessel (ohne Tage) ersetzen -
   // beim Umstieg vom alten Format steht der Verlauf so nie nur halb gespeichert da.
-  var meta=JSON.stringify({profile:state.profile,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides,split:1});
+  var meta=JSON.stringify({profile:state.profile,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides,split:1,
+    dirty:state.dirty,dirtyRoutines:state.dirtyRoutines});
   if(meta!==lsMetaStr){localStorage.setItem(LSK,meta);lsMetaStr=meta;}
   lsHot={};if(full){lsLastFull=Date.now();lsDaysRef=state.days;}
 }catch(e){warnSaveFailed();}}

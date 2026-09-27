@@ -219,9 +219,14 @@ function cloudFail(){
   cloudFailed=true;
   setSync("off","Nicht übertragen – wird wiederholt");
   if(!cloudFailT)cloudFailT=setTimeout(function(){cloudFailT=null;queueSave();},15000);
+  // Die wieder gesetzte Markierung muss auch einen Neustart überleben.
+  saveLocalSoon();
 }
 function cloudOk(){
   if(cloudFailed&&!cloudFailT){cloudFailed=false;setSync("on","synchronisiert");}
+  // Übertragene Tage aus der gespeicherten Markierung streichen - eine liegengebliebene
+  // Markierung würde beim nächsten Start eine neuere Änderung von einem anderen Gerät verdrängen.
+  saveLocalSoon();
 }
 function persist(){
   saveLocal();if(!db)return;
