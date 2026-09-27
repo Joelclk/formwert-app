@@ -416,8 +416,10 @@ var LEVELS=["F","E","D","C","B","A","S","S+"];
      normalen Klimmzug ("pullup") zusammengelegt - eine Uebung, Zusatzgewicht optional. Schon
      geloggte Saetze der alten Uebung werden beim Laden einmalig umbenannt (siehe
      mergeLegacyBuiltinEx() in app/14-start.js), damit nichts verloren geht.
-   - Wand-Handstand, L-Sit, Passives Haengen bleiben unveraendert auf der alten Tabelle - fuer
-     sie listet Strength Level keine Daten (weder Wdh./Sek. noch 1RM Weight). */
+   Ergaenzung ab 27.09.2026 (Version 407/408): auch Wand-Handstand, L-Sit und Passives Haengen
+   sind jetzt hier (siehe die drei Eintraege unten, "KEINE Strength-Level-Daten vorhanden") -
+   Strength Level fuehrt fuer sie keine Standards, die Werte sind deshalb manuell geschaetzt
+   statt recherchiert (siehe Vorbehalt-Kommentar direkt vor den drei Eintraegen). */
 var RANK_LADDER={
   bench:{
     m:[0.25,0.36,0.47,0.59,0.70,0.82,0.94,1.04,1.13,1.23,1.34,1.44,1.55,1.66,1.78,1.89,2.01,2.13,2.25],
@@ -558,6 +560,43 @@ var RANK_LADDER={
     bw:false,
     m:[0.05,0.14,0.39,1.08,3,13,23,33,43,53,65,76,88,101,115,128,136,144,152],
     w:[0.03,0.07,0.17,0.41,1,7,13,22,31,40,52,63,75,88,102,115,122,130,137]
+  },
+  /* ---- Ab hier: KEINE Strength-Level-Daten vorhanden (anders als bei allen Bereichen oben) ----
+     Fuer Wand-Handstand, L-Sit und Passives Haengen fuehrt Strength Level keine Standards - die
+     drei Ladder unten sind deshalb manuell nach gaengigen, in der Calisthenics-Szene ueblichen
+     Richtwerten geschaetzt (grobe Anhaltspunkte aus Erfahrungswerten, KEINE Forschungsquelle).
+     Das ist ein deutlich groesserer Vorbehalt als die sf-Faktor-Schaetzungen sonst im System
+     (dort ist wenigstens die Leituebung selbst belegt, hier die ganze Skala nicht) - entsprechend
+     im Projektdoku "Kraftstandards und Legende Grenzen" gesondert vermerkt. Aufbau/Architektur
+     (bw:false, 19 Punkte, Legende = Faktor 1,19 auf den obersten Ankerpunkt) folgt trotzdem der
+     gleichen Konvention wie Plank/Beinheben oben, damit sich die Skala im Spiel gleich verhaelt -
+     nur die Zahlen selbst sind geschaetzt statt recherchiert. */
+  handstand:{
+    /* Wand-Handstand halten. Anker (Sek. bei einer "durchschnittlich trainierenden" Person, die
+       diese Uebung ueberhaupt loggt): ~6/16/38/80/151 fuer Holz-Eintritt/Bronze-nah/Median/
+       fortgeschritten/sehr stark, Legende ≈ 3 Min. Frauen ~82 % der Maennerwerte (analog Plank/
+       Beinheben, ohne eigenen Beleg dafuer). */
+    bw:false,
+    m:[1,2,3,4,6,11,16,23,31,38,52,66,80,104,127,151,161,170,180],
+    w:[1,2,3,4,5,9,13,19,26,32,43,54,66,85,105,124,132,140,148]
+  },
+  lsit:{
+    /* L-Sit halten. Gleiches Vorgehen wie handstand oben; Anker ~3/8/20/38/58 Sek., Legende ≈
+       69 Sek. (ein sehr starker, aber realistischer L-Sit). Frauen ~87 % der Maennerwerte -
+       etwas naeher an den Maennerwerten als bei reinen Kraft-/Griffuebungen, weil diese Haltung
+       staerker von Rumpf-/Hueftbeuger-Ausdauer als von reiner Muskelmasse abhaengt. */
+    bw:false,
+    m:[0.29,0.51,0.93,1.67,3,6,8,12,16,20,26,32,38,45,52,58,62,65,69],
+    w:[0.19,0.34,0.62,1.11,2,4,7,10,13,16,21,27,32,38,44,50,53,57,60]
+  },
+  hang:{
+    /* Passives Haengen (Griffkraft-Ausdauer). Anker ~15/30/62/110/155 Sek., Legende ≈ 185 Sek.
+       (gut 3 Min.). Frauen ~75 % der Maennerwerte - naeher an typischen Griffkraft-Unterschieden
+       als bei Plank/Beinheben, weil reine Griffausdauer erfahrungsgemaess staerker
+       geschlechtsabhaengig ist als Rumpfhaltezeit. */
+    bw:false,
+    m:[2,3,5,9,15,22,30,41,51,62,78,94,110,125,140,155,165,175,185],
+    w:[1,2,4,7,10,15,20,27,35,42,54,66,78,91,104,117,124,132,139]
   }
 };
 var BW_REF={m:80,w:60};    // Referenzgewicht je Geschlecht, an dem die Ladder-Werte oben gelten
