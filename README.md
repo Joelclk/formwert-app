@@ -49,20 +49,19 @@ etwas verloren, bricht es ab.
 
 ## Am 3D-Modell arbeiten
 
-Das Modell steckt als ein base64-Block (`FW3D_HTML_B64`) in der App und laesst
-sich deshalb nicht ueber `patches/` aendern. Stattdessen:
+Der Betrachter steht als ein einziger JavaScript-Text (`FW3D_HTML`) in
+`app/assets/3d-viewer.js`. Darin arbeitet man nicht direkt, sondern so:
 
     git pull                                         # neuesten Stand holen
     python3 werkzeug/modell_auspacken.py             # -> muskelmodell_3d_vollstaendig.html
     # ... Datei bearbeiten, im Browser pruefen ...
     git pull                                         # nochmal, kurz vor dem Einpacken
     python3 werkzeug/modell_einpacken.py --probe
-    python3 werkzeug/modell_einpacken.py             # -> zurueck in formwert_app.html
-    python3 werkzeug/zerlegen.py
+    python3 werkzeug/modell_einpacken.py             # -> zurueck nach app/assets/3d-viewer.js
 
 `modell_einpacken.py` bricht ab, wenn das Modell in der App seit dem Auspacken
-von jemand anderem geaendert wurde - base64 laesst sich nicht zusammenfuehren,
-Einpacken wuerde dessen Arbeit ueberschreiben. Aenderungen am uebrigen
+von jemand anderem geaendert wurde - Einpacken wuerde dessen Arbeit
+ueberschreiben. Aenderungen am uebrigen
 App-Code stoeren nicht. Ausserdem prueft es, dass die Datei vollstaendig ist,
 und (falls `node` installiert ist) die Syntax aller Skripte darin.
 

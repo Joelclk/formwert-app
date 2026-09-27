@@ -98,11 +98,12 @@ vorkommt.
 
 ## Änderungen am 3D-Modell
 
-Das 3D-Modell ist ein einziger base64-Block (`FW3D_HTML_B64`) und lässt sich
-**nicht** über `patches/` ändern. Daran wird in
+Der 3D-Anatomie-Betrachter steht in `app/assets/3d-viewer.js` als ein einziger
+JavaScript-Text (`FW3D_HTML`, eine komplette HTML-Seite). Daran wird in
 `muskelmodell_3d_vollstaendig.html` gearbeitet, das mit
 `werkzeug/modell_auspacken.py` aus der App geholt und mit
 `werkzeug/modell_einpacken.py` zurückgebracht wird (Ablauf im `README.md`).
+`3d-viewer.js` nie von Hand bearbeiten.
 Nie an einer alten Fassung dieser Datei weiterarbeiten – immer erst frisch
 auspacken. Am Modell arbeitet nur eine Sitzung gleichzeitig.
 

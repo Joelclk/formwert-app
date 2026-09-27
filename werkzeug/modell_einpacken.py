@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Bringt das bearbeitete 3D-Muskelmodell zurueck in formwert_app.html.
+Bringt den bearbeiteten 3D-Betrachter zurueck nach app/assets/3d-viewer.js.
 
-Gegenstueck zu modell_auspacken.py. Liest muskelmodell_3d_vollstaendig.html,
-kodiert es als base64 und ersetzt damit den Block FW3D_HTML_B64 in der App.
+Gegenstueck zu modell_auspacken.py. Liest muskelmodell_3d_vollstaendig.html und
+schreibt es als JavaScript-Text (FW3D_HTML) nach app/assets/3d-viewer.js. Steht
+dort noch die alte base64-Form, wird sie dabei umgestellt - auch ohne inhaltliche
+Aenderung (--umstellen).
 
-Vorher wird geprueft, ob das Modell in der App noch dasselbe ist wie beim
-Auspacken. Hat jemand anderes es inzwischen geaendert und veroeffentlicht,
-bricht das Skript ab - base64 laesst sich nicht zusammenfuehren, Einpacken
-wuerde dessen Arbeit einfach ueberschreiben. Aenderungen am uebrigen App-Code
-stoeren dagegen nicht: geprueft wird nur der Modell-Block.
+Vorher wird geprueft, ob der Betrachter in der App noch derselbe ist wie beim
+Auspacken. Hat jemand anderes ihn inzwischen geaendert, bricht das Skript ab -
+Einpacken wuerde dessen Arbeit einfach ueberschreiben.
 
-Wichtig: vorher den neuesten Stand von formwert_app.html holen (git pull),
-sonst kann die Pruefung eine fremde Aenderung gar nicht sehen.
+Wichtig: vorher den neuesten Stand holen (git pull), sonst kann die Pruefung
+eine fremde Aenderung gar nicht sehen.
 
 Aufruf:
     python3 werkzeug/modell_einpacken.py --probe   (nur pruefen)
     python3 werkzeug/modell_einpacken.py
+    python3 werkzeug/modell_einpacken.py --umstellen  (nur alte base64-Form umstellen)
 """
-import os, re, sys, base64, shutil, subprocess
+import os, re, sys, shutil, subprocess
 
-from modell_auspacken import (APP, MODELL, STAND, modell_finden, fingerabdruck,
-                              stand_lesen, stand_schreiben)
+from modell_auspacken import (VIEWER, MODELL, STAND, modell_lesen, viewer_schreiben,
+                              fingerabdruck, stand_lesen, stand_schreiben)
 
 SKRIPT = re.compile(r'<script(\s[^>]*)?>(.*?)</script>', re.S | re.I)
 
@@ -66,7 +67,10 @@ def skripte_pruefen(text):
 
 def main():
     nur_pruefen = "--probe" in sys.argv
-    for pfad in (APP, MODELL):
+    if "--umstellen" in sys.argv:
+        umstellen(nur_pruefen)
+        return
+    for pfad in (VIEWER, MODELL):
         if not os.path.exists(pfad):
             sys.exit(os.path.basename(pfad) + " nicht gefunden.")
     stand = stand_lesen()
@@ -74,14 +78,12 @@ def main():
         sys.exit("Kein Auspack-Stand gefunden. Erst ausfuehren:\n"
                  "  python3 werkzeug/modell_auspacken.py")
 
-    html = open(APP, encoding="utf-8").read()
-    treffer = modell_finden(html)
-    in_app = base64.b64decode(treffer.group(1))
+    in_app = modell_lesen()
     neu = open(MODELL, "rb").read()
 
     if fingerabdruck(in_app) != stand["modell_sha256"]:
         print("Abbruch - nichts geaendert:")
-        print("  Das 3D-Modell in formwert_app.html wurde seit dem Auspacken")
+        print("  Der 3D-Betrachter in app/assets/3d-viewer.js wurde seit dem Auspacken")
         print("  (%s, %s) von jemand anderem geaendert." % (stand["app_version"], stand["datum"]))
         print("  Einpacken wuerde diese Aenderungen ueberschreiben.")
         print("\n  So weiter:")
@@ -109,8 +111,6 @@ def main():
             print("  " + f)
         sys.exit(1)
 
-    kodiert = base64.b64encode(neu).decode("ascii")
-    html_neu = html[:treffer.start(1)] + kodiert + html[treffer.end(1):]
     print("  in Ordnung. Modell: %d KB -> %d KB"
           % (len(in_app) // 1024, len(neu) // 1024))
 
@@ -118,14 +118,30 @@ def main():
         print("\nProbe: Einpacken wuerde passen. Nichts geschrieben.")
         return
 
-    shutil.copyfile(APP, APP + ".vorher")
-    with open(APP, "w", encoding="utf-8", newline="") as f:
-        f.write(html_neu)
+    shutil.copyfile(VIEWER, VIEWER + ".vorher")
+    viewer_schreiben(neu)
     # Ab jetzt ist das eingepackte Modell der Ausgangsstand fuer die naechste Runde.
     stand_schreiben(neu)
-    print("\nEingepackt. Sicherung: formwert_app.html.vorher")
-    print("Danach:  python3 werkzeug/zerlegen.py")
-    print("Die App ist damit noch nicht veroeffentlicht - das macht Claude.")
+    print("\nEingepackt. Sicherung: app/assets/3d-viewer.js.vorher")
+    print("Die App ist damit noch nicht veroeffentlicht.")
+
+
+def umstellen(nur_pruefen):
+    """Alte base64-Form in Text umstellen, Inhalt unveraendert - beweisbar per Fingerabdruck."""
+    js = open(VIEWER, encoding="utf-8").read()
+    if "var FW3D_HTML_B64=" not in js:
+        print("3d-viewer.js ist schon umgestellt.")
+        return
+    daten = modell_lesen()
+    alt_kb = len(js.encode("utf-8")) // 1024
+    if nur_pruefen:
+        print("Probe: wuerde 3d-viewer.js umstellen (%d KB). Nichts geschrieben." % alt_kb)
+        return
+    viewer_schreiben(daten)
+    if fingerabdruck(modell_lesen()) != fingerabdruck(daten):
+        sys.exit("Abbruch: nach dem Umstellen weicht der Inhalt ab - bitte aus git wiederherstellen.")
+    print("Umgestellt: 3d-viewer.js %d KB -> %d KB, Inhalt identisch."
+          % (alt_kb, os.path.getsize(VIEWER) // 1024))
 
 
 if __name__ == "__main__":

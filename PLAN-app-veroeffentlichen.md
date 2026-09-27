@@ -78,6 +78,17 @@ Ergebnisse identisch (120 von 120 Stichtagen).
 3. Große Daten als echte Binärdateien (`.glb`, `.webp`) statt base64 in JavaScript:
    rund ein Viertel kleiner, kein Dekodieren beim Start. Betrifft `assets/3d-viewer.js`
    (11 MB) und `assets/fig-*.js` (17 MB).
+   **Erster Schritt erledigt (27.09.2026, noch nicht veröffentlicht):** `3d-viewer.js`
+   hatte eine überflüssige äußere base64-Schicht um die ganze Betrachter-Seite. Die ist weg
+   (11,2 → 8,4 MB), und `fw3dHtml()` merkt sich das Ergebnis. Vorher wurde die Seite bei
+   jedem Aufruf neu ausgepackt – Körper-Tab und Figuren je einmal, bei 4× gedrosselter CPU
+   je 0,75–1,3 s. Jetzt 0 ms, nur noch das Laden der Datei (~0,2 s). Beide Dateien
+   (`04-animation.js`, `assets/3d-viewer.js`) müssen zusammen veröffentlicht werden; jede
+   funktioniert zur Not auch mit der alten Fassung der anderen (getestet).
+   **Offen:** In der Seite stecken noch 7,7 MB base64 (Modell 4,7 MB, Knochen 2,2 MB,
+   Draco-Decoder 0,7 MB). Als echte Binärdateien wären das rund 5,8 MB. Dafür müsste der
+   Betrachter die Daten per `fetch` oder `postMessage` bekommen – vorher klären, ob die
+   Artifact-Umgebung `.glb`/`.bin` ausliefert und `fetch` erlaubt.
 
 ## 5. Fehler im Live-Stand – erledigt mit Version 408 (27.09.2026)
 

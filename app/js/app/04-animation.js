@@ -36,12 +36,23 @@ function fwLoadAsset(name){
   });
   return fwAssetP[name];
 }
+// Die Betrachter-Seite steht in assets/3d-viewer.js inzwischen direkt als Text (FW3D_HTML).
+// Früher war sie zusätzlich base64-kodiert: 11 MB Zeichen für Zeichen auspacken kostete auf
+// einem Mittelklasse-Handy rund eine Sekunde – und das bei jedem Aufruf (Körper-Tab und
+// Figuren-Schnappschuss je einmal). Das Ergebnis wird deshalb einmal gemerkt. Die alte Form
+// (FW3D_HTML_B64) wird weiter gelesen, falls nur eine der beiden Dateien neu ausgeliefert wird.
+var fw3dHtmlP=null;
 function fw3dHtml(){
-  return fwLoadAsset("3d-viewer").then(function(){
+  if(fw3dHtmlP)return fw3dHtmlP;
+  fw3dHtmlP=fwLoadAsset("3d-viewer").then(function(){
+    if(typeof FW3D_HTML==="string")return FW3D_HTML;
     var bin=atob(FW3D_HTML_B64),bytes=new Uint8Array(bin.length);
     for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
     return new TextDecoder("utf-8").decode(bytes);
   });
+  // Ein Ladefehler darf nicht für immer gemerkt bleiben – der nächste Aufruf versucht es neu.
+  fw3dHtmlP.catch(function(){fw3dHtmlP=null;});
+  return fw3dHtmlP;
 }
 function fwAnimB64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
 function fwAnimGunzip(u){return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();}
