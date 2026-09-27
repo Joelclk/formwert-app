@@ -22,6 +22,10 @@ function baseValue(id){
     // Gespeichert wird das eingetragene Gewicht; gewertet wird es später mit effectiveKg (bei
   // "pro Seite" verdoppelt). Die Vorschau muss genauso rechnen, sonst springt die Stufe nach dem
   // Abschluss.
+  // Bei Körpergewichts-Übungen (Klimmzüge, Dips) zählt das Körpergewicht immer mit. Ohne
+  // Wiederholungen hieße das sonst "1 Wdh. mit Körpergewicht" - die Einrichtung trüge dann für
+  // jeden, der hier 0 lässt, einen erfundenen Satz ein. 0 Wdh. heißt wie früher: keine Angabe.
+  if(e.t==="load"&&e.wt==="body"&&ob.mode[id]!=="max"&&!(ob.val[id]>0))return 0;
   if(e.t==="load"){if(ob.mode[id]==="max")return effectiveKg(e,ob.kg[id]);return e1rm(effectiveKg(e,ob.kg[id]),ob.val[id]||0);}
   return (ob.val[id]||0);
 }

@@ -80,6 +80,7 @@
     "Pause: gilt für jede Einheit ohne eigene Pausenzeit und fürs freie Training. Vorschläge: Gewicht und Wiederholungen stehen im Training schon im Feld – aus deinem letzten Mal, leicht gesteigert.":"Rest: applies to every session without its own rest time and to free training. Suggestions: weight and reps are already filled in during training – from your last time, slightly increased.",
     "Notiz zur Übung hinzufügen":"Add note to exercise"};for(var k in m)if(!UI_EN[k])UI_EN[k]=m[k];})();
   UI_RX.push([/^Notiz bearbeiten: /g,"Edit note: "]);
+  UI_RX.push([/bei Klimmzug\/(\s*)Dips bis (\d+) (?:Wdh|reps)\.?/g,"for pull-ups/$1dips up to $2 reps"]);
   // Rest hinter "Next medal: … – noch 46 Punkte"; allgemeine Regeln davor machen "Tage" evtl. schon zu "days"
   UI_RX.push([/^(Next medal: .+) – noch (.+?)(?: (Punkte?|Wochen?|Tage?|days?|Rekorde?))?$/g,function(m,a,z,e){
     var en={Punkt:"point",Punkte:"points",Woche:"week",Wochen:"weeks",Tag:"day",Tage:"days",day:"day",days:"days",Rekord:"record",Rekorde:"records"}[e];
