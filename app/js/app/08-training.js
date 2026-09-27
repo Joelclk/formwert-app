@@ -1,15 +1,38 @@
-/* Formwert - Lesekopie, nicht ausfuehrbar.
-   Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: cardioDayOf() bis woAddPage()
-*/
+/* ==========================================================
+   app/08-training.js - Live-Training: Trainingsseite, Saetze, Pausen-Timer, Uebungsanteile/Farben
+   Teil der App-Logik; alle Dateien in js/app/ teilen sich einen Namensraum
+   und werden in Nummernreihenfolge geladen (siehe index.html).
+   ========================================================== */
+"use strict";
 
+/* ================= Live-Training ================= */
+var workout=null, woTick=null;
+function fmtDur(sec){sec=Math.max(0,Math.round(sec));var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;
+  return (h?h+":":"")+(h?pad(m):m)+":"+pad(x);}
+function woElapsed(){if(!workout)return 0;var base=(workout.paused?workout.pauseStart:Date.now())-workout.startedAt-workout.pausedMs;return base/1000;}
+// Neue Saetze starten leer: Gewicht und Wiederholungen traegt man im Training selbst ein.
+// Als Orientierung zeigen die Felder die Werte vom letzten Mal als Platzhalter (siehe
+// renderSessionInner), die Spalte "Vorher" bleibt ebenfalls stehen.
+function defaultSet(ex,prev){
+  if(prev)return {kg:prev.kg,reps:prev.reps,done:false};
+  return {kg:null,reps:null,done:false};
+}
+/* Leere Vorgaben: null (oder 0 beim Gewicht, so standen unbenutzte Felder frueher in den
+   Vorlagen) bedeutet "im Training eintragen". */
+function tplKg(v){return (v!=null&&+v>0)?+v:null;}
+function tplReps(v){return (v!=null&&+v>0)?Math.round(+v):null;}
+/* Eingabefeld <-> Satzwert: leer ist null (noch nicht eingetragen), nicht 0. */
+function fieldVal(v){return v==null?"":String(v);}
+function parseField(raw,isInt){
+  var t=String(raw==null?"":raw).trim().replace(",",".");if(t==="")return null;
+  var v=isInt?parseInt(t,10):parseFloat(t);return isFinite(v)?v:null;
+}
 /* In welchem Tag steht dieser Ausdauer-Datensatz? (Objektvergleich, nicht Inhalt.) */
 function cardioDayOf(rec){
   if(!rec)return null;
   for(var k in state.days){if((state.days[k].cardio||[]).indexOf(rec)>=0)return k;}
   return null;
 }
-
 /* Ein Ausdauer-Eintrag im Training zeigt auf DENSELBEN Datensatz wie der Tag (day.cardio) -
    die Minuten werden direkt darin geaendert, dadurch zaehlen sie aufs Wochenziel. Beim
    Speichern (localStorage/Cloud) wird daraus zwangslaeufig eine eigene Kopie: nach dem Laden
@@ -40,34 +63,36 @@ function relinkCardio(w){
     day(TODAY).cardio.push(rec);touch(TODAY);used.push(rec);
   });
 }
-
+/* Satzpause: Standard aus den Einstellungen (profile.restSec), je Einheit ueberschreibbar
+   (routine.rest), im Training fuer eine oder alle Uebungen aenderbar. */
+function defaultRest(){var v=state.profile&&state.profile.restSec;return (v!=null&&v>=0)?Math.round(v):90;}
+function routineRest(r){return (r&&r.rest!=null&&r.rest>=0)?Math.round(r.rest):defaultRest();}
+function workoutRest(){return (workout&&workout.restDefault!=null)?workout.restDefault:defaultRest();}
 function startWorkout(routineId){
-  var r=routineId?state.routines[routineId]:null;
-  workout={id:rid(),name:r?r.name:"Training",routineId:r?routineId:null,startedAt:Date.now(),pausedMs:0,paused:false,pauseStart:0,rest:{endAt:0,len:90},exercises:[]};
-  if(r)r.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
+  var r=routineId?state.routines[routineId]:null,rs=routineRest(r);
+  workout={id:rid(),name:r?r.name:"Training",routineId:r?routineId:null,startedAt:Date.now(),pausedMs:0,paused:false,pauseStart:0,rest:{endAt:0,len:rs},restDefault:rs,exercises:[]};
+    if(r)r.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
     // Ausdauer hat keine Sätze und gehört nicht in Vorlagen. Steht sie trotzdem drin (aus der
     // Zeit, als "Laufen & Co." nach dem Bearbeiten als Kraftübung galten), wird sie hier
     // übersprungen – mit Sätzen angelegt brach die Trainingsansicht ab.
     if(ex.t==="cardio")return;
-    var sets=[];for(var i=0;i<it.sets;i++)sets.push({kg:it.kg||0,reps:it.reps,done:false});
-    workout.exercises.push({ex:it.ex,restSec:90,sets:sets});});
+    var sets=[];for(var i=0;i<it.sets;i++)sets.push({kg:tplKg(it.kg),reps:tplReps(it.reps),done:false});
+    workout.exercises.push({ex:it.ex,restSec:(it.rest!=null&&it.rest>=0)?it.rest:rs,sets:sets});});
+  // Phase 2: leere Felder mit dem naechsten Schritt aus dem eigenen Verlauf vorbelegen.
+  workout.exercises.forEach(function(we){try{applySuggestion(we,exById(we.ex));}catch(e){}});
+  try{workout.sugV=SUG_VERSION;}catch(e){}
   woPage=0;woShape=null;
   saveWorkout();selectTab("tab-training");renderAll();window.scrollTo({top:0,behavior:"smooth"});
   startTick();
 }
-
 var swT=null;
-
 function saveWorkoutSoon(){if(swT)clearTimeout(swT);swT=setTimeout(function(){swT=null;saveWorkout();},500);}
-
 function flushWorkoutSave(){if(swT){clearTimeout(swT);swT=null;saveWorkout();}}
-
 // Schutz gegen Datenverlust: wird z. B. während des Eintippens eines Gewichts die App in den
 // Hintergrund geschickt oder der Tab geschlossen, bevor die 500ms-Verzögerung von
 // saveWorkoutSoon() abgelaufen ist, würde dieser letzte Tastendruck sonst verloren gehen.
 // Bei jedem Sichtbarkeits-/Fokuswechsel und beim Schließen sofort speichern.
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){flushWorkoutSave();flushLocalSave();}else refreshToday();});
-
 
 // TODAY wird beim Laden bestimmt. Auf dem Handy bleibt die App aber oft über Nacht offen –
 // ohne diesen Abgleich landen Einträge vom nächsten Morgen auf dem Vortag. Geprüft wird beim
@@ -82,56 +107,243 @@ function refreshToday(){
   if(state.profile&&state.profile.version>=3)renderAll();
 }
 
-
 setInterval(refreshToday,60000);
 
-
 addEventListener("pageshow",refreshToday);
-
 addEventListener("pagehide",function(){flushWorkoutSave();flushLocalSave();});
-
 addEventListener("beforeunload",function(){flushWorkoutSave();flushLocalSave();});
-
 function saveWorkout(){
   try{localStorage.setItem("formwert-workout",workout?JSON.stringify(workout):"");}catch(e){warnSaveFailed();}
-  if(db){if(workout)db.doc("state/workout").set(workout).catch(function(){});else db.doc("state/workout").delete().catch(function(){});}
+  if(db){if(workout)db.doc("state/workout").set(workout).then(cloudOk,cloudFail);else db.doc("state/workout").delete().then(cloudOk,cloudFail);}
 }
-
-function startTick(){if(woTick)return;woTick=setInterval(tickWorkout,1000);}
-
+function startTick(){if(woTick)return;woTick=setInterval(tickWorkout,1000);restLoop();}
 function tickWorkout(){
-  if(!workout){clearInterval(woTick);woTick=null;return;}
+  if(!workout){clearInterval(woTick);woTick=null;restCleanup();return;}
+  // Die Pause zuerst und getrennt: Wirft etwas im Layout-Teil (Figuren, Wischer), darf die
+  // Pausenanzeige trotzdem nicht stehen bleiben - genau so blieb der Timer frueher "haengen".
+  try{restUpdate();}catch(e){}
   try{tickInner();}catch(e){}
 }
-
-function restbarSpace(rb){
-  try{document.body.style.setProperty("--restbar-h",(rb&&!rb.hidden?rb.offsetHeight:0)+"px");}catch(e){}
-}
-
 function tickInner(){
   var t=$("wo-timer");if(t)t.textContent=fmtDur(woElapsed());var bt=$("wo-banner-t");if(bt)bt.textContent=fmtDur(woElapsed());
   woAlign();woFillFigs();
-  var rb=$("restbar");if(!rb)return;
-  var left=Math.ceil((workout.rest.endAt-Date.now())/1000);
-  if(workout.rest.endAt&&left>0){
-    var wasHidden=rb.hidden;
-    rb.hidden=false;$("rest-left").textContent=fmtDur(left);
-    $("rest-fill").style.width=clamp(100*left/workout.rest.len,0,100)+"%";
-    // Die Pausenleiste sitzt ueber der Seite - ihre Hoehe muss die Trainingsseite
-    // freihalten, sonst verdeckt sie die Muskelzeile darunter.
-    if(wasHidden)restbarSpace(rb);
-  }
-  else{ if(workout.rest.endAt&&!rb.hidden){try{if(navigator.vibrate)navigator.vibrate([120,60,120]);}catch(e){}}
-    if(!rb.hidden){rb.hidden=true;restbarSpace(rb);}
-    workout.rest.endAt=0;}
 }
 
+/* ================= Satzpause =================
+   Die Restzeit wird immer aus der Uhrzeit berechnet (endAt), nie aus mitgezaehlten Ticks.
+   Schlaeft das Handy, drosselt der Browser Timer oder laeuft die App im Hintergrund, stimmt
+   die Anzeige deshalb beim naechsten Blick sofort wieder.
+   workout.rest = {endAt, len, pausedLeft, byWo, notified}
+     endAt       Zeitpunkt des Pausenendes (ms), 0 = keine laufende Pause
+     len         Gesamtlaenge in Sekunden (fuer den Fortschrittsbalken)
+     pausedLeft  angehaltene Pause: verbleibende ms (endAt ist dann 0)
+     byWo        angehalten, weil das ganze Training pausiert wurde
+     notified    Ende wurde schon gemeldet (kein doppelter Ton) */
+var restT=null,restEndT=null,restWake=null,restSheetCloseT=null,restSheetSeq=0;
+// Ist gerade das Pausen-Blatt offen? Am Inhalt erkennen statt an einer Merk-Variable: oeffnet
+// sich ein anderes Blatt, ersetzt es den Inhalt - dann ist das Pausen-Blatt automatisch "zu".
+function restSheetShown(){var sh=$("sheet");return !!(sh&&sh.classList.contains("open")&&$("rest-sheet-t"));}
+function restObj(){if(!workout)return null;if(!workout.rest)workout.rest={endAt:0,len:90};return workout.rest;}
+function restPaused(){var r=restObj();return !!(r&&r.pausedLeft>0);}
+function restLeftMs(){
+  var r=restObj();if(!r)return 0;
+  if(r.pausedLeft>0)return r.pausedLeft;
+  if(r.endAt)return Math.max(0,r.endAt-Date.now());
+  return 0;
+}
+function isResting(){return restLeftMs()>0;}
+function restStart(sec){
+  var r=restObj();if(!r||!(sec>0))return;
+  r.endAt=Date.now()+sec*1000;r.len=sec;r.pausedLeft=0;r.byWo=false;r.notified=false;
+  // Laeuft das Training gerade pausiert, startet die Satzpause gleich mit angehalten.
+  if(workout.paused){r.pausedLeft=sec*1000;r.endAt=0;r.byWo=true;}
+  restSheetCancelClose();
+  saveWorkout();restLoop();restWakeSync();
+}
+function restSkip(){
+  var r=restObj();if(!r)return;
+  r.endAt=0;r.pausedLeft=0;r.byWo=false;r.notified=true;
+  saveWorkout();restLoop();restWakeSync();
+}
+function restAdd(sec){
+  var r=restObj();if(!r||!isResting())return;
+  var left=restLeftMs()+sec*1000;
+  if(left<1000){restSkip();return;}
+  if(r.pausedLeft>0)r.pausedLeft=left;else r.endAt=Date.now()+left;
+  r.len=Math.max(r.len||0,Math.ceil(left/1000));
+  saveWorkout();restLoop();
+}
+function restTogglePause(){
+  var r=restObj();if(!r||!isResting())return;
+  if(r.pausedLeft>0){r.endAt=Date.now()+r.pausedLeft;r.pausedLeft=0;}
+  else{r.pausedLeft=Math.max(1000,r.endAt-Date.now());r.endAt=0;}
+  r.byWo=false;
+  saveWorkout();restLoop();restWakeSync();
+}
+// Wird das ganze Training pausiert, haelt auch die Satzpause an - und laeuft beim Fortsetzen
+// weiter, sofern man sie nicht zwischendurch selbst bedient hat.
+function restFollowWorkoutPause(paused){
+  var r=restObj();if(!r)return;
+  if(paused&&r.endAt&&r.endAt>Date.now()){r.pausedLeft=r.endAt-Date.now();r.endAt=0;r.byWo=true;}
+  else if(!paused&&r.byWo&&r.pausedLeft>0){r.endAt=Date.now()+r.pausedLeft;r.pausedLeft=0;r.byWo=false;}
+  restLoop();restWakeSync();
+}
+/* Anzeige auffrischen - genau auf den naechsten Sekundenwechsel getaktet statt im groben
+   1-s-Raster, damit keine Zahl uebersprungen wird, plus ein eigener Wecker aufs Pausenende. */
+function restLoop(){
+  if(restT){clearTimeout(restT);restT=null;}
+  if(restEndT){clearTimeout(restEndT);restEndT=null;}
+  try{restUpdate();}catch(e){}
+  var r=restObj();if(!r||!r.endAt)return;
+  var left=r.endAt-Date.now();if(left<=0)return;
+  restT=setTimeout(restLoop,(left%1000)+25);
+  restEndT=setTimeout(restLoop,left+10);
+}
+function restUpdate(){
+  var r=restObj();
+  // Pause abgelaufen (auch waehrend die App im Hintergrund war): einmal melden, dann aufraeumen.
+  if(r&&r.endAt&&r.endAt<=Date.now()){
+    var late=Date.now()-r.endAt;r.endAt=0;r.pausedLeft=0;r.byWo=false;
+    if(!r.notified){r.notified=true;restSignal(late);}
+    saveWorkout();restWakeSync();
+  }
+  var left=restLeftMs(),on=left>0,paused=restPaused();
+  var rp=$("wo-rest-pill"),tw=$("wo-timer-wrap");
+  var txt=fmtDur(Math.ceil(left/1000));
+  if(rp){
+    if(rp.hidden!==!on)rp.hidden=!on;rp.classList.toggle("paused",paused);
+    var lb=rp.querySelector("span");setText(lb,paused?"Angehalten":"Pause");
+    setText($("wo-rest-left"),txt);
+    // Fuer Screenreader: Restzeit und Zustand mit ansagen, nicht nur "steuern".
+    var al="Satzpause "+(paused?"angehalten":"")+" "+txt+" – antippen zum Steuern";
+    al=al.replace(/\s+/g," ");if(rp._fwAl!==al){rp._fwAl=al;rp.setAttribute("aria-label",al);}
+  }
+  if(tw&&tw.hidden!==on)tw.hidden=on;
+  var rf=$("wo-restfill");if(rf){var w=on&&r&&r.len?clamp(100*left/(r.len*1000),0,100)+"%":"0%";if(rf.style.width!==w)rf.style.width=w;}
+  // Offenes Steuer-Blatt mitfuehren
+  if(restSheetShown()){
+    setText($("rest-sheet-t"),on?txt:"0:00");
+    setText($("rest-sheet-s"),on?(paused?"angehalten":"läuft"):"vorbei");
+    var sp=$("rest-sheet-p");if(sp){setText(sp,paused?"Weiter":"Anhalten");sp.disabled=!on;}
+    ["rest-sheet-m","rest-sheet-a"].forEach(function(id){var x=$(id);if(x)x.disabled=!on;});
+    // Pause vorbei: das Blatt kurz stehen lassen ("vorbei"), dann schliessen - aber nur, wenn
+    // dann immer noch GENAU dieses Blatt offen ist (nicht ein anderes, das inzwischen kam).
+    if(!on&&!restSheetCloseT){
+      var mark=$("rest-sheet-t").getAttribute("data-seq");
+      restSheetCloseT=setTimeout(function(){restSheetCloseT=null;
+        var t=$("rest-sheet-t");if(restSheetShown()&&t&&t.getAttribute("data-seq")===mark&&!isResting())closeSheet();},900);
+    }
+  }
+}
+// Text nur setzen, wenn er sich aendert - spart unnoetige Layout- und Uebersetzungsarbeit.
+// Verglichen wird mit dem zuletzt GESETZTEN (deutschen) Text, nicht mit dem angezeigten - im
+// Englisch-Modus steht dort die Uebersetzung, sonst wuerde jeder Takt neu uebersetzt.
+function setText(n,t){if(!n||n._fwSrc===t)return;n._fwSrc=t;n.textContent=t;}
+function restSheetCancelClose(){if(restSheetCloseT){clearTimeout(restSheetCloseT);restSheetCloseT=null;}}
+function restCleanup(){
+  if(restT){clearTimeout(restT);restT=null;}
+  if(restEndT){clearTimeout(restEndT);restEndT=null;}
+  restWakeSync();
+}
+/* Steuerung der laufenden Pause: kuerzen, verlaengern, anhalten, ueberspringen. */
+function sheetRest(){
+  if(!isResting()||restSheetShown())return;
+  restSheetCancelClose();
+  var seq=String(++restSheetSeq);
+  openSheet(function(b){
+    sheetTitle(b,"Satzpause");
+    var big=el("div","rest-big");
+    big.innerHTML='<b id="rest-sheet-t" class="num" data-seq="'+seq+'" role="timer" aria-live="off" tabindex="-1">0:00</b><span id="rest-sheet-s" aria-live="polite"></span>';
+    b.appendChild(big);
+    var row=el("div","rest-ctl");
+    var m=el("button","btn ghost","−15 s");m.id="rest-sheet-m";m.type="button";m.onclick=function(){restAdd(-15);};
+    var p=el("button","btn ghost","Anhalten");p.id="rest-sheet-p";p.type="button";p.onclick=function(){restTogglePause();};
+    var a=el("button","btn ghost","+15 s");a.id="rest-sheet-a";a.type="button";a.onclick=function(){restAdd(15);};
+    row.appendChild(m);row.appendChild(p);row.appendChild(a);b.appendChild(row);
+    var sk=el("button","btn primary block","Pause überspringen");sk.type="button";sk.style.marginTop="12px";
+    sk.onclick=function(){restSkip();closeSheet();};
+    b.appendChild(sk);
+  });
+  restUpdate();
+  // Fokus ins Blatt (auf die Zeitanzeige, nicht auf einen Knopf - ein zweites Enter darf die
+  // Pause nicht versehentlich ueberspringen), damit er nicht auf dem verdeckten Knopf dahinter bleibt.
+  try{var tt=$("rest-sheet-t");if(tt)tt.focus({preventScroll:true});}catch(e){}
+}
+/* ---- Signal am Pausenende ----
+   Ton ueber Web Audio (auf dem iPhone gibt es keine Vibration im Browser), Vibration wo
+   moeglich, dazu ein Hinweis auf dem Bildschirm. Der Ton braucht einmal eine Beruehrung,
+   bevor er spielen darf - das passiert beim Abhaken des Satzes (restAudioUnlock). */
+var restAudio=null;
+function restAudioUnlock(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    if(!restAudio)restAudio=new AC();
+    if(restAudio.state==="suspended")restAudio.resume();
+    var buf=restAudio.createBuffer(1,1,22050),src=restAudio.createBufferSource();
+    src.buffer=buf;src.connect(restAudio.destination);src.start(0);
+  }catch(e){}
+}
+// Ton freischalten, sobald irgendwo getippt wird - nicht nur beim Abhaken. Sonst bliebe die
+// Pause nach einem Neuladen mitten in der Pause stumm, bis wieder ein Satz abgehakt wird.
+["pointerdown","touchend","keydown"].forEach(function(t){
+  document.addEventListener(t,function(){if(workout&&(!restAudio||restAudio.state!=="running"))restAudioUnlock();},{passive:true,capture:true});
+});
+// Beim Verlassen/Neuladen der Seite den Audio-Kontext sauber schliessen - ein offener Kontext
+// kann das Entladen der Seite spuerbar verzoegern. Beim naechsten Satz entsteht er neu.
+addEventListener("pagehide",function(){try{if(restAudio){restAudio.close();restAudio=null;}}catch(e){restAudio=null;}});
+function restBeep(){
+  try{
+    if(!restAudio)return;
+    if(restAudio.state==="suspended")restAudio.resume();
+    var t0=restAudio.currentTime+0.02;
+    [0,0.22,0.44].forEach(function(dt,i){
+      var o=restAudio.createOscillator(),g=restAudio.createGain();
+      o.type="sine";o.frequency.value=i===2?1175:880;
+      g.gain.setValueAtTime(0.0001,t0+dt);
+      g.gain.exponentialRampToValueAtTime(0.35,t0+dt+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.16);
+      o.connect(g);g.connect(restAudio.destination);o.start(t0+dt);o.stop(t0+dt+0.18);
+    });
+  }catch(e){}
+}
+function restSignal(lateMs){
+  // Lange vorbei (App war z. B. geschlossen): kein Ton, keine Meldung mehr - das waere nur verwirrend.
+  if(lateMs>10*60*1000)return;
+  var fresh=!(lateMs>4000);
+  if(fresh&&document.visibilityState!=="hidden")restBeep();
+  try{if(navigator.vibrate)navigator.vibrate([160,80,160]);}catch(e){}
+  toast(fresh?"Pause vorbei – nächster Satz":"Pause ist seit "+fmtDur(Math.round(lateMs/1000))+" vorbei");
+  var hd=document.querySelector(".wo-head");
+  if(hd){hd.classList.remove("rest-done");void hd.offsetWidth;hd.classList.add("rest-done");setTimeout(function(){hd.classList.remove("rest-done");},1600);}
+}
+/* Bildschirm waehrend einer laufenden Pause anlassen, damit das Ende nicht im Standby
+   untergeht. Nur solange die Pause laeuft; wo der Browser das nicht erlaubt, passiert nichts. */
+function restWakeSync(){
+  var want=!!workout&&document.visibilityState==="visible"&&isResting()&&!restPaused();
+  try{
+    if(want&&!restWake&&navigator.wakeLock&&navigator.wakeLock.request){
+      restWake="pending";
+      navigator.wakeLock.request("screen").then(function(l){
+        if(restWake!=="pending"){try{l.release();}catch(e){}return;}
+        restWake=l;l.addEventListener("release",function(){if(restWake===l)restWake=null;});
+      }).catch(function(){restWake=null;});
+    }else if(!want&&restWake){
+      var l=restWake;restWake=null;if(l!=="pending"){try{l.release();}catch(e){}}
+    }
+  }catch(e){restWake=null;}
+}
+// Zurueck aus dem Hintergrund / Display wieder an: sofort neu rechnen und anzeigen,
+// nicht erst auf den naechsten (gedrosselten) Takt warten.
+function restWakeUp(){if(!workout)return;try{restLoop();}catch(e){}try{tickInner();}catch(e){}restWakeSync();}
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")restWakeUp();else restWakeSync();});
+addEventListener("pageshow",restWakeUp);
+addEventListener("focus",restWakeUp);
 function addWorkoutExercise(ex){
-  workout.exercises.push({ex:ex.id,restSec:90,sets:[defaultSet(ex,null)]});
+  workout.exercises.push({ex:ex.id,restSec:workoutRest(),sets:[defaultSet(ex,null)]});
+  try{applySuggestion(workout.exercises[workout.exercises.length-1],ex);}catch(e){}
   woPage=workout.exercises.length-1;   // direkt auf die neue Übungsseite wischen
   saveWorkout();renderSession();
 }
-
 // Cardio hat keine Saetze zum Abhaken - der Datensatz existiert also sofort (nicht erst nach
 // einem Haekchen), damit er wie ein Satz laufend in day(TODAY).cardio steht und beim Beenden
 // des Trainings schon in der cardioMin-Summe (finishWorkout) auftaucht.
@@ -142,7 +354,6 @@ function addWorkoutCardio(ex){
   woPage=workout.exercises.length-1;
   saveWorkout();renderSession();
 }
-
 /* Anteil einer Übung an den einzelnen Muskeln – dieselbe Gewichtung, mit der die Sätze auch in
    die Wochenauslastung eingehen: Primärmuskel 1,0 · Sekundärmuskel 0,5 Sätze je Satz. */
 /* Prozentuale Beanspruchung je Muskel: 100 % = der am staerksten beanspruchte Muskel
@@ -466,6 +677,12 @@ var EX_PCT={
             tg_unterarm_beug:55,
             tg_nacken:25,
             tg_rueck_rhomb:20},
+  // Schulterheben am Kabelzug, beidseitig. Konstante Spannung auch unten, Griffe seitlich wie
+  // bei Kurzhanteln - trifft den oberen Trapez etwa so gut wie die Kurzhantelvariante.
+  shrug_cable:{tg_rueck_trapez_ob:85,
+            tg_unterarm_beug:50,
+            tg_nacken:25,
+            tg_rueck_rhomb:20},
   // Schulterdruecken Langhantel. Setzt die Referenz fuer den vorderen Deltamuskel: die
   // vertikale Druckbahn ohne Ausweichmoeglichkeit trifft ihn direkter als jede Druckvariante
   // aus der Brust-Familie.
@@ -552,15 +769,9 @@ var EX_PCT={
             tg_rueck_trapez_unt:25,
             tg_schulter_rot_infra:30,
             tg_schulter_rot_teres_min:30},
-  // Innenrotation am Kabelzug. Einzige Uebung, die den Subscapularis gezielt isoliert -
-  // setzt damit zwangslaeufig die Referenz (100%). Die Brust wirkt bei der Innenrotation
-  // nur schwach unterstuetzend mit.
   rot_internal:{
             tg_schulter_rot_sub:100,
             tg_brust_mitte:15},
-  // Empty-Can-Raise. Die Armhaltung (Daumen nach unten, in der Skapularebene) isoliert den
-  // Supraspinatus so gezielt wie sonst keine Katalog-Uebung - Referenz. Der seitliche Delt
-  // uebernimmt oberhalb der ersten 30 Grad einen spuerbaren Anteil.
   emptycan:{
             tg_schulter_rot_supra:100,
             tg_schulter_seit:40},
@@ -954,9 +1165,6 @@ var EX_PCT={
             tg_gesaess_min:85},
   // Adduktoren-Maschine. Setzt die Referenz fuer die Adduktoren aus dem gleichen Grund.
   adduct:{  tg_adduktoren:100},
-  // Hueftbeugen am Kabelzug. Einzige Uebung im Katalog, die den Hueftbeuger als Hauptbewegung
-  // isoliert (die haengenden Bein-/Knieheben belasten ihn nur sekundaer) - Referenz. Die
-  // gerade Bauchmuskulatur stabilisiert das Becken waehrend der Bewegung mit.
   hipflex_cable:{
             tg_huefte:100,
             tg_bauch_gerade:20},
@@ -1107,30 +1315,23 @@ var EX_PCT={
   mob_hamstring:{
             tg_kniesehnen:6,
             tg_rueck_strecker:6}
-}
-;
-
+};
 function exPct(ex){return (ex&&(ex.pct||EX_PCT[ex.id]))||null;}
-
 /* Gleiche Form wie exInvolve (Gruppe -> 0..1), nur feiner abgestuft. */
 function exPctInv(ex){var p=exPct(ex);if(!p)return null;var inv={};for(var g in p)inv[g]=p[g]/100;return inv;}
-
 function _fwHexToRgb(h){h=String(h).replace("#","");if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
   var n=parseInt(h,16);if(isNaN(n))n=0x808080;return [(n>>16)&255,(n>>8)&255,n&255];}
-
 function _fwRgbToHsl(r,g,b){r/=255;g/=255;b/=255;
   var mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2,d=mx-mn;
   if(d){s=l>0.5?d/(2-mx-mn):d/(mx+mn);
     if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;}
   return [h,s,l];}
-
 function _fwHslToHex(h,s,l){h=((h%360)+360)%360;
   var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r,g,b;
   if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}else if(h<180){r=0;g=c;b=x;}
   else if(h<240){r=0;g=x;b=c;}else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
   function q(v){var n=Math.round((v+m)*255);n=Math.max(0,Math.min(255,n));return (n<16?"0":"")+n.toString(16);}
   return "#"+q(r)+q(g)+q(b);}
-
 /* Farbskala der Beanspruchung: Gelb -> Orange -> Rot, in festen Stufen.
    Der Farbton steigt UND die Farbe wird dunkler - beides zusammen macht die Reihenfolge
    auch auf der beschatteten 3D-Geometrie lesbar, wo ein reiner Helligkeitsverlauf durch
@@ -1139,8 +1340,7 @@ function _fwHslToHex(h,s,l){h=((h%360)+360)%360;
    ganz unten gelb. Der Sprung von Orange auf Rot ist bewusst hart: "Top-Uebung" ist keine
    Abstufung, sondern eine Aussage. Innerhalb von Rot gibt es noch eine dunklere Stufe ab
    90 %, damit die staerkste Wirkung sichtbar bleibt. */
-var EX_PCT_HOT=0.80;
-                  // ab hier rot
+var EX_PCT_HOT=0.80;                  // ab hier rot
 var EX_PCT_STEPS=[
   {min:0,          col:"#FBE674"},    // unter 20 % - hellgelb
   {min:0.20,       col:"#F6C353"},    // 20-39 %
@@ -1149,27 +1349,21 @@ var EX_PCT_STEPS=[
   {min:EX_PCT_HOT, col:"#CB3F2C"},    // 80-89 % - rot
   {min:0.90,       col:"#A3281C"}     // ab 90 % - dunkelrot
 ];
-
 function exPctStep(v){
   v=Math.max(0,Math.min(1,v||0));
   var s=EX_PCT_STEPS[0];
   for(var i=0;i<EX_PCT_STEPS.length;i++)if(v>=EX_PCT_STEPS[i].min)s=EX_PCT_STEPS[i];
   return s;
 }
-
 function exPctColor(v){return exPctStep(v).col;}
-
 function exPctColorStep(v){return exPctColor(v);}
-
 /* Dunklere Variante derselben Stufe - fuer Flaechen, auf denen weisse Schrift steht
    (auf dem hellen Gelb der unteren Stufen waere sie nicht lesbar). */
 // ---- Fuellstand-Skala fuer das Wochenvolumen -------------------------------
 // Statt drei harter Zonen (zu wenig / Optimum / zu viel) wird der Farbwert stufenlos
 // zwischen den Korridor-Marken interpoliert: ruhiges Grau bei null, ueber Petrol zum
 // Gruen im Korridor, darueber dunkles Rotbraun.
-var _volStops=null,
-_volStopsKey=null;
-
+var _volStops=null,_volStopsKey=null;
 function volStops(){
   var key=(document.documentElement.getAttribute("data-theme")||"")+"|"+
           (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"d":"l");
@@ -1181,7 +1375,6 @@ function volStops(){
   _volStopsKey=key;
   return _volStops;
 }
-
 /* Ueber der Grenze wird in RGB gemischt, nicht in HSL. Der Weg von Dunkelgruen (Farbton ~150)
    zu dunklem Rotbraun (~15) fuehrt auf dem kuerzeren Bogen durch Gelb - ein leicht ueberzogener
    Muskel waere dadurch gelbgruen erschienen statt langsam ins Braune zu kippen. */
@@ -1194,26 +1387,17 @@ function _fwMixRgbHex(a,b,t){
   }
   return o;
 }
-
 function _fwMixHex(a,b,t){
   t=clamp(t,0,1);
   var A=_fwRgbToHsl.apply(null,_fwHexToRgb(a)),B=_fwRgbToHsl.apply(null,_fwHexToRgb(b));
   var d=B[0]-A[0];if(d>180)d-=360;if(d<-180)d+=360;
   return _fwHslToHex(A[0]+d*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);
 }
-
-// Skalenende des Balkens: Limit plus 35 % Luft, damit eine Ueberschreitung sichtbar bleibt.
-function volScale(m){return corr(m).mrv*1.35;}
-
-function volFill(v,m){return clamp(v/volScale(m)*100,0,100);}
-
 /* Mehrere hundert Meshes pro Einfaerbung, und jede Farbe entsteht ueber HSL-Umrechnungen.
    Gleiche Gruppe + gleicher Wert ergibt immer dieselbe Farbe - also einmal rechnen, merken.
    Der Schluessel enthaelt das Thema und den persoenlichen Korridor-Faktor, damit ein Wechsel
    dort nicht alte Farben stehen laesst. */
-var _volColMemo={}
-;
-
+var _volColMemo={};
 function volColor(v,m){
   var id=m&&m.id;
   volStops();   // stellt sicher, dass der Themenschluessel gesetzt ist
@@ -1225,7 +1409,6 @@ function volColor(v,m){
   }
   return volColorRaw(v,m);
 }
-
 function volColorRaw(v,m){
   var c=corr(m),S=volStops();
   if(!(v>0))return S[0];
@@ -1237,12 +1420,10 @@ function volColorRaw(v,m){
   if(v<=c.mrv)return _fwMixHex(S[2],S[3],(q-q1)/Math.max(.001,q2-q1));
   return _fwMixRgbHex(S[3],S[4],(q-q2)/Math.max(.001,Math.sqrt(c.mrv*1.30)-q2));
 }
-
 // Position eines Satzwerts auf der Legendenskala (in Prozent der Balkenbreite).
 // Die Stuetzstellen entsprechen den Marken im Verlaufsbalken: 0 / Minimum / Optimum /
 // Limit / Skalenende.
 var VOL_LEG_P=[0,26.5,48.4,78,100];
-
 function volLegendPos(v,m){
   var c=corr(m),P=VOL_LEG_P;
   if(!(v>0))return P[0];
@@ -1253,7 +1434,6 @@ function volLegendPos(v,m){
   if(v<=c.mrv)return P[2]+(P[3]-P[2])*(q-q1)/Math.max(.001,q2-q1);
   return Math.min(P[4],P[3]+(P[4]-P[3])*(q-q2)/Math.max(.001,q3-q2));
 }
-
 // Aggregat fuer Regions-/Gruppenzeilen: 0..100 Punkte entlang derselben Skala.
 function volColorScore(score,over){
   var S=volStops();
@@ -1262,46 +1442,17 @@ function volColorScore(score,over){
   if(t<0.70)return _fwMixHex(S[0],S[1],t/0.70);
   return _fwMixHex(S[1],S[3],(t-0.70)/0.30);
 }
-
 function exPctColorInk(v){
   var h=_fwRgbToHsl.apply(null,_fwHexToRgb(exPctColor(v)));
   return _fwHslToHex(h[0],Math.max(h[1],0.45),Math.min(h[2],0.36));
 }
-
 function exPctColorStepInk(v){return exPctColorInk(v);}
-
 function exInvolve(ex){
   var inv={};
   (ex.p||[]).forEach(function(g){inv[g]=1;});
   (ex.s||[]).forEach(function(g){if(!(inv[g]>=1))inv[g]=0.5;});(ex.st||[]).forEach(function(g){if(!(inv[g]>=0.5))inv[g]=0.25;});
   return inv;
 }
-
-function involvePaint(inv){
-  return function(gs){
-    var v=0;(gs||[]).forEach(function(g){if(g&&(inv[g]||0)>v)v=inv[g];});
-    if(v<=0)return {cls:"msk",fill:"var(--z0)",op:0};
-    // Primär: kräftiges Grün, sofort erkennbar. Sekundär: helleres Grün, klar schwächer.
-    return {cls:"msk",fill:v>=1?"var(--ex-pri)":"var(--ex-sec)",op:v>=1?1:0.92};
-  };
-}
-
-// Wie exInvolve, aber für einen ganzen Trainingstag: alle an diesem Tag geloggten Übungen
-// (unabhängig davon, ob einzeln eingetragen oder über eine Trainingseinheit abgehakt – beides
-// landet in day.sets) fließen mit ihrer eigenen Primär-/Sekundärgewichtung ein; trifft eine
-// Übung einen Muskel nur sekundär, eine andere Übung desselben Tages aber primär, zählt primär.
-function dayInvolve(dateKey){
-  var inv={},d=state.days[dateKey];if(!d)return inv;
-  var seen={};
-  (d.sets||[]).forEach(function(s){seen[s.ex]=true;});
-  Object.keys(seen).forEach(function(exid){
-    var ex=exById(exid);if(!ex||ex.t==="cardio")return;
-    var i2=exInvolve(ex);
-    Object.keys(i2).forEach(function(g){if((inv[g]||0)<i2[g])inv[g]=i2[g];});
-  });
-  return inv;
-}
-
 // Die Figuren sind teuer (Feinaufteilungen messen echte Geometrie) – für einen Tag lohnt sich
 // kein dauerhafter Cache wie bei Übungen (der Tag kann sich durch Nachbearbeiten ändern),
 // aber "data-filled" verhindert immerhin einen doppelten Aufbau bei jedem Sheet-Redraw.
@@ -1312,12 +1463,9 @@ function fillDayFig(svg){
   var inv=setsInvolve((state.days[dateKey]||{}).sets);
   fw3dSnapInto(svg,"day:"+dateKey+"|"+fw3dInvKey(inv),inv,view,false,null,"step",FT_SESSION);
 }
-
 // Die Figuren sind teuer (Feinaufteilungen messen echte Geometrie), ändern sich pro Übung aber
 // nie – deshalb einmal bauen, als Markup merken und bei jedem Neuaufbau wiederverwenden.
-var exFigCache={}
-;
-
+var exFigCache={};
 function fillExFig(svg){
   if(svg.getAttribute("data-filled"))return;
   var ex=exById(svg.getAttribute("data-ex")),view=svg.getAttribute("data-view");
@@ -1330,31 +1478,24 @@ function fillExFig(svg){
   fw3dSnapInto(svg,"ex:"+ex.id+(pinv?(detail?"|pd":"|pc"):""),pinv||exInvolve(ex),view,false,
                detail?null:(discFine||null),pinv?(detail?"step":"card"):null);
 }
-
 function renderBanner(){
   var bn=$("wo-banner");if(!bn)return;bn.hidden=!workout;if(!workout)return;
   var done=0,tot=0;workout.exercises.forEach(function(we){if(!we.sets)return;we.sets.forEach(function(st){tot++;if(st.done)done++;});});
-  bn.innerHTML='<div><b>'+workout.name+' läuft</b><span>'+done+' von '+tot+' Sätzen · tippen zum Weitermachen</span></div><span class="num" id="wo-banner-t">'+fmtDur(woElapsed())+'</span>';
+  bn.innerHTML='<div><b>'+esc(workout.name)+' läuft</b><span>'+done+' von '+tot+' Sätzen · tippen zum Weitermachen</span></div><span class="num" id="wo-banner-t">'+fmtDur(woElapsed())+'</span>';
   bn.onclick=function(){selectTab("tab-training");window.scrollTo(0,0);};
 }
-
-var woPage=0,
- woShape=null,
- woScrollT=0;
-
+var woPage=0, woShape=null, woScrollT=0;
 function woShapeKey(){
   return workout.exercises.map(function(we){return we.ex+"#"+(we.sets?we.sets.length:"c"+we.cardioRec.min+":"+we.cardioRec.km)+"#"+we.restSec;}).join(",")+"|"+(workout.paused?"p":"r");
 }
-
 // Während eines laufenden Trainings bekommt der Bildschirm ein festes Layout (siehe CSS):
 // Die Übungsseite füllt genau die Höhe, gescrollt wird nicht. Dieselbe Idee gilt auch für die
 // Trainingsseite VOR dem Start (kein Workout aktiv): auch dort volle Bildschirmhöhe, kein
 // Scrollen – nur das Layout dahinter ist ein anderes (Einheiten-Liste statt Satztabelle).
 function woLive(){
   try{document.body.classList.toggle("wo-live",!!workout&&tab==="tab-training");
-    document.body.classList.toggle("tr-idle-fixed",!workout&&tab==="tab-training");}catch(e){}
+    document.body.classList.remove("tr-idle-fixed");}catch(e){}
 }
-
 function renderSession(){
   $("session-wrap").hidden=!workout;$("start-wrap").hidden=!!workout;
   woLive();
@@ -1369,25 +1510,23 @@ function renderSession(){
   if(keepKey){var again=$("session-body").querySelector('input[data-k="'+keepKey+'"]');
     if(again){try{again.focus({preventScroll:true});if(keepPos!=null)again.setSelectionRange(keepPos,keepPos);}catch(e){}}}
 }
-
 /* Eine Übung pro Seite: horizontal wischen, ganz hinten das große Plus für die nächste Übung. */
 function woGoto(i,smooth){
   var p=$("wo-pager");if(!p)return;
   var x=i*(p.clientWidth||p.offsetWidth||0);
   try{p.scrollTo({left:x,behavior:smooth?"smooth":"auto"});}catch(e){p.scrollLeft=x;}
 }
-
 function woDots(){
   var d=$("wo-dots");if(!d||!workout)return;d.innerHTML="";
   var n=workout.exercises.length+1;
   for(var i=0;i<n;i++){
-    var cls=(i===n-1?"plus":"")+(i===woPage?" on":"");
+    var we=workout.exercises[i],fin=we&&we.sets&&we.sets.length&&we.sets.every(function(st){return st.done;});
+    var cls=(i===n-1?"plus":"")+(i===woPage?" on":"")+(fin?" done":"");
     var x=el("i",cls.trim());
     (function(k){x.onclick=function(){woPage=k;woGoto(k,true);woDots();woFillFigs();};})(i);
     d.appendChild(x);
   }
 }
-
 // Layout-Änderungen (Pausenleiste, Tastatur, nachgeladene Figuren) können den Wischer zwischen
 // zwei Seiten stehen lassen. Kurz nach einer echten Wischbewegung nie eingreifen.
 function woAlign(){
@@ -1396,7 +1535,6 @@ function woAlign(){
   var w=p.clientWidth||0;if(!w)return;
   if(Math.abs(p.scrollLeft-woPage*w)>6)woGoto(woPage,false);
 }
-
 // Die Muskelzeile braucht je nach Uebung ein bis drei Reihen. Ihre tatsaechliche
 // Hoehe wird gemessen und im Layout freigehalten, damit unten nichts abgeschnitten
 // wird - die Figur darueber nutzt den restlichen Platz.
@@ -1409,7 +1547,6 @@ function woMusSpace(){
   if(Math.abs((parseInt(document.body.style.getPropertyValue("--mus-h"),10)||0)-h)>2)
     document.body.style.setProperty("--mus-h",h+"px");
 }
-
 function woFillFigs(){
   var p=$("wo-pager");if(!p||!p.getClientRects().length)return;
   woMusSpace();
@@ -1418,26 +1555,28 @@ function woFillFigs(){
     Array.prototype.forEach.call(pg.querySelectorAll("svg[data-ex]"),fillExFig);
   });
 }
-
 // Leichtes Update ohne Neuaufbau: Häkchen, gesperrte Felder, Zähler.
 function woUpdate(){
   var p=$("wo-pager");if(!p||!workout)return;
   workout.exercises.forEach(function(we,ei){
     var pg=p.querySelector('.wo-page[data-i="'+ei+'"]');if(!pg)return;
     if(!we.sets)return;
+    try{woWarmRefresh(pg,we,ei);}catch(e){}
     we.sets.forEach(function(st,si){
       var r=pg.querySelector('.wo-row[data-s="'+si+'"]');if(!r)return;
       if(st.done)r.classList.add("done");else r.classList.remove("done");
-      var ck=r.querySelector(".wo-check");if(ck){if(st.done)ck.classList.add("on");else ck.classList.remove("on");}
+      r.classList.toggle("pr",!!(st.done&&st.pr&&st.pr.length));
+            var ck=r.querySelector(".wo-check");if(ck){if(st.done)ck.classList.add("on");else ck.classList.remove("on");}
       var rb=r.querySelector(".wo-rir");if(rb){rb.disabled=!!st.done;if(st.done)rb.classList.add("done");else rb.classList.remove("done");}
       Array.prototype.forEach.call(r.querySelectorAll("input"),function(inp){
         inp.disabled=!!st.done;
+        inp.classList.toggle("sug",!!st.sug&&!st.done);
         if(document.activeElement!==inp){
           var f=inp.getAttribute("data-f"),raw=st[f];
           // Alte Sätze (vor "einseitig") haben kein repsL/repsR – dann wie beim Aufbau der Zeile
           // auf den gemeinsamen reps-Wert zurückfallen statt auf 0.
           if(raw==null&&(f==="repsL"||f==="repsR"))raw=st.reps;
-          var want=String(raw!=null?raw:0);
+          var want=raw!=null?String(raw):"";
           if(inp.value!==want)inp.value=want;
         }
       });
@@ -1446,19 +1585,25 @@ function woUpdate(){
   var done=0,tot=0;workout.exercises.forEach(function(we){if(!we.sets)return;we.sets.forEach(function(st){tot++;if(st.done)done++;});});
   $("session-meta").textContent=done+" von "+tot+" Sätzen";
   var pr=$("wo-prog");if(pr)pr.textContent=done+"/"+tot;
+  var pf=$("wo-progfill");if(pf)pf.style.width=(tot?100*done/tot:0)+"%";
+  // Der erste offene Satz jeder Übung ist "dran": er bekommt die Hauptaktion (farbiger Haken),
+  // alle anderen bleiben ruhig. So ist auf jeder Seite sofort klar, was als Nächstes kommt.
+  workout.exercises.forEach(function(we,ei){
+    var pg=p.querySelector('.wo-page[data-i="'+ei+'"]');if(!pg||!we.sets)return;
+    var cur=-1;for(var k=0;k<we.sets.length;k++){if(!we.sets[k].done){cur=k;break;}}
+    Array.prototype.forEach.call(pg.querySelectorAll(".wo-row[data-s]"),function(r){
+      r.classList.toggle("cur",+r.getAttribute("data-s")===cur);});
+  });
+  woDots();
   tickWorkout();
 }
-
 // Die Illustration hat viel Rand. Für die Trainingsansicht wird auf die Figur zugeschnitten –
 // dieselben Koordinaten für Masken und Bild, deshalb reicht ein engerer viewBox-Ausschnitt.
-var FIGCROP={male:[0.123,0.016,0.877,0.989], female:[0.178,0.046,0.826,0.989]}
-;
-
+var FIGCROP={male:[0.123,0.016,0.877,0.989], female:[0.178,0.046,0.826,0.989]};
 function figViewBoxTight(){
   var c=FIGCROP[figSex()==="female"?"female":"male"];
   return (c[0]*FIGW)+" "+(c[1]*FIGH)+" "+((c[2]-c[0])*FIGW)+" "+((c[3]-c[1])*FIGH);
 }
-
 function woFigs(ex){
   var wrap=el("div","wo-figwrap"),box=el("div","wo-figs");
   [["front","Vorne"],["back","Hinten"]].forEach(function(v){
@@ -1476,7 +1621,6 @@ function woFigs(ex){
   wrap.appendChild(box);
   return wrap;
 }
-
 /* Einzelnen Muskel hervorheben: nur er bleibt farbig und undurchsichtig, alles andere
    wird durchscheinend. Nur so sieht man Muskeln, die von anderen verdeckt werden –
    etwa die tiefe Bauchmuskulatur unter dem geraden Bauchmuskel. */
@@ -1501,7 +1645,6 @@ function woFigsShow(figsEl,ex,focusG){
     }
   });
 }
-
 /* Prozent-Darstellung: ein Chip je Muskel, absteigend nach Beanspruchung, eingefaerbt
    mit derselben Blau-Rot-Skala wie die Figur daneben - so gehoeren Zahl und Bild sichtbar
    zusammen. Tippen hebt den einzelnen Muskel in der Figur hervor (wie bisher). */
@@ -1521,7 +1664,6 @@ function woPctScale(){
   w.appendChild(el("b",null,"ab "+hot+" % Top-Übung"));
   return w;
 }
-
 /* Woher die Zahlen kommen - gehoert sichtbar dazu, damit die Werte nicht fuer Messwerte
    gehalten werden. */
 function woPctNote(){
@@ -1530,7 +1672,6 @@ function woPctNote(){
     "Planungswerte auf Basis der EMG-Literatur – keine Messwerte.");
   return n;
 }
-
 function woMusPct(ex,figsEl,pct,box){
   var items=[];
   Object.keys(pct).forEach(function(g){var m=muscleById(g);if(!m)return;items.push({id:g,name:m.name,v:pct[g]});});
@@ -1568,7 +1709,6 @@ function woMusPct(ex,figsEl,pct,box){
   box.appendChild(woPctNote());
   return box;
 }
-
 /* Auf der laufenden Trainingsseite ist Hoehe das knappste Gut. Die volle Muskelliste steht
    deshalb nicht dauerhaft da, sondern als eine Zeile mit den drei staerksten Muskeln, die
    sich aufklappen laesst - und zusaetzlich hinter der Figur, die als Ganzes antippbar ist. */
@@ -1600,7 +1740,6 @@ function woMusLive(ex,figsEl){
   head.onclick=function(ev){ev.preventDefault();pageExMuscles(ex);};
   return box;
 }
-
 /* Grosse Ansicht: eigene Vollbildseite mit moeglichst grossen Figuren plus vollstaendiger
    Liste - erreichbar durch Antippen der Figur auf der Trainingsseite. Nutzt dieselbe
    Vollbild-Huelle wie das Uebungsdetail, damit Zuruecknavigieren sich gleich anfuehlt. */
@@ -1618,7 +1757,6 @@ function pageExMuscles(ex){
   body.appendChild(woMus(ex,figs));
   woFigsShow(figs,ex,null);
 }
-
 function woMus(ex,figsEl){
   var box=el("div","wo-mus"),pct=exPct(ex);
   if(pct)return woMusPct(ex,figsEl,pct,box);
@@ -1652,430 +1790,4 @@ function woMus(ex,figsEl){
   if(pri.length)box.appendChild(line(" p","Primär",pri));
   if(sec.length)box.appendChild(line(" s","Sekundär",sec));
   return box;
-}
-
-/* ================= Was eine Uebung ausser Muskeln noch staerkt =================
-   Sehnen, Baender, Faszien, Gelenke, Knochen und Faehigkeiten. Bewusst getrennt von
-   den Muskeln gehalten: diese Strukturen lassen sich nicht in Saetzen pro Woche
-   messen, und sie gehen NICHT ins Trainingsvolumen ein. Die Angabe ist eine
-   Einordnung, keine Dosierung - deshalb steht bei jedem Eintrag, worum es geht,
-   statt einer Zahl. */
-var STRUCT={
- griff:{n:"Griffkraft",k:"Fähigkeit",t:"Wie lange und wie fest du etwas halten kannst. Bei Zug- und Hebeübungen oft das erste, was nachgibt - und damit die Grenze, bevor der Zielmuskel wirklich ausbelastet ist."},
- achilles:{n:"Achillessehne",k:"Sehne",t:"Die kräftigste Sehne des Körpers. Sie passt sich an Zug an, aber deutlich langsamer als der Muskel - nach langer Pause ist der Sprung in die alte Belastung der häufigste Auslöser für Beschwerden."},
- patella:{n:"Patellasehne",k:"Sehne",t:"Verbindet Kniescheibe und Schienbein. Regelmäßige Beugung unter Last macht sie belastbarer; plötzlich viel Sprung- und Landearbeit reizt sie."},
- tractus:{n:"Tractus iliotibialis",k:"Faszie",t:"Sehnenplatte an der Oberschenkelaußenseite, vom Becken bis unters Knie. Sie wird nicht selbst trainiert, sondern über die Muskeln, die an ihr ziehen - Gesäß und Hüftabspreizer. Schwache Hüftstabilität zeigt sich häufig hier."},
- rotator_sehnen:{n:"Rotatorenmanschette",k:"Sehne",t:"Vier Sehnen, die den Oberarmkopf in der Pfanne zentrieren. Sie arbeiten bei jedem Drücken und Ziehen mit, ohne dass man sie spürt - und sind der Grund, warum saubere Technik über Kopf wichtiger ist als Gewicht."},
- bizepssehne:{n:"Lange Bizepssehne",k:"Sehne",t:"Läuft durch das Schultergelenk hindurch. Sie wird bei tiefen Stützpositionen mit gestreckter Schulter stark auf Zug genommen."},
- ellbogen:{n:"Sehnenansätze am Ellbogen",k:"Sehne",t:"Ursprung der Unterarmmuskeln an den Knochenvorsprüngen innen und außen - die Stellen, an denen Tennis- und Golferellenbogen entstehen. Sie profitieren von langsamen, kontrollierten Wiederholungen."},
- adduktorensehnen:{n:"Adduktorensehnen",k:"Sehne",t:"Ansatz an der Schambeinregion. Häufige Beschwerdestelle bei Sportarten mit schnellen Richtungswechseln - gezielte Kräftigung beugt vor."},
- rueckenfaszie:{n:"Rückenfaszie",k:"Faszie",t:"Große Bindegewebsplatte im unteren Rücken, an der Gesäß, Latissimus und Bauchmuskeln zusammenlaufen. Sie überträgt Kraft zwischen Ober- und Unterkörper."},
- plantar:{n:"Plantarfaszie",k:"Faszie",t:"Spannt das Längsgewölbe des Fußes und federt bei jedem Schritt."},
- g_sprunggelenk:{n:"Sprunggelenk",k:"Gelenk",t:"Beweglichkeit und Stabilität hier entscheiden mit, wie tief du hocken kannst und wie sicher du landest."},
- g_knie:{n:"Kniegelenk",k:"Gelenk",t:"Kräftige Muskeln rundherum halten das Gelenk zusammen - das Training wirkt mehr über die Führung als über das Gelenk selbst."},
- g_huefte:{n:"Hüftgelenk",k:"Gelenk",t:"Das beweglichste große Gelenk. Seitliche Stabilität hier bestimmt, ob das Knie bei Belastung nach innen fällt."},
- g_schulter:{n:"Schultergelenk",k:"Gelenk",t:"Viel Bewegungsumfang, wenig knöcherne Führung - die Stabilität kommt fast ausschließlich aus Muskeln und Sehnen."},
- g_handgelenk:{n:"Handgelenk",k:"Gelenk",t:"Wird bei Stützpositionen in Streckung belastet. Mit der Zeit gewöhnt es sich daran; von null auf viel ist der übliche Fehler."},
- g_wirbelsaeule:{n:"Wirbelsäule",k:"Gelenk",t:"Nicht ein Gelenk, sondern viele. Sie hält Last aus, wenn die Rumpfmuskulatur sie in Position hält - genau das wird hier mittrainiert."},
- knochen:{n:"Knochendichte",k:"Knochen",t:"Knochen bauen auf Druck und Zug auf. Schweres Heben und Belastung mit dem eigenen Körpergewicht wirken dabei deutlich besser als gelenkschonende Ausdauerformen."},
- rumpf:{n:"Rumpfspannung",k:"Fähigkeit",t:"Die Fähigkeit, den Oberkörper unter Last stabil zu halten. Sie begrenzt bei vielen Übungen, wie viel Gewicht sinnvoll bewegt werden kann."},
- balance:{n:"Gleichgewicht",k:"Fähigkeit",t:"Einbeinige und freie Übungen fordern laufende Korrekturen aus Fuß, Hüfte und Rumpf - das trainiert man nicht an der Maschine."},
- beweglichkeit:{n:"Beweglichkeit",k:"Fähigkeit",t:"Wie weit ein Gelenk bewegt werden kann, ohne auszuweichen. Wächst durch regelmäßige, nicht durch lange Einheiten."},
- kondition:{n:"Herz-Kreislauf",k:"Fähigkeit",t:"Ausdauerleistung und Erholungsfähigkeit. Zeigt sich im Alltag oft früher als Kraftzuwachs."}
-}
-;
-
-var EX_PLUS={"bench":["rotator_sehnen", "g_schulter"],
-  "bench_db":["rotator_sehnen", "g_schulter"],
-  "bench_inc":["rotator_sehnen", "g_schulter"],
-  "bench_inc_db":["rotator_sehnen", "g_schulter"],
-  "bench_dec":["rotator_sehnen", "g_schulter"],
-  "machine_press":["rotator_sehnen", "g_schulter"],
-  "machine_press_lying":["rotator_sehnen", "g_schulter"],
-  "pushup":["rotator_sehnen", "g_schulter", "g_handgelenk"],
-  "pushup_diamond":["rotator_sehnen", "g_schulter", "g_handgelenk"],
-  "pushup_arch":["rotator_sehnen", "g_schulter", "g_handgelenk"],
-  "pushup_dec":["rotator_sehnen", "g_schulter", "g_handgelenk"],
-  "dips":["rotator_sehnen", "bizepssehne", "g_schulter", "g_handgelenk"],
-  "fly_db":["rotator_sehnen", "g_schulter"],
-  "cable_fly":["rotator_sehnen", "g_schulter"],
-  "fly_machine":["rotator_sehnen", "g_schulter"],
-  "pullover":["rotator_sehnen", "g_schulter"],
-  "ohp":["rotator_sehnen", "g_schulter", "rumpf"],
-  "ohp_db":["rotator_sehnen", "g_schulter", "rumpf"],
-  "push_press":["rotator_sehnen", "g_schulter", "rumpf"],
-  "arnold":["rotator_sehnen", "g_schulter", "rumpf"],
-  "pike_pushup":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
-  "hspu":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
-  "handstand":["rotator_sehnen", "g_schulter", "g_handgelenk", "rumpf"],
-  "pullup":["griff", "ellbogen", "g_schulter"],
-  "chinup":["griff", "ellbogen", "g_schulter"],
-  "pullup_wide":["griff", "ellbogen", "g_schulter"],
-  "pullup_weight":["griff", "ellbogen", "g_schulter"],
-  "latpull":["griff", "ellbogen", "g_schulter"],
-  "latpull_close":["griff", "ellbogen", "g_schulter"],
-  "pullup_neg":["griff", "ellbogen", "g_schulter"],
-  "deadhang":["griff", "ellbogen", "g_handgelenk"],
-  "row_bb":["griff", "g_schulter", "rumpf"],
-  "row_db":["griff", "g_schulter", "rumpf", "balance"],
-  "row_pendlay":["griff", "g_schulter", "rumpf"],
-  "row_tbar":["griff", "g_schulter", "rumpf"],
-  "row_cable":["g_schulter", "rumpf"],
-  "row_machine":["g_schulter", "rumpf"],
-  "row_inv":["g_schulter", "rumpf"],
-  "row_band":["g_schulter", "rumpf"],
-  "facepull":["g_schulter", "rumpf"],
-  "shrug":["griff", "g_schulter", "rumpf"],
-  "shrug_db":["griff", "g_schulter", "rumpf"],
-  "squat":["patella", "g_knie", "knochen", "rumpf"],
-  "squat_front":["patella", "g_knie", "knochen", "rumpf"],
-  "squat_goblet":["patella", "g_knie", "rumpf"],
-  "squat_bw":["patella", "g_knie", "rumpf"],
-  "squat_pistol":["patella", "g_knie", "g_huefte", "rumpf"],
-  "squat_bulg":["patella", "g_knie", "g_huefte", "rumpf"],
-  "legpress":["patella", "g_knie", "knochen", "rumpf"],
-  "hacksquat":["patella", "g_knie", "knochen", "rumpf"],
-  "lunge":["patella", "g_knie", "g_huefte", "rumpf"],
-  "lunge_walk":["patella", "g_knie", "g_huefte", "rumpf"],
-  "stepup":["patella", "g_knie", "g_huefte", "rumpf"],
-  "stepup_bw":["patella", "g_knie", "g_huefte", "rumpf"],
-  "legext":["patella", "g_knie", "knochen", "rumpf"],
-  "sissy":["patella", "g_knie", "rumpf"],
-  "wallsit":["patella", "g_knie", "rumpf"],
-  "balance_sl":["patella", "g_knie", "g_huefte", "rumpf"],
-  "deadlift":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "deadlift_rdl":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "deadlift_sumo":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "deadlift_sl":["griff", "rueckenfaszie", "g_huefte", "g_wirbelsaeule"],
-  "hipthrust":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "gluteBridge":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "goodmorning":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "backext":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "legcurl":["g_knie"],
-  "nordic":["rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "kb_swing":["griff", "rueckenfaszie", "g_wirbelsaeule", "knochen"],
-  "plank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "lsit":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "sideplank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "hollow":["g_wirbelsaeule", "rumpf"],
-  "legraise":["griff", "g_wirbelsaeule", "rumpf"],
-  "kneeraise":["griff", "g_wirbelsaeule", "rumpf"],
-  "crunch":["g_wirbelsaeule", "rumpf"],
-  "situp":["g_wirbelsaeule", "rumpf"],
-  "russian":["g_wirbelsaeule", "rumpf"],
-  "abwheel":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "cablecrunch":["g_wirbelsaeule", "rumpf"],
-  "deadbug":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "birddog":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "pallof":["g_wirbelsaeule", "rumpf"],
-  "torso_rot":["g_wirbelsaeule", "rumpf"],
-  "dragonflag":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
-  "lateral":["g_schulter"],
-  "lateral_cable":["g_schulter", "balance"],
-  "frontraise":["g_schulter"],
-  "reversefly":["g_schulter"],
-  "upright_row":["g_schulter"],
-  "cuban":["g_schulter"],
-  "bandpullapart":["g_schulter"],
-  "rot_internal":["rotator_sehnen", "g_schulter", "balance"],
-  "emptycan":["rotator_sehnen", "g_schulter"],
-  "curl_bb":["ellbogen"],
-  "curl_db":["ellbogen"],
-  "curl_hammer":["griff", "ellbogen", "g_handgelenk"],
-  "curl_incline":["ellbogen"],
-  "curl_preacher":["ellbogen"],
-  "curl_preacher_machine":["ellbogen"],
-  "curl_cable":["ellbogen"],
-  "curl_cable_lying":["ellbogen"],
-  "tri_push":["ellbogen"],
-  "tri_skull":["ellbogen"],
-  "tri_over":["ellbogen"],
-  "tri_kick":["ellbogen", "balance"],
-  "dips_bench":["ellbogen", "bizepssehne"],
-  "wrist_curl":["griff", "ellbogen", "g_handgelenk"],
-  "wrist_curl_rev":["griff", "ellbogen", "g_handgelenk"],
-  "farmers":["griff", "ellbogen", "g_handgelenk"],
-  "ricebucket":["griff", "ellbogen", "g_handgelenk"],
-  "fatgripz":["griff", "ellbogen", "g_handgelenk"],
-  "calf_stand":["achilles", "g_sprunggelenk"],
-  "calf_seat":["achilles", "g_sprunggelenk"],
-  "calf_bw":["achilles", "g_sprunggelenk"],
-  "adduct":["adduktorensehnen", "g_huefte"],
-  "hipflex_cable":["balance"],
-  "clamshell":["tractus", "g_huefte"],
-  "sidelying_raise":["tractus", "g_huefte"],
-  "bandwalk_lat":["tractus", "g_huefte"],
-  "abduct":["tractus", "g_huefte"],
-  "copenhagen":["adduktorensehnen", "g_huefte"],
-  "neck_curl":["g_wirbelsaeule"],
-  "neck_ext_bw":["g_wirbelsaeule"],
-  "neck_flex_bw":["g_wirbelsaeule"],
-  "neck_side_bw":["g_wirbelsaeule"],
-  "neck_harness":["g_wirbelsaeule"],
-  "neck_bridge":["g_wirbelsaeule"],
-  "run":["kondition", "achilles", "tractus", "g_sprunggelenk"],
-  "run_interval":["kondition", "achilles", "tractus", "g_sprunggelenk"],
-  "bike":["kondition"],
-  "row_erg":["kondition", "griff", "rueckenfaszie"],
-  "swim":["kondition", "rotator_sehnen", "g_schulter"],
-  "jumprope":["kondition", "achilles", "g_sprunggelenk", "knochen"],
-  "walk":["kondition", "achilles", "g_sprunggelenk", "knochen"],
-  "hike":["kondition", "achilles", "tractus", "g_sprunggelenk"],
-  "stairs":["kondition", "achilles", "tractus", "g_sprunggelenk"],
-  "burpee":["kondition", "achilles", "g_sprunggelenk", "knochen"],
-  "elliptical":["kondition"],
-  "football":["kondition", "achilles", "g_sprunggelenk", "knochen"],
-  "mob_hip":["beweglichkeit", "g_huefte"],
-  "mob_shoulder":["beweglichkeit", "g_schulter", "g_wirbelsaeule"],
-  "mob_thoracic":["beweglichkeit", "g_wirbelsaeule"],
-  "mob_hamstring":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
-  "mob_ankle":["beweglichkeit", "g_sprunggelenk"],
-  "mob_couch":["beweglichkeit", "g_huefte"],
-  "mob_deadhang":["beweglichkeit", "griff", "g_schulter", "g_handgelenk"],
-  "mob_pancake":["beweglichkeit", "g_huefte"],
-  "mob_chest":["beweglichkeit", "g_schulter"],
-  "mob_biceps":["beweglichkeit", "g_schulter", "g_handgelenk"],
-  "mob_cobra":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
-  "mob_reardelt":["beweglichkeit", "g_schulter"],
-  "mob_triceps":["beweglichkeit", "g_schulter"],
-  "mob_neck":["beweglichkeit"],
-  "mob_lat":["beweglichkeit", "g_schulter"],
-  "mob_knee2chest":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
-  "mob_twist":["beweglichkeit", "g_huefte", "g_wirbelsaeule"],
-  "mob_wrist_flex":["beweglichkeit", "g_handgelenk"],
-  "mob_wrist_ext":["beweglichkeit", "g_handgelenk"],
-  "mob_hipflex":["beweglichkeit", "g_huefte"],
-  "mob_pigeon":["beweglichkeit", "g_huefte"],
-  "mob_glutemed":["beweglichkeit", "g_huefte"],
-  "mob_quad":["beweglichkeit", "g_huefte"],
-  "mob_frog":["beweglichkeit", "g_huefte"],
-  "mob_calf_straight":["beweglichkeit", "g_sprunggelenk", "g_huefte"],
-  "mob_calf_bent":["beweglichkeit", "g_sprunggelenk"],
-  "mob_tibialis":["beweglichkeit", "g_sprunggelenk"],
-  "mob_catcow":["beweglichkeit", "g_wirbelsaeule"],
-  "mob_wgs":["beweglichkeit", "g_sprunggelenk", "g_huefte", "g_wirbelsaeule"],
-  "mob_legswing":["beweglichkeit", "g_huefte"],
-  "mob_9090":["beweglichkeit", "g_huefte"],
-  "mob_wrist_circ":["beweglichkeit", "g_handgelenk"]}
-;
-
-function exPlusList(ex){
-  var ids=EX_PLUS[ex&&ex.id]||[];
-  return ids.filter(function(id){return !!STRUCT[id];});
-}
-
-/* ================= Übungsdetail: Tabs Info/Verlauf/Fortschritt/Rekorde ================= */
-function exDetailPlus(ex){
-  var ids=exPlusList(ex);
-  if(!ids.length)return null;
-  var wrap=el("div","pluslist");
-  ids.forEach(function(id){
-    var st=STRUCT[id];
-    var row=el("div","plusrow");
-    var head=el("div","plushead");
-    head.appendChild(el("b",null,st.n));
-    head.appendChild(el("span","pluskind",st.k));
-    row.appendChild(head);
-    row.appendChild(el("p",null,st.t));
-    wrap.appendChild(row);
-  });
-  var note=el("p","note pluslead",
-    "Zählt nicht ins Trainingsvolumen - diese Strukturen lassen sich nicht in Sätzen pro Woche messen. Sie werden trotzdem mitbelastet und brauchen meist länger, um sich anzupassen, als der Muskel.");
-  wrap.insertBefore(note,wrap.firstChild);
-  return wrap;
-}
-
-function exDetailInfo(ex){
-  var wrap=el("div");
-  var figs=woFigs(ex);figs.classList.add("exdetail-figs");wrap.appendChild(figs);
-  wrap.appendChild(woMus(ex,figs));
-  return wrap;
-}
-
-// onChange wird nach dem Bearbeiten/Löschen eines vergangenen Satzes aufgerufen, damit die
-// gesamte Detailseite (Verlauf/Fortschritt/Rekorde hängen alle an denselben Daten) neu gezeichnet wird.
-function exDetailHistory(ex,onChange){
-  var wrap=el("div"),rows=exSetsByDay(ex.id).slice().reverse();
-  if(!rows.length){wrap.appendChild(el("p","note","Noch keine Sätze für diese Übung eingetragen."));return wrap;}
-  rows.forEach(function(r){
-    var row=el("div","exd-hrow");
-    row.appendChild(el("b",null,deDate(r.date)));
-    var line=el("div","exd-hsets");
-    r.sets.forEach(function(s){
-      var idx=state.days[r.date].sets.indexOf(s);
-      var chip=el("button","exd-hset",setLabel(ex,s));chip.type="button";
-      chip.setAttribute("aria-label","Satz bearbeiten");
-      chip.onclick=function(){sheetEditLoggedSet(ex,r.date,idx,onChange);};
-      line.appendChild(chip);
-    });
-    row.appendChild(line);
-    wrap.appendChild(row);
-  });
-  return wrap;
-}
-
-// Schlichter SVG-Linienchart ohne externe Bibliothek – reicht für eine Kennzahl über die Zeit.
-function svgLineChart(points){
-  if(points.length<2)return el("p","note","Für einen Verlauf braucht es mindestens 2 Trainingstage mit dieser Übung.");
-  var w=320,h=120,pad=6,padB=4,n=points.length;
-  var vals=points.map(function(p){return p.val;});
-  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
-  if(minV===maxV){minV-=1;maxV+=1;}
-  function X(i){return pad+i/(n-1)*(w-2*pad);}
-  function Y(v){return h-padB-(v-minV)/(maxV-minV)*(h-2*padB);}
-  var d="M"+points.map(function(p,i){return X(i)+","+Y(p.val);}).join(" L");
-  var svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("viewBox","0 0 "+w+" "+h);svg.setAttribute("class","exd-chart");svg.setAttribute("preserveAspectRatio","none");
-  var path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",d);path.setAttribute("class","exd-chart-line");
-  svg.appendChild(path);
-  points.forEach(function(p,i){
-    var c=document.createElementNS(svg.namespaceURI,"circle");
-    c.setAttribute("cx",X(i));c.setAttribute("cy",Y(p.val));c.setAttribute("r",i===n-1?4:2.2);
-    c.setAttribute("class","exd-chart-dot"+(i===n-1?" last":""));
-    svg.appendChild(c);
-  });
-  var wrap=el("div","exd-chart-wrap");wrap.appendChild(svg);
-  var lab=el("div","exd-chart-labels");
-  lab.appendChild(el("span",null,shortDate(points[0].date)));
-  lab.appendChild(el("span",null,shortDate(points[n-1].date)));
-  wrap.appendChild(lab);
-  return wrap;
-}
-
-function exDetailProgress(ex){
-  var wrap=el("div"),pts=exBestByDay(ex);
-  if(!pts.length){wrap.appendChild(el("p","note","Noch keine Sätze für diese Übung eingetragen."));return wrap;}
-  var last=pts[pts.length-1];
-  var head=el("div","exd-nowval");
-  head.appendChild(el("b",null,fmtBestVal(ex,last.val,last.set)));
-  head.appendChild(el("span",null,"Letzter Bestwert · "+deDate(last.date)));
-  wrap.appendChild(head);
-  wrap.appendChild(svgLineChart(pts));
-  // Vergleich mit dem ältesten Wert, der mindestens ~3 Wochen zurückliegt – zeigt die Richtung,
-  // ohne bei sehr dichtem Training nur den direkten Vorwert zu vergleichen.
-  var cmpIdx=-1;
-  for(var i=pts.length-2;i>=0;i--){if(daysBetween(pts[i].date,last.date)>=21){cmpIdx=i;break;}}
-  if(cmpIdx>=0){
-    var before=pts[cmpIdx],diff=last.val-before.val,pct=before.val>0?Math.round(diff/before.val*100):null;
-    wrap.appendChild(el("p","note",
-      (diff>=0?"+":"")+(ex.t==="load"?Math.round(diff*2)/2:Math.round(diff))+" "+unitOf(ex.t)+
-      (pct!=null?" ("+(pct>=0?"+":"")+pct+"%)":"")+" seit "+deDate(before.date)));
-  }
-  return wrap;
-}
-
-function exDetailRecords(ex){
-  var wrap=el("div"),rows=exSetsByDay(ex.id);
-  if(!rows.length){wrap.appendChild(el("p","note","Noch keine Sätze für diese Übung eingetragen."));return wrap;}
-  var bestVal=null,bestValDate=null,bestKg=null,bestKgSet=null,bestKgDate=null;
-  var bestValSet=null,bestReps=null,bestRepsDate=null,bestRepsSet=null,totalSets=0;
-  rows.forEach(function(r){
-    r.sets.forEach(function(s){
-      totalSets++;
-      var v=setValue(ex,s);
-      if(bestVal==null||v>bestVal){bestVal=v;bestValDate=r.date;bestValSet=s;}
-      if(ex.t==="load"&&(bestKg==null||s.kg>bestKg)){bestKg=s.kg;bestKgSet=s;bestKgDate=r.date;}
-      var reps=(ex.uni&&s.repsL!=null&&s.repsR!=null)?Math.min(s.repsL,s.repsR):s.reps;
-      if(reps!=null&&(bestReps==null||reps>bestReps)){bestReps=reps;bestRepsDate=r.date;bestRepsSet=s;}
-    });
-  });
-  function card(lab,val,sub){
-    var c=el("div","exd-rec");
-    c.appendChild(el("span","exd-rec-lab",lab));
-    c.appendChild(el("b",null,val));
-    if(sub)c.appendChild(el("span","exd-rec-sub",sub));
-    return c;
-  }
-  var grid=el("div","exd-recgrid");
-  grid.appendChild(card(ex.t==="load"?"Bester e1RM":"Bestwert",fmtBestVal(ex,bestVal,bestValSet),deDate(bestValDate)));
-  if(ex.t==="load")grid.appendChild(card("Höchstes Gewicht",bestKg+" kg",setLabel(ex,bestKgSet)+" · "+deDate(bestKgDate)));
-  grid.appendChild(card(ex.t==="sec"?"Längste Haltezeit":"Meiste Wiederholungen",bestReps+(ex.t==="sec"?" s":" Wdh"),(ex.uni&&bestRepsSet&&bestRepsSet.repsL!=null&&bestRepsSet.repsR!=null?setLabel(ex,bestRepsSet)+" · ":"")+deDate(bestRepsDate)));
-  grid.appendChild(card("Trainiert",rows.length+" Tage",totalSets+" Sätze insgesamt"));
-  grid.appendChild(card("Zuletzt trainiert",deDate(rows[rows.length-1].date)));
-  var g=grade(ex,bestVal);
-  if(g)grid.appendChild(card("Aktuelle Kraftstufe",g.name,g.next?"nächste Stufe ab "+fmtVal(g.next,ex.t):"höchste Stufe erreicht"));
-  wrap.appendChild(grid);
-  return wrap;
-}
-
-/* ---- Reihenfolge der Uebungen im laufenden Training ----
-   Die Position in workout.exercises ist reine Anzeige: geloggte Saetze haengen an ihrem
-   eigenen Datensatz (st.rec), Ausdauer an we.cardioRec - beide kennen ihre Uebung selbst.
-   Verschieben kann also nichts loeschen und keine Eintraege verschieben.
-   Die gerade angesehene Uebung bleibt sichtbar, auch wenn sie dabei die Position wechselt. */
-function woMoveEx(from,to){
-  if(!workout)return false;
-  var n=workout.exercises.length;
-  if(from<0||from>=n||to<0||to>=n||from===to)return false;
-  var seen=workout.exercises[woPage]||null;
-  var it=workout.exercises.splice(from,1)[0];
-  workout.exercises.splice(to,0,it);
-  if(seen){var ni=workout.exercises.indexOf(seen);if(ni>=0)woPage=ni;}
-  // Zwei gleiche Übungen zu tauschen ergibt denselben woShapeKey. Ohne erzwungenen Neuaufbau
-  // blieben Eingabefelder und Knöpfe an der alten Reihenfolge hängen, und "Übung entfernen"
-  // träfe die falsche Übung.
-  woShape=null;
-  saveWorkout();renderSession();
-  return true;
-}
-
-function openReorderSheet(){
-  if(!workout||workout.exercises.length<2)return;
-  openSheet(function(b){
-    sheetTitle(b,"Reihenfolge ändern");
-    var list=el("div","card flush");list.style.marginTop="2px";
-    function draw(){
-      list.innerHTML="";
-      workout.exercises.forEach(function(we,i){
-        var ex=exById(we.ex);
-        var row=el("div","row wo-ordrow"+(i===woPage?" cur":""));
-        row.appendChild(el("span","wo-ordnum num",String(i+1)));
-        var mn=el("div","main");
-        mn.appendChild(el("b",null,ex?ex.n:"Übung"));
-        var sub;
-        if(we.sets){
-          var dn2=0;we.sets.forEach(function(st){if(st.done)dn2++;});
-          sub=dn2+" von "+we.sets.length+" Sätzen";
-        }else sub="Ausdauer";
-        mn.appendChild(el("span",null,sub));
-        row.appendChild(mn);
-        var up=el("button","iconbtn");up.setAttribute("aria-label","Nach oben schieben");
-        up.innerHTML=svgIcon("M12 19V5M5 12l7-7 7 7",2.1);
-        up.disabled=(i===0);
-        var dw=el("button","iconbtn");dw.setAttribute("aria-label","Nach unten schieben");
-        dw.innerHTML=svgIcon("M12 5v14M5 12l7 7 7-7",2.1);
-        dw.disabled=(i===workout.exercises.length-1);
-        (function(k){
-          up.onclick=function(){if(woMoveEx(k,k-1))draw();};
-          dw.onclick=function(){if(woMoveEx(k,k+1))draw();};
-        })(i);
-        row.appendChild(up);row.appendChild(dw);
-        list.appendChild(row);
-      });
-    }
-    draw();
-    b.appendChild(list);
-    b.appendChild(el("p","setpage-note","Bereits abgehakte Sätze bleiben erhalten – verschoben wird nur die Reihenfolge, in der die Übungen angezeigt werden."));
-    var ok=el("button","btn primary block","Fertig");ok.style.marginTop="14px";
-    ok.onclick=closeSheet;b.appendChild(ok);
-  });
-}
-
-function woAddPage(){
-  var pg=el("article","wo-page wo-addpage");pg.setAttribute("data-i",String(workout.exercises.length));
-  var b=el("button","wo-plus");b.setAttribute("aria-label","Übung hinzufügen");
-  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
-  b.onclick=function(){openSheet(function(bb){sheetTitle(bb,"Übung hinzufügen");
-    exPicker(bb,null,function(e){
-      closeSheet();
-      // Cardio passt nicht in das Satz-Schema (Minuten/km statt Gewicht/Wdh) - dafuer oeffnet
-      // sich der Ausdauer-Dialog statt einer neuen Uebungsseite, mit dieser Aktivitaet schon
-      // vorausgewaehlt, und dem laufenden Training zugeordnet (wid), genau wie ein Satz.
-      if(e.t==="cardio")addWorkoutCardio(e);
-      else addWorkoutExercise(e);
-    },{cardio:true});
-  });};
-  pg.appendChild(b);
-  pg.appendChild(el("p",null,workout.exercises.length?"Tipp auf das Plus für die nächste Übung.":"Tipp auf das Plus und füge deine erste Übung hinzu."));
-  return pg;
 }

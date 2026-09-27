@@ -1,7 +1,376 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: FW3D_MESH2FINE bis (Anweisung)
+   Enthaelt: fw_syncPullExtras() bis (Anweisung)
 */
+
+// Beim Verbinden dieselben beiden Dokumente wieder einlesen. Was lokal schon vorhanden
+// ist, hat Vorrang (das ist der zuletzt auf diesem Geraet bearbeitete Stand).
+function fw_syncPullExtras(d){
+  // Kein catch: Schlägt das Einlesen fehl, darf connect() nicht weitermachen und danach
+  // den unvollständigen lokalen Stand als vollständig ins Konto schreiben.
+  var gone=state.extrasGone||{};
+  return d.doc("state/exoverrides").get().then(function(es){
+    var v=es&&es.exists?cloneWritable(es.data()):null;v=v&&v.v;
+    if(v&&typeof v==="object"){
+      state.exOverrides=state.exOverrides||{};
+      Object.keys(v).forEach(function(id){if(!state.exOverrides[id]&&!gone["ov:"+id])state.exOverrides[id]=v[id];});
+    }
+    return d.doc("state/customex").get();
+  }).then(function(cs){
+    var v=cs&&cs.exists?cloneWritable(cs.data()):null;v=v&&v.v;
+    if(Array.isArray(v)){
+      state.customEx=state.customEx||[];
+      var have={};state.customEx.forEach(function(e){if(e&&e.id)have[e.id]=1;});
+      v.forEach(function(e){if(e&&e.id&&!have[e.id]&&!gone["ex:"+e.id])state.customEx.push(e);});
+    }
+    applyCustomEx();applyExOverrides();
+    secDirty.entdecken=true;secDirty.training=true;
+  });
+}
+
+var syncState={k:"",t:"nur dieses Gerät"}
+;
+
+function setSync(k,t){
+  syncState={k:k,t:t};
+  $("syncdot").className="dot"+(k?" "+k:"");$("synctxt").textContent=t;
+  secDirty.werte=true;
+}
+
+
+/* ================= Onboarding ================= */
+var ob=null,
+obStep=0,
+OB=["Über dich","Hauptübungen","Krafttest","Rhythmus","Startwert"];
+
+function candidatesFor(pat){return EX.filter(function(e){return e.pat===pat&&e.std;});}
+
+function startOnboarding(old){
+  ob={age:old?old.age:28,sex:old?old.sex:"m",bw:old?old.bodyweight:78,hr:old?old.restHr:60,main:{},val:{},kg:{},mode:{},
+      goals:old?{days:old.goals.days,mob:old.goals.mob,cardio:old.goals.cardio}:{days:4,mob:3,cardio:150},cardioPick:(old&&old.cardioPick)||"run"};
+  if(old&&old.mainEx)old.mainEx.forEach(function(id){var e=exById(id);if(e)ob.main[e.pat]=id;});
+  else ob.main={push_h:"pushup",push_v:"ohp",pull_v:"pullup",pull_h:"row_bb",squat:"squat",hinge:"deadlift",core:"plank"};
+  obStep=0;$("ob").hidden=false;document.body.style.overflow="hidden";drawOb();
+}
+
+function mainList(){var o=[];for(var k in ob.main)if(ob.main[k])o.push(ob.main[k]);return o;}
+
+function obProfile(){return {age:ob.age,sex:ob.sex,bodyweight:ob.bw,restHr:ob.hr,cooper:0};}
+
+function baseValue(id){
+  var e=exById(id);if(!e)return 0;
+  // Gespeichert wird das eingetragene Gewicht; gewertet wird es später mit effectiveKg (bei
+  // "pro Seite" verdoppelt). Die Vorschau muss genauso rechnen, sonst springt die Stufe nach dem
+  // Abschluss.
+  if(e.t==="load"){if(ob.mode[id]==="max")return effectiveKg(e,ob.kg[id]);return e1rm(effectiveKg(e,ob.kg[id]),ob.val[id]||0);}
+  return (ob.val[id]||0);
+}
+
+function drawOb(){
+  var w=$("ob-inner");w.innerHTML="";
+  w.appendChild(el("div","ob-step","Schritt "+(obStep+1)+" von "+OB.length+" · "+OB[obStep]));
+  var prog=el("div","progress");for(var i=0;i<OB.length;i++){var b=el("i");if(i<=obStep)b.className="done";prog.appendChild(b);}
+
+  if(obStep===0){
+    w.appendChild(el("h2","","Ein paar Eckdaten"));
+    w.appendChild(el("p","intro","Alter, Geschlecht und Körpergewicht bestimmen, woran deine Kraft gemessen wird. Ziele trägst du nirgends ein – die ergeben sich daraus."));
+    w.appendChild(prog);
+    function qr(lab,sub,node){var r=el("div","qrow"),q=el("div","q");q.innerHTML="<b>"+lab+"</b><span>"+sub+"</span>";var qi=el("div","qin");qi.appendChild(node);r.appendChild(q);r.appendChild(qi);w.appendChild(r);return qi;}
+    function ni(v,mn,mx,st,cb){var n=document.createElement("input");n.type="number";n.inputMode="decimal";n.min=mn;n.max=mx;n.step=st;n.value=v;n.oninput=function(){cb(parseFloat(n.value.replace(",","."))||0);};return n;}
+    qr("Alter","Kraftstufen und Ausdauer sind altersgewichtet",ni(ob.age,12,99,1,function(v){ob.age=v;})).appendChild(el("span","unit","J."));
+    var sx=document.createElement("select");sx.style.width="130px";
+    [["m","männlich"],["w","weiblich"]].forEach(function(o){var e=document.createElement("option");e.value=o[0];e.textContent=o[1];sx.appendChild(e);});
+    sx.value=ob.sex;sx.onchange=function(){ob.sex=sx.value;};
+    qr("Geschlecht","Referenzwerte und Körperfigur",sx);
+    qr("Körpergewicht","Bezug für alle Kraftstufen",ni(ob.bw,30,250,0.5,function(v){ob.bw=v;})).appendChild(el("span","unit","kg"));
+    qr("Ruhepuls","morgens im Liegen – daraus wird die Ausdauer geschätzt",ni(ob.hr,0,140,1,function(v){ob.hr=v;})).appendChild(el("span","unit","bpm"));
+    var h=el("div","hint");h.innerHTML="<b>Keinen Ruhepuls zur Hand?</b> Lass 0 stehen – die Ausdauer zählt dann nur über deine Wochenminuten. Nachtragen geht jederzeit unter „Werte“.";w.appendChild(h);
+  }
+  if(obStep===1){
+    w.appendChild(el("h2","","Deine Hauptübungen"));
+    w.appendChild(el("p","intro","Für jedes Bewegungsmuster eine Übung als Startmessung. Nimm die, die du wirklich regelmäßig machst – später zählt ohnehin jede Übung mit Kraftstandard, die du einträgst."));
+    w.appendChild(prog);
+    PATTERNS.filter(function(p){return p.id!=="cardio";}).forEach(function(pt){
+      w.appendChild(el("div","grouplab",pt.name));var g=el("div","pickgrid");
+      candidatesFor(pt.id).forEach(function(e){
+        var b=el("button","pick");b.type="button";b.innerHTML=e.n+"<small>"+e.e+"</small>";
+        b.setAttribute("aria-pressed",String(ob.main[pt.id]===e.id));
+        b.onclick=function(){ob.main[pt.id]=(ob.main[pt.id]===e.id?null:e.id);
+          Array.prototype.forEach.call(g.children,function(c){c.setAttribute("aria-pressed","false");});
+          if(ob.main[pt.id]===e.id)b.setAttribute("aria-pressed","true");};
+        g.appendChild(b);});
+      w.appendChild(g);});
+    w.appendChild(el("div","grouplab","Ausdauer"));var g2=el("div","pickgrid");
+    EX.filter(function(e){return e.t==="cardio";}).slice(0,8).forEach(function(e){
+      var b=el("button","pick");b.type="button";b.innerHTML=e.n+"<small>"+e.intens+" intensiv</small>";
+      b.setAttribute("aria-pressed",String(ob.cardioPick===e.id));
+      b.onclick=function(){ob.cardioPick=e.id;Array.prototype.forEach.call(g2.children,function(c){c.setAttribute("aria-pressed","false");});b.setAttribute("aria-pressed","true");};
+      g2.appendChild(b);});
+    w.appendChild(g2);
+  }
+  if(obStep===2){
+    w.appendChild(el("h2","","Wo stehst du heute?"));
+    w.appendChild(el("p","intro","Die wichtigste Angabe der ganzen App. Trag einen schweren Arbeitssatz ein, den du bis nahe ans Limit geführt hast – daraus wird dein Einer-Maximum berechnet. Kennst du dein Einer-Maximum, trag es direkt ein."));
+    w.appendChild(prog);
+    mainList().forEach(function(id){
+      var e=exById(id),pr=obProfile(),card=el("div","card");card.style.marginBottom="10px";
+      card.appendChild(el("h3",null,e.n));
+      if(e.t==="load"){
+        var seg=el("div","segbtn");
+        [["set","Arbeitssatz"],["max","1RM bekannt"]].forEach(function(o){
+          var bb=el("button",null,o[1]);bb.type="button";bb.setAttribute("aria-selected",String((ob.mode[id]||"set")===o[0]));
+          bb.onclick=function(){ob.mode[id]=o[0];var y=window.scrollY;drawOb();window.scrollTo(0,y);};seg.appendChild(bb);});
+        card.appendChild(seg);
+      }
+      var isMax=e.t==="load"&&ob.mode[id]==="max",grid=el("div","grid2");
+      function nfield(lab,val,step,cb){var f=el("div","field");f.appendChild(el("label",null,lab));
+        var n=document.createElement("input");n.type="number";n.inputMode="decimal";n.step=step;n.min="0";n.value=val||"";n.placeholder="0";
+        n.oninput=function(){cb(parseFloat(n.value.replace(",","."))||0);upd();};f.appendChild(n);return f;}
+      if(e.t==="load")grid.appendChild(nfield((isMax?"Einer-Maximum":"Gewicht")+(e.wt==="side"?" pro Seite":"")+" (kg)",ob.kg[id],"2.5",function(v){ob.kg[id]=v;}));
+      if(!isMax)grid.appendChild(nfield(e.t==="sec"?"Sekunden":"Wiederholungen",ob.val[id],"1",function(v){ob.val[id]=v;}));
+      card.appendChild(grid);
+      var out=el("div","calcout");card.appendChild(out);
+      function upd(){
+        var v=baseValue(id);
+        if(v<=0){out.textContent="Noch nichts eingetragen – die Übung wird erst gewertet, wenn du sie das erste Mal einträgst.";return;}
+        var g=grade(e,v,pr),th=thresholds(e,pr);
+        var txt=(e.t==="load"&&ob.mode[id]!=="max")?"Einer-Maximum <b>"+(Math.round(v*2)/2)+" kg</b>":"Gewertet als <b>"+fmtVal(v,e.t)+"</b>";
+        if(g)txt+="<br>Stufe <b>"+g.name+"</b>"+(g.next?" · nächste ab "+fmtVal(g.next,e.t):" · Höchststufe");
+        else if(th)txt+="<br>Stufe „"+LEVELS[0]+"“ ab "+fmtVal(th[0],e.t);
+        out.innerHTML=txt;
+      }
+      upd();w.appendChild(card);
+    });
+    var h2=el("div","hint");h2.innerHTML="<b>Sätze mit bis zu 15 Wiederholungen</b> lassen sich gut umrechnen. Bei sehr langen Sätzen wird die Schätzung unsicher – dann lieber ein schwereres Gewicht mit weniger Wiederholungen eintragen.";w.appendChild(h2);
+  }
+  if(obStep===3){
+    w.appendChild(el("h2","","Welchen Rhythmus hältst du?"));
+    w.appendChild(el("p","intro","Der Maßstab für Konstanz, Mobilität und Ausdauer. Nimm die normale Woche, nicht die Idealwoche – ein Ziel, das du zu 90 % erfüllst, trägt dich; eins, das du zu 40 % erfüllst, zermürbt."));
+    w.appendChild(prog);
+    [["days","Trainingstage pro Woche","Tage","jeder Tag mit mindestens einem Satz",1,7,"1"],["mob","Mobilität pro Woche","×","Dehnen, Hüfte, Schulter",0,7,"1"],["cardio","Ausdauerminuten pro Woche","min","WHO empfiehlt 150 moderate Minuten",0,600,"15"]].forEach(function(g){
+      var r=el("div","qrow"),q=el("div","q");q.innerHTML="<b>"+g[1]+"</b><span>"+g[3]+"</span>";var qi=el("div","qin");
+      var n=document.createElement("input");n.type="number";n.inputMode="numeric";n.min=g[4];n.max=g[5];n.step=g[6];n.value=ob.goals[g[0]];n.oninput=function(){ob.goals[g[0]]=parseInt(n.value,10)||0;};
+      qi.appendChild(n);qi.appendChild(el("span","unit",g[2]));r.appendChild(q);r.appendChild(qi);w.appendChild(r);});
+    var h=el("div","hint");h.innerHTML="<b>Warum rollierend?</b> Alles misst die letzten 30 Tage, die Muskelkarte die letzten 7. Eine gute Woche hebt den Wert, eine faule senkt ihn von allein – ohne Strafpunkte, das Fenster schiebt sich einfach weiter.";w.appendChild(h);
+  }
+  if(obStep===4){
+    var pv=preview();
+    w.appendChild(el("h2","","Dein Startwert"));
+    w.appendChild(el("p","intro","Deine Testwerte zählen als erster bestätigter Messpunkt. Konstanz, Abdeckung und Ausdauer bauen sich in den nächsten Wochen aus echten Einträgen auf – dass sie jetzt niedrig stehen, ist richtig so."));
+    w.appendChild(prog);
+    var card=el("div","card"),big=el("div","hero-val");big.innerHTML='<b class="num">'+pv.fitness+'</b><i>/ 100 zum Start</i>';card.appendChild(big);
+    SKILLDEF.forEach(function(sd){
+      var v=pv[sd.key],m=el("div","meter");m.style.padding="9px 0";m.style.borderBottom="0";
+      var top=el("div","meter-top"),nm=el("div","meter-name"),sw=el("span","sw");sw.style.background=sd.color;nm.appendChild(sw);nm.appendChild(document.createTextNode(sd.name));
+      var val=el("div","meter-val");val.innerHTML='<span class="num">'+Math.round(v)+'</span>';top.appendChild(nm);top.appendChild(val);
+      var bar=el("div","bar"),fi=el("i");fi.style.background=sd.color;fi.style.width=clamp(v,0,100)+"%";bar.appendChild(fi);
+      m.appendChild(top);m.appendChild(bar);card.appendChild(m);});
+    w.appendChild(card);
+    if(pv.grades.length){var c2=el("div","card flush");
+      pv.grades.forEach(function(g){var r=el("div","row"),m=el("div","main");m.appendChild(el("b",null,g.name));
+        m.appendChild(el("span",null,g.val+(g.next!=="max"?" · nächste Stufe ab "+g.next:"")));r.appendChild(m);
+        r.appendChild(el("span","pill g"+clamp(g.idx,0,LEVELS.length-1),g.lvl));c2.appendChild(r);});
+      w.appendChild(c2);}
+    var h=el("div","hint");h.innerHTML="<b>Konstanz und Abdeckung stehen noch niedrig</b> – sie messen, was du in den letzten Tagen wirklich getan hast. Nach zwei Wochen Eintragen sind sie aussagekräftig.";w.appendChild(h);
+  }
+  var nav=el("div","ob-nav");
+  var back=el("button","btn ghost",obStep===0?"Abbrechen":"Zurück");back.type="button";
+  back.onclick=function(){
+    try{if(obStep===0){if(state.profile){$("ob").hidden=true;document.body.style.overflow="";}return;}obStep--;drawOb();}
+    catch(e){try{console.error("onboarding-back error",e);}catch(e2){}toast("Fehler: "+(e&&e.message?e.message:"unbekannt"));}
+  };
+  if(obStep===0&&!state.profile)back.style.visibility="hidden";
+  var next=el("button","btn primary",obStep===4?"Los geht's":"Weiter");next.type="button";
+  next.onclick=function(){
+    // Absicherung: falls beim Abschluss (Profil bauen, Sätze eintragen, rendern) irgendwo ein
+    // unerwarteter Fehler auftritt, blieb die Oberfläche bisher stumm hängen ("nichts passiert").
+    // Jetzt wird der Fehler sichtbar gemacht, statt die Aktion lautlos zu verschlucken.
+    try{
+      if(obStep===1&&!mainList().length){toast("Wähl mindestens eine Hauptübung.");return;}
+      if(obStep===4){finishOnboarding();return;}
+      obStep++;drawOb();
+    }catch(e){
+      try{console.error("onboarding-next error",e);}catch(e2){}
+      toast("Fehler beim Fortfahren: "+(e&&e.message?e.message:"unbekannt"));
+    }
+  };
+  nav.appendChild(back);nav.appendChild(next);
+  var navWrap=$("ob-navwrap");navWrap.innerHTML="";navWrap.appendChild(nav);
+  $("ob-scroll") /* no-op guard if missing */;
+  var scroller=document.querySelector(".ob-scroll");if(scroller)scroller.scrollTop=0;
+}
+
+function buildProfile(){
+  return {version:3,age:ob.age,sex:ob.sex,bodyweight:ob.bw,restHr:ob.hr,cooper:0,mainEx:mainList(),cardioPick:ob.cardioPick,
+    goals:{days:ob.goals.days,mob:ob.goals.mob,cardio:ob.goals.cardio},peaks:{},startedAt:TODAY};
+}
+
+function preview(){
+  var old=state.profile;state.profile=buildProfile();
+  var grades=[],sum=0,n=0;
+  mainList().forEach(function(id){var e=exById(id),v=baseValue(id),g=v>0?grade(e,v):null;sum+=g?g.score:0;n++;
+    if(g)grades.push({name:e.n,val:fmtVal(v,e.t),lvl:g.name,idx:g.idx,next:g.next?fmtVal(g.next,e.t):"max"});});
+  var kraft=n?sum/n:0,c=compute(TODAY);state.profile=old;
+  c.kraft=kraft;c.fitness=Math.round(W.kraft*kraft+W.konst*c.konst+W.deckung*c.deckung+W.ausdauer*c.ausdauer+W.mob*c.mob);c.grades=grades;return c;
+}
+
+function finishOnboarding(){
+  // Das Assessment fragt nur Eckdaten, Hauptübungen und Ziele ab. Beim Wiederholen bleibt
+  // alles andere am Profil erhalten: Cooper-Test, persönliche Korridore, Sprache, Startdatum
+  // (daran hängen die Auswertungsfenster) und Bestwerte.
+  var old=state.profile,neu=buildProfile();
+  if(old&&old.version>=3){for(var k in old){if(!(k in neu)||k==="cooper"||k==="peaks"||k==="startedAt")neu[k]=old[k];}}
+  state.profile=neu;var d=day(TODAY);
+  mainList().forEach(function(id){
+    var e=exById(id),v=baseValue(id);if(v<=0)return;
+    if(d.sets.some(function(s){return s.ex===id;}))return;
+    if(e.t==="load"){if(ob.mode[id]==="max")d.sets.push({ex:id,kg:ob.kg[id]||0,reps:1});else d.sets.push({ex:id,kg:ob.kg[id]||0,reps:ob.val[id]||1});}
+    else d.sets.push({ex:id,kg:0,reps:ob.val[id]||0});
+  });
+  touch(TODAY);$("ob").hidden=true;document.body.style.overflow="";persist();renderAll();
+}
+
+
+/* ================= Start ================= */
+function validWorkout(w){
+  if(!w||typeof w!=="object"||!Array.isArray(w.exercises)||!w.startedAt)return null;
+  if(Date.now()-w.startedAt>12*3600*1000)return null;           // älter als 12 h: vergessen → verwerfen
+  if(!w.rest)w.rest={endAt:0,len:90};if(w.pausedMs==null)w.pausedMs=0;if(!w.id)w.id=rid();if(!w.name)w.name="Training";
+  // Zwei gueltige Formen: Kraftuebung (sets-Array) und Ausdauer (cardioRec). Frueher wurde
+  // hier nur auf sets geprueft - jede Ausdauer-Einheit fiel dadurch beim Laden aus dem
+  // Training heraus und war nach einem Neustart weg.
+  w.exercises=w.exercises.filter(function(e){
+    return e&&exById(e.ex)&&(Array.isArray(e.sets)||(e.cardioRec&&typeof e.cardioRec==="object"));});
+  relinkCardio(w);
+  return w;
+}
+
+loadLocal();
+try{var lw=localStorage.getItem("formwert-workout");if(lw)workout=validWorkout(JSON.parse(lw));}
+catch(e){workout=null;}
+
+/* Erst starten, wenn das ganze Skript durchgelaufen ist. Die Nachschlagetabellen des
+   3D-Modells (FW3D_MESH2FINE, FW3D_FORCE_TRANSPARENT_GROUPS) werden weiter unten
+   zugewiesen; wurde hier schon gerendert, liefen die Figuren des Heute-Tabs in ein noch
+   undefiniertes Nachschlagewerk und blieben leer. Sichtbar wurde das nur, wenn fuer heute
+   bereits Saetze eingetragen waren - deshalb ist es lange nicht aufgefallen. */
+// Name der eigenen Uebung -> ID der jetzt eingebauten Entsprechung. Nur exakte Namens-
+// treffer, damit nichts Falsches zusammengelegt wird.
+var LEGACY_EX_MERGE={"Rotierende Torso Maschine":"torso_rot","Einbeiniges Balancieren":"balance_sl"}
+;
+
+function mergeDuplicateCustomEx(){
+  var changed=false;
+  (state.customEx||[]).slice().forEach(function(ce){
+    var newId=LEGACY_EX_MERGE[ce.n];
+    if(!newId||ce.id===newId||!exById(newId))return;
+    var oldId=ce.id;
+    for(var d in state.days){
+      var dd=state.days[d],touched=false;
+      (dd.sets||[]).forEach(function(s){if(s.ex===oldId){s.ex=newId;touched=true;}});
+      (dd.cardio||[]).forEach(function(c){if(c.ex===oldId){c.ex=newId;touched=true;}});
+      if(touched){touch(d);changed=true;}
+    }
+    for(var rid2 in state.routines){
+      var r=state.routines[rid2],touched2=false;
+      (r.items||[]).forEach(function(it){if(it.ex===oldId){it.ex=newId;touched2=true;}});
+      if(touched2){markRoutineDirty(rid2);changed=true;}
+    }
+    if(workout&&Array.isArray(workout.exercises)){
+      var touched3=false;
+      workout.exercises.forEach(function(we){if(we.ex===oldId){we.ex=newId;touched3=true;}});
+      if(touched3){changed=true;saveWorkout();}
+    }
+    state.customEx=state.customEx.filter(function(x){return x.id!==oldId;});
+    for(var i=EX.length-1;i>=0;i--)if(EX[i].id===oldId)EX.splice(i,1);
+    if(EX_BY_ID)delete EX_BY_ID[oldId];
+    markExtrasDirty();changed=true;
+  });
+  if(changed)saveLocal();
+  return changed;
+}
+
+/* Wird genau einmal wirksam: entweder die App zeigen (Profil vorhanden) oder die
+   Einrichtung starten (wirklich keins vorhanden - weder hier noch in der Cloud). */
+var bootSettled=false;
+
+function fwBootReady(){
+  if(bootSettled)return;
+  bootSettled=true;
+  var bw=$("bootwait");if(bw)bw.hidden=true;
+  document.body.style.overflow="";
+  if(state.profile&&state.profile.version>=3)renderAll();
+  else startOnboarding(state.profile&&state.profile.version>=2?state.profile:null);
+}
+
+function fwBoot(){
+  selectTab("tab-heute");
+  mergeDuplicateCustomEx();
+  // Liegt hier schon ein Profil, geht es sofort weiter - kein Warten, kein Flackern.
+  if(state.profile&&state.profile.version>=3){fwBootReady();return;}
+  // Sonst: nicht sofort nach den Eckdaten fragen. Erst muss feststehen, ob in der
+  // Cloud eins liegt. connect() meldet sich; die Notbremse greift, falls gar nichts
+  // antwortet (kein Netz, Capability nicht verfuegbar, haengende Verbindung).
+  var bw=$("bootwait");if(bw)bw.hidden=false;
+  document.body.style.overflow="hidden";
+  setTimeout(fwBootReady,12000);
+}
+
+setSync("","nur dieses Gerät");
+
+var connectTries=0;
+
+function connect(){
+  if(!window.claude||!window.claude.use){setSync("off","nur dieses Gerät");fwBootReady();return;}
+  window.claude.use("db").then(function(d){
+    if(!d){setSync("off","nur dieses Gerät");fwBootReady();return;}
+    db=d;
+    // Eine offline begonnene Wiederherstellung muss VOR jedem Cloud-Download abgeschlossen
+    // werden. Sonst würden gerade ersetzte lokale Daten wieder mit dem alten Kontostand vermischt.
+    if(cloudReplacePending()){
+      setSync("","Backup wird übertragen");
+      return replaceCloudFromState(d).then(function(){
+        markCloudReplacePending(false);connectTries=0;setSync("on","synchronisiert");connect();
+      }).catch(function(){
+        setSync("off","Backup nur lokal – Übertragung wird wiederholt");fwBootReady();setTimeout(connect,30000);
+      });
+    }
+    setSync("on","synchronisiert");
+    d.doc("state/profile").get().then(function(s){
+      var sd=s.exists?cloneWritable(s.data()):null;
+      if(sd&&sd.version>=3&&!state.profile)state.profile=sd;
+      // Ab hier steht fest, ob es ein gespeichertes Profil gibt - der Startbildschirm
+      // darf weg. Tage und Einheiten kommen gleich danach und rendern nochmal.
+      fwBootReady();
+      return d.collection("days").limit(400).get();
+    }).then(function(qs){
+      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(!b)return;
+        // Ein lokal geänderter Tag gewinnt, bis genau diese Version erfolgreich hochgeladen ist.
+        if(state.dirty[doc.id])return;
+        if(doc.id===TODAY&&state.days[TODAY]&&(state.days[TODAY].sets||[]).length)return;
+        state.days[doc.id]={sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""};});
+      return d.doc("state/workout").get().then(function(ws){if(ws.exists&&!workout){workout=validWorkout(cloneWritable(ws.data()));if(!workout)d.doc("state/workout").delete().catch(function(){});else{secDirty.training=true;if(tab==="tab-training")renderSession();renderBanner();}}}).catch(function(){}).then(function(){return fw_syncPullExtras(d);}).then(function(){return d.collection("routines").limit(100).get();});
+    }).then(function(qs){
+      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id&&!state.dirtyRoutines[doc.id])state.routines[b.id]=b;});
+      mergeDuplicateCustomEx();
+      if(state.profile&&state.profile.version>=3)renderAll();persist();
+      connectTries=0;
+    }).catch(function(){
+      // Ein einzelner Netzwerk-Hänger (z. B. direkt beim App-Start, wenn parallel schon ein
+      // Training gestartet wird) sollte die Sync-Anzeige nicht für immer auf "gestört" einfrieren:
+      // ein paar Mal zügig erneut versuchen, danach im Hintergrund weiter alle 30 s, damit sich
+      // die Verbindung von selbst erholt, sobald das Netz wieder mitspielt.
+      connectTries++;
+      if(connectTries<=3)setTimeout(connect,Math.min(1500*connectTries,6000));
+      else{setSync("off","Sync gestört – lokal gespeichert");setTimeout(connect,30000);}
+      // Nach einem Fehlversuch nicht ewig auf dem Startbildschirm stehen bleiben:
+      // beim ersten Versuch noch kurz weiterwarten, danach freigeben.
+      if(connectTries>1)fwBootReady();
+    });
+  }).catch(function(){setSync("off","nur dieses Gerät");fwBootReady();});
+}
+
+var FW3D_HTML_B64="__DATEN_ENTFERNT__base64__11174024_ZEICHEN__";
 
 var FW3D_MESH2FINE={"(Abdominal part of pectoralis major muscle)":"abdominal_part_of_pectoralis_major","(Adductor minimus)":"adductor_minimus","(Opponens digiti minimi muscle of foot)":"opponens_digiti_minimi_of_foot","Abductor digiti minimi of foot":"abductor_digiti_minimi_of_foot","Abductor digiti minimi of hand":"abductor_digiti_minimi_of_hand","Abductor hallucis":"abductor_hallucis","Abductor pollicis brevis":"abductor_pollicis_brevis","Abductor pollicis longus":"abductor_pollicis_longus","Acromial part of deltoid muscle":"acromial_part_of_deltoid","Adductor brevis":"adductor_brevis","Adductor longus":"adductor_longus","Adductor magnus":"adductor_magnus","Anconeus muscle":"anconeus","Anterior belly of digastric muscle":"anterior_belly_of_digastric","Ary-epiglottic part of oblique arytenoid muscle":"ary_epiglottic_part_of_oblique_arytenoid","Ascending part of trapezius muscle":"ascending_part_of_trapezius","Brachialis muscle":"brachialis","Brachioradialis muscle":"brachioradialis","Calcaneal tendon":"calcaneal_tendon","Clavicular head of pectoralis major muscle":"clavicular_head_of_pectoralis_major","Clavicular part of deltoid muscle":"clavicular_part_of_deltoid","Coccygeus muscle":"coccygeus","Common tendinous ring":"common_tendinous_ring","Coracobrachialis muscle":"coracobrachialis","Deep head of flexor pollicis brevis":"deep_head_of_flexor_pollicis_brevis","Deep head of pronator teres":"deep_head_of_pronator_teres","Descending part of trapezius muscle":"descending_part_of_trapezius","Diaphragm":"diaphragm","Dorsal interossei muscles of foot":"dorsal_interossei_of_foot","Dorsal interossei muscles of hand":"dorsal_interossei_of_hand","Dorsal parts of lateral intertransversarii lumborum muscles":"dorsal_parts_of_lateral_intertransversarii_lumborum","Extensor carpi radialis brevis":"extensor_carpi_radialis_brevis","Extensor carpi radialis longus":"extensor_carpi_radialis_longus","Extensor digiti minimi":"extensor_digiti_minimi","Extensor digitorum":"extensor_digitorum","Extensor digitorum brevis":"extensor_digitorum_brevis","Extensor digitorum longus":"extensor_digitorum_longus","Extensor hallucis brevis":"extensor_hallucis_brevis","Extensor hallucis longus":"extensor_hallucis_longus","Extensor indicis":"extensor_indicis","Extensor pollicis brevis":"extensor_pollicis_brevis","Extensor pollicis longus":"extensor_pollicis_longus","External abdominal oblique muscle":"external_abdominal_oblique","External intercostal muscles":"external_intercostal","External part of thyro-arytenoid muscle":"external_part_of_thyro_arytenoid","Fibularis brevis muscle":"fibularis_brevis","Fibularis longus muscle":"fibularis_longus","Fibularis tertius muscle":"fibularis_tertius","Flexor carpi radialis":"flexor_carpi_radialis","Flexor digiti minimi of foot":"flexor_digiti_minimi_of_foot","Flexor digiti minimi of hand":"flexor_digiti_minimi_of_hand","Flexor digitorum brevis":"flexor_digitorum_brevis","Flexor digitorum longus":"flexor_digitorum_longus","Flexor digitorum profundus":"flexor_digitorum_profundus","Flexor hallucis longus":"flexor_hallucis_longus","Flexor pollicis longus":"flexor_pollicis_longus","Genioglossus muscle":"genioglossus","Geniohyoid muscle":"geniohyoid","Gluteus maximus muscle":"gluteus_maximus","Gluteus medius muscle":"gluteus_medius","Gluteus minimus muscle":"gluteus_minimus","Gracilis muscle":"gracilis","Humeral head of extensor carpi ulnaris":"humeral_head_of_extensor_carpi_ulnaris","Humeral head of flexor carpi ulnaris":"humeral_head_of_flexor_carpi_ulnaris","Humero-ulnar head of flexor digitorum superficialis":"humero_ulnar_head_of_flexor_digitorum_superficialis","Hyoglossus muscle":"hyoglossus","Iliacus muscle":"iliacus","Iliococcygeus muscle":"iliococcygeus","Iliocostalis colli muscle":"iliocostalis_colli","Iliocostalis lumborum muscle":"iliocostalis_lumborum","Iliocostalis thoracis muscle":"iliocostalis_thoracis","Iliopectineal arch":"iliopectineal_arch","Iliotibial tract":"iliotibial_tract","Inferior gemellus muscle":"inferior_gemellus","Inferior pharyngeal constrictor":"inferior_pharyngeal_constrictor","Inferior tarsus":"inferior_tarsus","Infraspinatus muscle":"infraspinatus","Innermost intercostal muscles":"innermost_intercostal","Intermediate tendon of digastric muscle":"intermediate_tendon_of_digastric","Internal abdominal oblique muscle":"internal_abdominal_oblique","Internal intercostal muscles":"internal_intercostal","Lateral crico-arytenoid muscle":"lateral_crico_arytenoid","Lateral head of flexor hallucis brevis":"lateral_head_of_flexor_hallucis_brevis","Lateral head of gastrocnemius":"lateral_head_of_gastrocnemius","Lateral head of triceps brachii":"lateral_head_of_triceps_brachii","Latissimus dorsi muscle":"latissimus_dorsi","Levator scapulae":"levator_scapulae","Levatores breves costarum":"levatores_breves_costarum","Levatores longi costarum":"levatores_longi_costarum","Linea alba":"linea_alba","Long head of biceps brachii":"long_head_of_biceps_brachii","Long head of biceps femoris":"long_head_of_biceps_femoris","Long head of triceps brachii":"long_head_of_triceps_brachii","Longissimus capitis muscle":"longissimus_capitis","Longissimus colli muscle":"longissimus_colli","Longissimus thoracis muscle":"longissimus_thoracis","Longus capitis muscle":"longus_capitis","Longus colli muscle":"longus_colli","Lumbrical muscles of foot":"lumbrical_of_foot","Lumbrical muscles of hand":"lumbrical_of_hand","Medial head of flexor hallucis brevis":"medial_head_of_flexor_hallucis_brevis","Medial head of gastrocnemius":"medial_head_of_gastrocnemius","Medial head of triceps brachii":"medial_head_of_triceps_brachii","Middle pharyngeal constrictor":"middle_pharyngeal_constrictor","Multifidus colli muscle":"multifidus_colli","Multifidus lumborum muscle":"multifidus_lumborum","Multifidus thoracis muscle":"multifidus_thoracis","Mylohyoid muscle":"mylohyoid","Oblique head of adductor hallucis":"oblique_head_of_adductor_hallucis","Oblique head of adductor pollicis":"oblique_head_of_adductor_pollicis","Oblique part of cricothyroid muscle":"oblique_part_of_cricothyroid","Obliquus inferior capitis muscle":"obliquus_inferior_capitis","Obliquus superior capitis muscle":"obliquus_superior_capitis","Obturator externus":"obturator_externus","Obturator internus":"obturator_internus","Omohyoid muscle":"omohyoid","Opponens digiti minimi muscle of hand":"opponens_digiti_minimi_of_hand","Opponens pollicis muscle":"opponens_pollicis","Palatopharyngeus muscle":"palatopharyngeus","Palmar interossei muscles":"palmar_interossei","Palmaris longus muscle":"palmaris_longus","Pectineus muscle":"pectineus","Pectoralis minor muscle":"pectoralis_minor","Piriformis muscle":"piriformis","Plantar interossei muscles":"plantar_interossei","Plantaris muscle":"plantaris","Popliteus muscle":"popliteus","Posterior belly of digastric muscle":"posterior_belly_of_digastric","Posterior crico-arytenoid muscle":"posterior_crico_arytenoid","Pronator quadratus":"pronator_quadratus","Psoas major":"psoas_major","Pyramidalis muscle":"pyramidalis","Quadratus femoris muscle":"quadratus_femoris","Quadratus lumborum muscle":"quadratus_lumborum","Quadratus plantae muscle":"quadratus_plantae","Radial head of flexor digitorum superficialis":"radial_head_of_flexor_digitorum_superficialis","Rectus abdominis muscle":"rectus_abdominis","Rectus anterior capitis muscle":"rectus_anterior_capitis","Rectus femoris muscle":"rectus_femoris","Rectus lateralis capitis muscle":"rectus_lateralis_capitis","Rectus posterior major capitis muscle":"rectus_posterior_major_capitis","Rectus posterior minor capitis muscle":"rectus_posterior_minor_capitis","Rhomboid major muscle":"rhomboid_major","Rhomboid minor muscle":"rhomboid_minor","Rotatores":"rotatores","Sartorius muscle":"sartorius","Scalenus anterior muscle":"scalenus_anterior","Scalenus medius muscle":"scalenus_medius","Scalenus posterior muscle":"scalenus_posterior","Scapular spinal part of deltoid muscle":"scapular_spinal_part_of_deltoid","Semimembranosus muscle":"semimembranosus","Semitendinosus muscle":"semitendinosus","Serratus anterior muscle":"serratus_anterior","Serratus posterior inferior muscle":"serratus_posterior_inferior","Serratus posterior superior muscle":"serratus_posterior_superior","Short head of biceps brachii":"short_head_of_biceps_brachii","Short head of biceps femoris":"short_head_of_biceps_femoris","Soleus muscle":"soleus","Splenius capitis muscle":"splenius_capitis","Splenius colli muscle":"splenius_colli","Sternocleidomastoid muscle":"sternocleidomastoid","Sternocostal head of pectoralis major muscle":"sternocostal_head_of_pectoralis_major","Sternohyoid muscle":"sternohyoid","Sternothyroid muscle":"sternothyroid","Straight part of cricothyroid muscle":"straight_part_of_cricothyroid","Stylohyoid muscle":"stylohyoid","Stylopharyngeus muscle":"stylopharyngeus","Subclavius muscle":"subclavius","Subscapularis muscle":"subscapularis","Superficial head of flexor pollicis brevis":"superficial_head_of_flexor_pollicis_brevis","Superficial head of pronator teres":"superficial_head_of_pronator_teres","Superior gemellus muscle":"superior_gemellus","Superior pharyngeal constrictor":"superior_pharyngeal_constrictor","Superior tarsus":"superior_tarsus","Supraspinatus muscle":"supraspinatus","Tendinous arch of levator ani":"tendinous_arch_of_levator_ani","Tendon of extensor digitorum longus":"tendon_of_extensor_digitorum_longus","Teres major muscle":"teres_major","Teres minor muscle":"teres_minor","Thyro-epiglottic part of thyro-arytenoid muscle":"thyro_epiglottic_part_of_thyro_arytenoid","Thyrohyoid muscle":"thyrohyoid","Tibialis anterior muscle":"tibialis_anterior","Tibialis posterior muscle":"tibialis_posterior","Transverse arytenoid muscle":"transverse_arytenoid","Transverse head of adductor hallucis":"transverse_head_of_adductor_hallucis","Transverse head of adductor pollicis":"transverse_head_of_adductor_pollicis","Transverse part of trapezius muscle":"transverse_part_of_trapezius","Transversus abdominis muscle":"transversus_abdominis","Transversus thoracis muscle":"transversus_thoracis","Trochlea of superior oblique muscle":"trochlea_of_superior_oblique","Ulnar head of extensor carpi ulnaris":"ulnar_head_of_extensor_carpi_ulnaris","Ulnar head of flexor carpi ulnaris":"ulnar_head_of_flexor_carpi_ulnaris","Vastus intermedius muscle":"vastus_intermedius","Vastus lateralis muscle":"vastus_lateralis","Vastus medialis muscle":"vastus_medialis","Ventral parts of lateral intertransversarii lumborum muscles":"ventral_parts_of_lateral_intertransversarii_lumborum",}
 ;

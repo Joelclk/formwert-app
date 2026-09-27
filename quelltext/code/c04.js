@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: renderSessionInner() bis FW3D_HTML_B64
+   Enthaelt: renderSessionInner() bis persist()
 */
 
 function renderSessionInner(){
@@ -29,7 +29,9 @@ function renderSessionInner(){
   workout.exercises.forEach(function(we,ei){
     var ex=exById(we.ex);if(!ex)return;
     var w=el("article","wo-page");w.setAttribute("data-i",String(ei));
-    var isCardio=ex.t==="cardio";
+    // Nur mit Ausdauer-Datensatz als Ausdauer zeigen: Ein gespeichertes Training kann aus
+    // derselben Zeit noch Sätze für eine Ausdauer-Übung enthalten.
+    var isCardio=ex.t==="cardio"&&!!we.cardioRec;
     var h=el("div","wo-pagehead");
     var title=el("div","main");title.appendChild(el("b",null,ex.n));
     if(isCardio){
@@ -70,9 +72,10 @@ function renderSessionInner(){
     if(isCardio){
       var grid=el("div","grid2");grid.style.marginTop="4px";
       // Sollte der Datensatz nicht (mehr) in einem Tag stehen - etwa weil der Tag
-      // zwischendurch aus der Cloud neu geschrieben wurde -, wieder eintragen: sonst
-      // laufen die Minuten ins Leere und zaehlen auf kein Wochenziel.
-      if(!cardioDayOf(we.cardioRec)){day(TODAY).cardio.push(we.cardioRec);touch(TODAY);}
+      // zwischendurch aus der Cloud neu geschrieben wurde -, erst die Kopie im Tag suchen
+      // (gleiche Uebung, gleiches Training) und nur ohne Treffer neu eintragen. Blindes
+      // Eintragen setzte ihn neben die Cloud-Kopie und zaehlte die Minuten doppelt.
+      if(!cardioDayOf(we.cardioRec))relinkCardio(workout);
       var touchCardio=function(){touch(cardioDayOf(we.cardioRec)||TODAY);};
       var minF=numField("Minuten",we.cardioRec.min,"5",0),kmF=numField("Kilometer (optional)",we.cardioRec.km,"0.5",0);
       grid.appendChild(minF);grid.appendChild(kmF);w.appendChild(grid);
@@ -132,17 +135,17 @@ function renderSessionInner(){
       var rirBtn=el("button","wo-rir"+(st.done?" done":""));rirBtn.type="button";
       rirBtn.innerHTML='<b>'+rirText(st.rir!=null?st.rir:null)+'</b>';
       rirBtn.setAttribute("aria-label","Wiederholungen in Reserve für diesen Satz");
-      if(st.done){
-        rirBtn.disabled=true;
-      }else{
-        rirBtn.onclick=function(ev){
-          ev.preventDefault();ev.stopPropagation();
-          var cur=st.rir!=null?st.rir:null;
-          st.rir=(cur==null)?0:(cur>=5?null:cur+1);
-          saveWorkoutSoon();
-          rirBtn.querySelector("b").textContent=rirText(st.rir);
-        };
-      }
+      if(st.done)rirBtn.disabled=true;
+      // Der Handler hängt immer, auch an abgehakten Sätzen: Wird ein Satz zurückgenommen,
+      // gibt woUpdate() den Knopf nur wieder frei, ohne die Zeile neu aufzubauen.
+      rirBtn.onclick=function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        if(st.done)return;
+        var cur=st.rir!=null?st.rir:null;
+        st.rir=(cur==null)?0:(cur>=5?null:cur+1);
+        saveWorkoutSoon();
+        rirBtn.querySelector("b").textContent=rirText(st.rir);
+      };
       r.appendChild(rirBtn);
       var ck=el("button","wo-check"+(st.done?" on":""));ck.type="button";ck.setAttribute("aria-label",st.done?"Satz zurücknehmen":"Satz abhaken");
       ck.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5 6 12l7.5-8"/></svg>';
@@ -235,21 +238,59 @@ function prevSetsFor(exid){
    auch Sätze, die nach Mitternacht auf dem Folgetag gelandet sind. */
 function workoutSetCount(wo){var n=0;for(var k in state.days){(state.days[k].sets||[]).forEach(function(st){if(st.wid===wo.id)n++;});}return n;}
 
+function workoutCardioCount(wo){var n=0;for(var k in state.days){(state.days[k].cardio||[]).forEach(function(c){if(c.wid===wo.id)n++;});}return n;}
+
+// Ausdauer gehört genauso zum Training wie die Sätze – die Trainingsansicht zeigt sie mit an.
+// Bliebe sie beim Löschen stehen, zählte ein gelöschtes Training weiter aufs Ausdauer-Wochenziel.
 function deleteWorkout(dateKey,wo){
-  for(var k in state.days){var dd=state.days[k],before=(dd.sets||[]).length;
+  for(var k in state.days){var dd=state.days[k],before=(dd.sets||[]).length,beforeC=(dd.cardio||[]).length;
     dd.sets=(dd.sets||[]).filter(function(st){return st.wid!==wo.id;});
-    if(dd.sets.length!==before)touch(k);}
+    dd.cardio=(dd.cardio||[]).filter(function(c){return c.wid!==wo.id;});
+    if(dd.sets.length!==before||dd.cardio.length!==beforeC)touch(k);}
   var d=day(dateKey);d.workouts=(d.workouts||[]).filter(function(w){return w.id!==wo.id;});touch(dateKey);
   renderAll();toast("Training gelöscht");
 }
 
 function confirmDeleteWorkout(dateKey,wo){
-  var n=workoutSetCount(wo);
-  askConfirm("Training löschen?","„"+wo.name+"“ vom "+deDate(dateKey)+(n?" samt "+(n===1?"einem geloggten Satz":n+" geloggten Sätzen"):"")+" wird dauerhaft entfernt.","Löschen",function(){deleteWorkout(dateKey,wo);},true);
+  var n=workoutSetCount(wo),c=workoutCardioCount(wo),teile=[];
+  if(n)teile.push(n===1?"einem geloggten Satz":n+" geloggten Sätzen");
+  if(c)teile.push(c===1?"einem Ausdauer-Eintrag":c+" Ausdauer-Einträgen");
+  askConfirm("Training löschen?","„"+wo.name+"“ vom "+deDate(dateKey)+(teile.length?" samt "+teile.join(" und "):"")+" wird dauerhaft entfernt.","Löschen",function(){deleteWorkout(dateKey,wo);},true);
+}
+
+/* Ein Satz aus dem laufenden Training steht zweimal: als Datensatz im Tag (day.sets) und im
+   Training (st.rec). Wird er außerhalb des Trainings gelöscht oder bearbeitet (Heute-Tab,
+   Satz bearbeiten, Tag leeren), muss das Training nachziehen – sonst zeigt es den Satz weiter
+   als abgehakt und "Beenden" zählt ihn mit den alten Werten. Nach einem Neuladen ist st.rec
+   nur eine Kopie, darum wird zusätzlich über den Zeitstempel verglichen. */
+function syncWorkoutRec(rec,removed){
+  if(!workout||!rec||rec.wid!==workout.id)return;
+  var hit=false;
+  workout.exercises.forEach(function(we){(we.sets||[]).forEach(function(st){
+    if(!st.rec||!(st.rec===rec||(rec.ts&&st.rec.ts===rec.ts)))return;
+    hit=true;
+    if(removed){st.done=false;st.rec=null;}
+    else{st.kg=rec.kg;st.reps=rec.reps;if(rec.repsL!=null){st.repsL=rec.repsL;st.repsR=rec.repsR;}st.rec=rec;}
+  });});
+  if(hit)saveWorkout();
+}
+
+// Dasselbe für Ausdauer: Wird der Eintrag außerhalb des Trainings gelöscht, fliegt auch die
+// Übung aus dem Training. Sonst trüge das Training ihn beim nächsten Aufbau wieder in den Tag ein.
+function dropWorkoutCardio(rec){
+  if(!workout||!rec||rec.wid!==workout.id)return;
+  var n=workout.exercises.length;
+  workout.exercises=workout.exercises.filter(function(we){return we.cardioRec!==rec;});
+  if(workout.exercises.length===n)return;
+  if(woPage>workout.exercises.length)woPage=workout.exercises.length;
+  saveWorkout();
 }
 
 function deleteDay(dateKey){
-  var d=day(dateKey);d.sets=[];d.cardio=[];d.workouts=[];d.mobility=false;touch(dateKey);renderAll();toast("Tag geleert");
+  var d=day(dateKey);
+  (d.sets||[]).forEach(function(st){syncWorkoutRec(st,true);});
+  (d.cardio||[]).forEach(function(c){dropWorkoutCardio(c);});
+  d.sets=[];d.cardio=[];d.workouts=[];d.mobility=false;touch(dateKey);renderAll();toast("Tag geleert");
 }
 
 // Vorne/Hinten-Figur mit den an diesem Tag tatsächlich trainierten Muskeln (Primär kräftig,
@@ -520,7 +561,7 @@ function finishWorkout(){
       if(done||cardioMin){var d=day(TODAY);d.workouts=d.workouts||[];
         d.workouts.push({id:workout.id,name:workout.name,start:workout.startedAt,dur:Math.round(dur),sets:done,exs:exs,vol:Math.round(vol),cardioMin:Math.round(cardioMin)});touch(TODAY);}
       if(rtUpd&&rt&&rtItems&&rtItems.length){
-        rt.items=rtItems;state.routines[rt.id]=rt;state.dirtyRoutines[rt.id]=true;persist();
+        rt.items=rtItems;state.routines[rt.id]=rt;markRoutineDirty(rt.id);persist();
         toast("Vorlage „"+rt.name+"“ angepasst");
       }
       workout=null;saveWorkout();closeSheet();renderAll();
@@ -698,10 +739,10 @@ function sheetEditor(id,preset){
     b.appendChild(focusBox);
     var save=el("button","btn primary block","Speichern");save.style.marginTop="14px";
     save.onclick=function(){ed.name=(ni.value||"").trim()||"Einheit";if(!ed.items.length)return;
-      state.routines[ed.id]=ed;state.dirtyRoutines[ed.id]=true;closeSheet();persist();renderAll();};
+      state.routines[ed.id]=ed;markRoutineDirty(ed.id);closeSheet();persist();renderAll();};
     b.appendChild(save);
     if(id){var del2=el("button","btn ghost block","Einheit löschen");del2.style.marginTop="8px";
-      del2.onclick=function(){closeSheet();setTimeout(function(){askConfirm("Einheit löschen?",ed.name,"Löschen",function(){delete state.routines[id];state.dirtyRoutines[id]=true;persist();renderAll();});},180);};
+      del2.onclick=function(){closeSheet();setTimeout(function(){askConfirm("Einheit löschen?",ed.name,"Löschen",function(){delete state.routines[id];markRoutineDirty(id);persist();renderAll();});},180);};
       b.appendChild(del2);}
   });
 }
@@ -884,6 +925,78 @@ var UI_RX=[
    alles ein, was die App spaeter nachbaut - Blaetter, Dialoge, Listen.
    Eigene Eingaben des Nutzers bleiben unberuehrt: sie stehen nicht im Woerterbuch. */
 var _uiBusy=false;
+
+
+/* Nachtrag zur englischen Oberfläche. Ein Rundgang durch alle Tabs und Dialoge in englischer
+   Sprache hat diese Texte noch deutsch gezeigt. Eigener Block statt Einträgen mitten im
+   Wörterbuch oben, damit er als Ganzes nachvollziehbar bleibt. Muster, die auf den deutschen
+   Rohtext passen müssen, kommen VOR die vorhandenen – deren allgemeine Regeln machen z. B.
+   "Tage" sonst schon vorher zu "days" oder "3 Sätzen" zu "3 setsn". Allgemeine Muster kommen
+   hinten dran, damit die spezielleren zuerst greifen. Vorhandene Einträge bleiben
+   unangetastet, und keine englische Übersetzung ist doppelt vergeben – sonst fiele der Rückweg
+   ins Deutsche (UI_DE) für feste Beschriftungen weg. */
+(function(){
+  var add={"+ Satz": "+ Set", "+ Übung hinzufügen": "+ Add exercise", "/ 100 zum Start": "/ 100 to start", "0 = bis zum Muskelversagen. Ohne Angabe zählt der Satz voll; ab 3 in Reserve zählt er anteilig weniger.": "0 = to failure. Without a value the set counts in full; from 3 in reserve it counts proportionally less.", "1. Formwert im Handy-Browser öffnen (gleiches Konto).\n2. Teilen-Symbol → „Zum Home-Bildschirm“.\n3. Einmal anmelden – danach bleibst du in dieser Kachel angemeldet und startest ohne Umweg.": "1. Open Formwert in your phone's browser (same account).\n2. Share icon → “Add to Home Screen”.\n3. Sign in once – after that you stay signed in on this tile and start right away.", "100 % = die beste verfügbare Übung für diesen Muskel. Ein Satz zählt anteilig auf dein Wochenvolumen: 60 % sind 0,6 Sätze. Planungswerte auf Basis der EMG-Literatur – keine Messwerte.": "100 % = the best available exercise for this muscle. A set counts proportionally toward your weekly volume: 60 % is 0.6 sets. Planning values based on EMG literature – not measurements.", "100 % = die stärkste Übung dafür im ganzen Katalog. Wird nichts geändert, zählt Primär 100 %, Sekundär 50 %.": "100 % = the strongest exercise for it in the whole catalog. If nothing is changed, primary counts 100 %, secondary 50 %.", "Achillessehne": "Achilles tendon", "Adduktorensehnen": "Adductor tendons", "Aktivität": "Activity", "Alle Einträge dieses Tages löschen": "Delete all entries for this day", "Alles misst die letzten 30 Tage, die Muskelkarte die letzten 7. Eine gute Woche hebt den Wert, eine faule senkt ihn von allein – ohne Strafpunkte, das Fenster schiebt sich einfach weiter.": "Everything measures the last 30 days, the muscle map the last 7. A good week raises the score, a lazy one lowers it on its own – no penalty points, the window simply moves on.", "Alter, Geschlecht und Körpergewicht bestimmen, woran deine Kraft gemessen wird. Ziele trägst du nirgends ein – die ergeben sich daraus.": "Age, sex and body weight determine what your strength is measured against. You don't enter goals anywhere – they follow from this.", "Andere Übung": "Other exercise", "Ansatz an der Schambeinregion. Häufige Beschwerdestelle bei Sportarten mit schnellen Richtungswechseln - gezielte Kräftigung beugt vor.": "Attach at the pubic region. A common trouble spot in sports with quick changes of direction - targeted strengthening helps prevent it.", "Art": "Type", "Ausdauer (Minuten)": "Cardio (minutes)", "Ausdauer eintragen": "Log cardio", "Ausdauerleistung und Erholungsfähigkeit. Zeigt sich im Alltag oft früher als Kraftzuwachs.": "Endurance performance and ability to recover. In everyday life it often shows sooner than strength gains.", "Ausführung": "Execution", "Backup nur lokal – Übertragung wird wiederholt": "Backup only local – upload will be retried", "Backup wird übertragen": "Uploading backup", "Bauchroller": "Ab wheel", "Bearbeiten": "Edit", "Bei Kurzhanteln meist „Pro Seite“ (Gewicht je Hantel) – die Gesamtlast ist dann das Doppelte. Bei Maschine oder Langhantel „Gesamtgewicht“.": "With dumbbells usually “Per side” (weight per dumbbell) – the total load is then double. With a machine or barbell “Total weight”.", "Beidseitig": "Both sides", "Bereits abgehakte Sätze bleiben erhalten – verschoben wird nur die Reihenfolge, in der die Übungen angezeigt werden.": "Sets already checked off are kept – only the order in which the exercises are shown changes.", "Beweglichkeit": "Flexibility", "Beweglichkeit und Stabilität hier entscheiden mit, wie tief du hocken kannst und wie sicher du landest.": "Mobility and stability here help decide how deep you can squat and how safely you land.", "Bewegungsmuster": "Movement pattern", "Bezug für alle Kraftstufen": "Basis for all strength levels", "Brust": "Chest", "Das beweglichste große Gelenk. Seitliche Stabilität hier bestimmt, ob das Knie bei Belastung nach innen fällt.": "The most mobile large joint. Lateral stability here decides whether the knee caves in under load.", "Datei wählen": "Choose file", "Dehnen, Hüfte, Schulter": "Stretching, hips, shoulders", "Dehnen, Hüfte, Schulter für heute": "Stretching, hips, shoulders for today", "Deine Hauptübung für Rücken und Hüfte": "Your main exercise for back and hips", "Deine Hauptübung für den Rumpf": "Your main exercise for the core", "Deine Hauptübung für die Oberschenkel": "Your main exercise for the thighs", "Deine Hauptübung fürs Drücken über Kopf": "Your main exercise for overhead pushing", "Deine Hauptübung fürs Rudern": "Your main exercise for rowing", "Deine Hauptübung fürs Ziehen von oben": "Your main exercise for pulling from above", "Deine Hauptübung fürs waagerechte Drücken": "Your main exercise for horizontal pushing", "Deine Hauptübungen": "Your main exercises", "Deine Testwerte zählen als erster bestätigter Messpunkt. Konstanz, Abdeckung und Ausdauer bauen sich in den nächsten Wochen aus echten Einträgen auf – dass sie jetzt niedrig stehen, ist richtig so.": "Your test values count as the first confirmed data point. Consistency, coverage and endurance build up over the next weeks from real entries – that they are low right now is how it should be.", "Deine bevorzugte Ausdauerform": "Your preferred type of cardio", "Der Maßstab für Konstanz, Mobilität und Ausdauer. Nimm die normale Woche, nicht die Idealwoche – ein Ziel, das du zu 90 % erfüllst, trägt dich; eins, das du zu 40 % erfüllst, zermürbt.": "The yardstick for consistency, mobility and endurance. Take your normal week, not your ideal week – a goal you meet 90 % of the time carries you; one you meet 40 % of the time wears you down.", "Die Fähigkeit, den Oberkörper unter Last stabil zu halten. Sie begrenzt bei vielen Übungen, wie viel Gewicht sinnvoll bewegt werden kann.": "The ability to keep the upper body stable under load. In many exercises it limits how much weight can sensibly be moved.", "Die kräftigste Sehne des Körpers. Sie passt sich an Zug an, aber deutlich langsamer als der Muskel - nach langer Pause ist der Sprung in die alte Belastung der häufigste Auslöser für Beschwerden.": "The strongest tendon in the body. It adapts to tension, but much more slowly than the muscle - after a long break, jumping straight back to the old load is the most common cause of trouble.", "Die wichtigste Angabe der ganzen App. Trag einen schweren Arbeitssatz ein, den du bis nahe ans Limit geführt hast – daraus wird dein Einer-Maximum berechnet. Kennst du dein Einer-Maximum, trag es direkt ein.": "The most important input in the whole app. Enter a heavy working set that you took close to your limit – your one-rep max is calculated from it. If you know your one-rep max, enter it directly.", "Drücken waagerecht": "Horizontal push", "Drücken über Kopf": "Overhead push", "Ein Backup ist unabhängig vom Konto: eine Datei mit allem, was drin ist. Nimm sie, bevor du etwas Großes änderst.": "A backup is independent of your account: one file with everything in it. Make one before you change anything big.", "Einbeinige und freie Übungen fordern laufende Korrekturen aus Fuß, Hüfte und Rumpf - das trainiert man nicht an der Maschine.": "Single-leg and free exercises demand constant corrections from foot, hip and core - you don't train that on a machine.", "Einer-Maximum (kg)": "One-rep max (kg)", "Einer-Maximum pro Seite (kg)": "One-rep max per side (kg)", "Einheit bearbeiten": "Edit session", "Einheit löschen": "Delete session", "Einseitig (L/R getrennt)": "One side (L/R separately)", "Einzelnen Satz eintragen": "Log a single set", "Erst oben Muskeln auswählen.": "Select muscles above first.", "Faszie": "Fascia", "Fähigkeit": "Ability", "Für dein Alter": "For your age", "Für jedes Bewegungsmuster eine Übung als Startmessung. Nimm die, die du wirklich regelmäßig machst – später zählt ohnehin jede Übung mit Kraftstandard, die du einträgst.": "One exercise per movement pattern as a starting measurement. Pick the ones you really do regularly – later, every exercise with a strength standard that you log counts anyway.", "Gelenk": "Joint", "Gerade keine Verbindung zum Konto – alles wird lokal in diesem Browser gespeichert und beim nächsten Verbinden hochgeladen.": "No connection to your account right now – everything is saved locally in this browser and uploaded the next time you connect.", "Gesamtgewicht": "Total weight", "Geschätztes Einer-Maximum": "Estimated one-rep max", "Gewicht (kg)": "Weight (kg)", "Gewicht pro Seite (kg)": "Weight per side (kg)", "Gewicht zählt als": "Weight counts as", "Gewicht × Wdh": "Weight × reps", "Gewichtete Sätze: je Satz zählt ein Muskel mit dem Anteil, den diese Übung für ihn leistet (in der Übung als Prozent angegeben, 100 % = beste verfügbare Übung), mal dem Faktor für die Wiederholungen in Reserve. Balken und Farbe zeigen den Anteil am stärkst beanspruchten Muskel DIESER Einheit – die Figur oben ist genauso eingefärbt. Sie sagen also, worauf die Einheit zielt, nicht wie viel der Wochenmenge sie deckt; das steht als Satzzahl daneben.": "Weighted sets: per set, a muscle counts with the share this exercise contributes to it (given as a percentage on the exercise, 100 % = best available exercise), times the factor for reps in reserve. Bar and color show the share relative to the most-worked muscle of THIS session – the figure above is colored the same way. So they show what the session targets, not how much of the weekly amount it covers; that is the set count next to it.", "Gleichgewicht": "Balance", "Griffkraft": "Grip strength", "Große Bindegewebsplatte im unteren Rücken, an der Gesäß, Latissimus und Bauchmuskeln zusammenlaufen. Sie überträgt Kraft zwischen Ober- und Unterkörper.": "Large sheet of connective tissue in the lower back where glutes, lats and abs meet. It transfers force between upper and lower body.", "Handgelenk": "Wrist", "Hauptübungen": "Main exercises", "Herz-Kreislauf": "Cardiovascular fitness", "Höchstes Gewicht": "Heaviest weight", "Hüftgelenk": "Hip joint", "Hüftstreckung": "Hip hinge", "Ja, anpassen": "Yes, update", "Kabelzug": "Cable", "Keine Sätze.": "No sets.", "Keinen Ruhepuls zur Hand?": "No resting heart rate at hand?", "Klimmzugstange": "Pull-up bar", "Kniebeuge-Muster": "Squat pattern", "Kniegelenk": "Knee joint", "Knochen": "Bone", "Knochen bauen auf Druck und Zug auf. Schweres Heben und Belastung mit dem eigenen Körpergewicht wirken dabei deutlich besser als gelenkschonende Ausdauerformen.": "Bones build up from compression and tension. Heavy lifting and bodyweight loading work much better for this than joint-friendly forms of cardio.", "Knochendichte": "Bone density", "Konstanz und Abdeckung stehen noch niedrig": "Consistency and coverage are still low", "Kopfgeschirr": "Head harness", "Kraftstufen und Ausdauer sind altersgewichtet": "Strength levels and endurance are age-adjusted", "Krafttest": "Strength test", "Kräftige Muskeln rundherum halten das Gelenk zusammen - das Training wirkt mehr über die Führung als über das Gelenk selbst.": "Strong muscles all around hold the joint together - training works more through that guidance than through the joint itself.", "Kurzhantel": "Dumbbell", "Lange Bizepssehne": "Long biceps tendon", "Langhantel": "Barbell", "Lass 0 stehen – die Ausdauer zählt dann nur über deine Wochenminuten. Nachtragen geht jederzeit unter „Werte“.": "Leave it at 0 – endurance then only counts your weekly minutes. You can add it any time under “Stats”.", "Laufen, Rad, Rudern – zählt auf die Wochenminuten": "Running, cycling, rowing – counts toward your weekly minutes", "Leeres Training – Übungen fügst du unterwegs hinzu": "Empty workout – add exercises as you go", "Läuft durch das Schultergelenk hindurch. Sie wird bei tiefen Stützpositionen mit gestreckter Schulter stark auf Zug genommen.": "Runs through the shoulder joint. It is put under strong tension in deep support positions with the shoulder extended.", "Maschine": "Machine", "Meiste Wiederholungen": "Most reps", "Minuten": "Minutes", "Mobilität zurücknehmen": "Undo mobility", "Name des Trainings": "Workout name", "Nein, so lassen": "No, keep it", "Nicht ein Gelenk, sondern viele. Sie hält Last aus, wenn die Rumpfmuskulatur sie in Position hält - genau das wird hier mittrainiert.": "Not one joint but many. It handles load when the core muscles hold it in position - exactly what is trained along with it here.", "Noch kein Satz abgehakt. Beenden verwirft das Training.": "No set checked off yet. Finishing discards the workout.", "Noch kein Wert in den letzten 90 Tagen. Trag bei einer dieser Übungen einen schweren Satz ein, dann bekommt der Bereich eine Stufe.": "No value in the last 90 days yet. Log a heavy set for one of these exercises and the area gets a level.", "Noch keine Sätze für diese Übung eingetragen.": "No sets logged for this exercise yet.", "Noch nicht gemessen": "Not measured yet", "Noch nichts eingetragen – die Übung wird erst gewertet, wenn du sie das erste Mal einträgst.": "Nothing entered yet – the exercise is only rated once you log it for the first time.", "Notiz zum Tag": "Note for the day", "Nur auf diesem Gerät": "Only on this device", "Patellasehne": "Patellar tendon", "Pausenzeit ändern": "Change rest time", "Plantarfaszie": "Plantar fascia", "Primärmuskeln zählen 1,0 Sätze, Sekundärmuskeln 0,5. Brust (oben/mitte/unten) und Schulter (vorn/seitlich/hinten) werden einzeln erfasst und auf der Figur entlang ihres Faserverlaufs getrennt dargestellt – diese Liste zeigt jede Gruppe mit ihren Marken für Minimum, Optimum und Erholungsgrenze.": "Primary muscles count 1.0 sets, secondary muscles 0.5. Chest (upper/middle/lower) and shoulder (front/side/rear) are tracked separately and shown split along their fiber direction on the figure – this list shows each group with its marks for minimum, optimum and recovery limit.", "Primärmuskeln zählen mit vollem, Sekundärmuskeln mit halbem Satz fürs Wochenvolumen, sofern der Anteil oben nicht geändert wurde.": "Primary muscles count as a full set and secondary muscles as half a set toward weekly volume, unless the share above was changed.", "Pro Seite": "Per side", "Rad": "Bike", "Referenzwerte und Körperfigur": "Reference values and body figure", "Reihenfolge der Übungen ändern": "Change exercise order", "Reihenfolge ändern": "Change order", "Reiskübel": "Rice bucket", "Rhythmus": "Rhythm", "Rotatorenmanschette": "Rotator cuff", "Rumpf": "Core", "Rumpfspannung": "Core stability", "Rücken": "Back", "Rückenfaszie": "Thoracolumbar fascia", "Satz": "Set", "Satz abhaken": "Check off set", "Satz bearbeiten": "Edit set", "Satz löschen": "Delete set", "Satz zurücknehmen": "Undo set", "Schultergelenk": "Shoulder joint", "Sehne": "Tendon", "Sehnenansätze am Ellbogen": "Elbow tendon attachments", "Sehnenplatte an der Oberschenkelaußenseite, vom Becken bis unters Knie. Sie wird nicht selbst trainiert, sondern über die Muskeln, die an ihr ziehen - Gesäß und Hüftabspreizer. Schwache Hüftstabilität zeigt sich häufig hier.": "Tendon sheet on the outside of the thigh, from the pelvis to below the knee. It isn't trained itself but through the muscles that pull on it - glutes and hip abductors. Weak hip stability often shows up here.", "Sekunden": "Seconds", "Sekunden halten": "Hold for seconds", "Spannt das Längsgewölbe des Fußes und federt bei jedem Schritt.": "Tensions the longitudinal arch of the foot and cushions every step.", "Speichern & beenden": "Save & finish", "Springseil": "Jump rope", "Sprunggelenk": "Ankle", "Startwert": "Starting score", "Stufe": "Level", "Sync gestört – lokal gespeichert": "Sync problem – saved locally", "Sätze mit bis zu 15 Wiederholungen": "Sets of up to 15 reps", "Text einspielen": "Import text", "Tipp auf das Plus für die nächste Übung.": "Tap the plus for the next exercise.", "Tractus iliotibialis": "Iliotibial band", "Training beenden": "Finish workout", "Training löschen": "Delete workout", "Ursprung der Unterarmmuskeln an den Knochenvorsprüngen innen und außen - die Stellen, an denen Tennis- und Golferellenbogen entstehen. Sie profitieren von langsamen, kontrollierten Wiederholungen.": "Origin of the forearm muscles on the bony points inside and outside - where tennis and golfer's elbow develop. They benefit from slow, controlled reps.", "VO2max geschätzt": "Estimated VO2max", "Verbindet Kniescheibe und Schienbein. Regelmäßige Beugung unter Last macht sie belastbarer; plötzlich viel Sprung- und Landearbeit reizt sie.": "Connects the kneecap and shin. Regular bending under load makes it more resilient; a sudden lot of jumping and landing irritates it.", "Verwerfen": "Discard", "Viel Bewegungsumfang, wenig knöcherne Führung - die Stabilität kommt fast ausschließlich aus Muskeln und Sehnen.": "Lots of range of motion, little bony guidance - stability comes almost entirely from muscles and tendons.", "Vier Sehnen, die den Oberarmkopf in der Pfanne zentrieren. Sie arbeiten bei jedem Drücken und Ziehen mit, ohne dass man sie spürt - und sind der Grund, warum saubere Technik über Kopf wichtiger ist als Gewicht.": "Four tendons that keep the head of the upper arm centered in its socket. They work in every push and pull without you feeling it - and are the reason clean technique overhead matters more than weight.", "WHO empfiehlt 150 moderate Minuten": "WHO recommends 150 moderate minutes", "Was heute los war": "What happened today", "Was willst du tun?": "What do you want to do?", "Weiter trainieren": "Keep training", "Welche Muskeln trainiert diese Einheit?": "Which muscles does this session train?", "Welchen Rhythmus hältst du?": "What rhythm do you keep?", "Wie lange und wie fest du etwas halten kannst. Bei Zug- und Hebeübungen oft das erste, was nachgibt - und damit die Grenze, bevor der Zielmuskel wirklich ausbelastet ist.": "How long and how hard you can hold on to something. In pulling and lifting exercises it's often the first thing to give out - and so the limit before the target muscle is really worked.", "Wie lief es? Was war schwer, was ging leicht?": "How did it go? What was hard, what felt easy?", "Wie weit ein Gelenk bewegt werden kann, ohne auszuweichen. Wächst durch regelmäßige, nicht durch lange Einheiten.": "How far a joint can move without compensating. Grows through regular sessions, not long ones.", "Wie wird das gezählt?": "How is this counted?", "Wiederholungen": "Reps", "Wiederholungen in Reserve": "Reps in reserve", "Wiederholungen in Reserve für diesen Satz": "Reps in reserve for this set", "Wirbelsäule": "Spine", "Wird bei Stützpositionen in Streckung belastet. Mit der Zeit gewöhnt es sich daran; von null auf viel ist der übliche Fehler.": "Loaded in extension in support positions. It gets used to it over time; going from zero to a lot is the usual mistake.", "Wird im Training nicht eigens gezählt": "Not counted separately in training", "Wo stehst du heute?": "Where do you stand today?", "Wähl die Backup-Datei aus oder füg den Inhalt als Text ein. Das ersetzt deine aktuellen Daten.": "Choose the backup file or paste its contents as text. This replaces your current data.", "Ziehen senkrecht": "Vertical pull", "Ziehen waagerecht": "Horizontal pull", "Zählt als": "Counts as", "Zählt nicht ins Trainingsvolumen - diese Strukturen lassen sich nicht in Sätzen pro Woche messen. Sie werden trotzdem mitbelastet und brauchen meist länger, um sich anzupassen, als der Muskel.": "Not counted toward training volume - these structures can't be measured in sets per week. They are still loaded and usually take longer to adapt than the muscle.", "bis zum Muskelversagen": "to failure", "erledigt": "completed", "fünf oder mehr in Reserve": "five or more in reserve", "heute erledigt": "done today", "jeder Tag mit mindestens einem Satz": "every day with at least one set", "lassen sich gut umrechnen. Bei sehr langen Sätzen wird die Schätzung unsicher – dann lieber ein schwereres Gewicht mit weniger Wiederholungen eintragen.": "convert well. For very long sets the estimate becomes unreliable – better enter a heavier weight with fewer reps.", "morgens im Liegen – daraus wird die Ausdauer geschätzt": "in the morning, lying down – endurance is estimated from it", "z. B. Butterfly Maschine": "e.g. Butterfly machine", "z. B. Maschine": "e.g. Machine", "z. B. Oberkörper A": "e.g. Upper body A", "Über dich": "About you", "Übung": "Exercise", "Übung bearbeiten": "Edit exercise", "Übung entfernen": "Remove exercise", "Übungen": "Exercises", "– sie messen, was du in den letzten Tagen wirklich getan hast. Nach zwei Wochen Eintragen sind sie aussagekräftig.": "– they measure what you actually did in recent days. After two weeks of logging they are meaningful.", "…oder Backup-Text hier einfügen": "…or paste backup text here", "− Satz": "− Set"};
+  for(var k in add)if(!(k in UI_EN))UI_EN[k]=add[k];
+  // Nachtrag 27.09.: in der Übungsauswahl übersehen
+  if(!("+ Neue Übung erstellen" in UI_EN))UI_EN["+ Neue Übung erstellen"]="+ Create new exercise";
+  if(!("Übung suchen…" in UI_EN))UI_EN["Übung suchen…"]="Search exercise…";
+  var PAT_EN={"Drücken waagerecht": "Horizontal push", "Drücken über Kopf": "Overhead push", "Ziehen senkrecht": "Vertical pull", "Ziehen waagerecht": "Horizontal pull", "Kniebeuge-Muster": "Squat pattern", "Hüftstreckung": "Hip hinge", "Rumpf": "Core", "Ausdauer": "Cardio", "Isolation": "Isolation", "Mobilität": "Mobility"},EQ_EN={"Bauchroller": "Ab wheel", "Kabelzug": "Cable", "Klimmzugstange": "Pull-up bar", "Kopfgeschirr": "Head harness", "Kurzhantel": "Dumbbell", "Körpergewicht": "Body weight", "Langhantel": "Barbell", "Maschine": "Machine", "Rad": "Bike", "Reiskübel": "Rice bucket", "Springseil": "Jump rope", "Sonstiges": "Other"},OB_EN={"Über dich":"About you","Hauptübungen":"Main exercises","Krafttest":"Strength test","Rhythmus":"Rhythm","Startwert":"Starting score"};
+  function alt(o){return Object.keys(o).map(function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}).join("|");}
+  var vorne=[
+    [/(\d+) von (\d+) Sätzen/g,"$1 of $2 sets"],
+    [/^▬ stabil in (\d+) Tagen$/g,"▬ steady over $1 days"],
+    [/^([▲▼] \+?\d+) in (\d+) Tagen$/g,"$1 over $2 days"],
+    [/Wochenminimum ([\d,.]+) Sätze · noch ([\d,.]+) offen/g,"Weekly minimum $1 sets · $2 to go"],
+    [/Wochenminimum ([\d,.]+) Sätze · erreicht/g,"Weekly minimum $1 sets · reached"],
+    [/^Übung (\d+) von (\d+) · /g,"Exercise $1 of $2 · "],
+    [/ · neu · /g," · new · "],
+    [/ · Pause (\d+) s$/g," · rest $1 s"],
+    [/^(.+): (\d+) % Beanspruchung – allein in der Figur hervorheben$/g,"$1: $2 % load – show only this in the figure"],
+    [/^(\d+) gewählt: /g,"$1 selected: "],
+    [/^Beanspruchte Muskeln von (.+) gross anzeigen$/g,"Show muscles worked by $1 large"],
+    [/^Beanspruchte Muskeln von (.+) anzeigen$/g,"Show muscles worked by $1"],
+    [/^Kraft (Brust|Schultern|Rücken|Arme|Beine|Rumpf)$/g,function(m,c){return "Strength – "+({"Brust":"Chest","Schultern":"Shoulders","Rücken":"Back","Arme":"Arms","Beine":"Legs","Rumpf":"Core"})[c];}],
+    [/^Aus dem Plan · /g,"From plan · "],
+    [/nächste Stufe ab /g,"next level at "],
+    [/· nächste ab /g,"· next at "],
+    [/· Höchststufe/g,"· top level"],
+    [/(\d+) Äquivalentminuten/g,"$1 equivalent minutes"],
+    [/auf dein Wochenziel von (\d+) min\./g,"toward your weekly goal of $1 min."],
+    [/^ab (\d+) % Top-Übung$/g,"from $1 % of the top exercise"],
+    [/letzte (\d+) Tage · antippen für Details/g,"last $1 days · tap for details"],
+    [/^(zu wenig|im Korridor|über Limit) · /g,function(m,z){return ({"zu wenig":"too little","im Korridor":"in range","über Limit":"over limit"})[z]+" · ";}],
+    [/^Schritt (\d+) von (\d+) · (.+)$/g,function(m,a,b,c){return "Step "+a+" of "+b+" · "+(OB_EN[c]||c);}],
+    [/^Stufe „(.+?)“ als Durchschnitt aus (\d+) bewerteten Übung(?:en)? in diesem Bereich\. Bester Einzelwert: (.+?) mit (.+?)\. „Richtwert“ heißt: Stufe aus einer verwandten Übung abgeleitet, nicht aus einer eigenen Normtabelle\.$/g,
+      function(m,g,n,ex,val){return "Level “"+g+"” as the average of "+n+" rated exercise"+(n==="1"?"":"s")+" in this area. Best single value: "+ex+" with "+val+". “Guide value” means: level derived from a related exercise, not from its own standards table.";}],
+    [new RegExp("^("+alt(PAT_EN)+") · ([^·]+)$","g"),function(m,p,e){return PAT_EN[p]+" · "+(EQ_EN[e]||e);}],
+    // Die Formel-Erklärung im Werte-Tab ist ein einziger Textblock mit fester Spaltenbreite.
+    [/Formwert = 30 % Maximalkraft\n(\s+)\+ 25 % Konstanz\n(\s+)\+ 20 % Muskelabdeckung\n(\s+)\+ 15 % Ausdauer\n(\s+)\+ 10 % Mobilität/g,
+      "Formwert = 30 % max strength\n$1+ 25 % consistency\n$2+ 20 % muscle coverage\n$3+ 15 % endurance\n$4+ 10 % mobility"],
+    [/Maximalkraft    Ø der (\d+) Kraft-Bereiche \((\d+) T\)\n(\s+)je Bereich zählt die stärkste Übung/g,"Max strength    avg of $1 strength areas ($2 d)\n$3per area the strongest exercise counts"],
+    [/Konstanz        Trainingstage (\d+) T ÷ (\d+)/g,"Consistency     training days $1 d ÷ $2"],
+    [/Muskelabdeckung Ø Sätze je Muskel gegen MEV\/MAV \((\d+) T\)/g,"Muscle coverage avg sets per muscle vs MEV/MAV ($1 d)"],
+    [/Ausdauer        WHO-Minuten \+ VO2max-Perzentil/g,"Endurance       WHO minutes + VO2max percentile"],
+    [/Mobilität       Einheiten (\d+) T ÷ (\d+)/g,"Mobility        sessions $1 d ÷ $2"],
+    [/Epley \(1–3 Wdh\)/g,"Epley (1–3 reps)"],
+    [/weich gemischt, aus dem besten Satz/g,"smoothly blended, from the best set"],
+    [/\nFigur: /g,"\nFigure: "],
+    [/\njetzt  /g,"\nnow    "]
+  ];
+  var hinten=[
+    [/(\d+) Übungen\b/g,"$1 exercises"],
+    [/^(\d+) Übung$/g,"$1 exercise"],
+    [/(\d+) min Ausdauer/g,"$1 min cardio"],
+    [/^(\d+) Minuten\b/g,"$1 minutes"],
+    [/^(\d+) Einheiten$/g,"$1 sessions"],
+    [/^(\d+) Einheit$/g,"$1 session"],
+    [/ · Mobilität$/g," · Mobility"],
+    [/ · Notiz$/g," · Note"],
+    [/ · Ausdauer$/g," · cardio"]
+  ];
+  UI_RX.unshift.apply(UI_RX,vorne);
+  UI_RX.push.apply(UI_RX,hinten);
+})();
 
 /* Rueckwaerts-Woerterbuch. Beim Zurueckschalten auf Deutsch muessen fest im Dokument stehende
    Beschriftungen (Navigation, Ringlegende, Sync-Anzeige) wieder deutsch werden - die werden
@@ -1173,7 +1286,12 @@ function renderSection(id){
   // Entdecken hängt an keinen Tageswerten (c) – unabhängig davon rendern, damit ein noch
   // fehlendes lastC (z. B. ganz am Anfang) den Übungskatalog nicht blockiert.
   if(id==="tab-entdecken"){renderEntdecken();secDirty.entdecken=false;return;}
-  var c=lastC,pk=state.profile.peaks||{};if(!c)return;
+  var c=lastC,pk=state.profile.peaks||{};
+  // Während eines Trainings rechnet renderLight() bewusst nicht alles neu, sondern setzt nur
+  // heuteDirty. Körper und Werte brauchen aber den aktuellen Stand – sonst fehlen dort die
+  // gerade abgehakten Sätze, bis man einmal den Heute-Tab öffnet.
+  if(heuteDirty&&id!=="tab-training")c=lastC=compute(TODAY);
+  if(!c)return;
   if(id==="tab-koerper"){renderBody(c.ms);renderMuscleList(c.ms);secDirty.koerper=false;}
   else if(id==="tab-werte"){renderSkills(c,pk);renderStrength(c);renderCardio(c);renderFormula(c);renderSpark();renderHistory();renderSettings();secDirty.werte=false;}
   else if(id==="tab-training"){renderRoutines();renderSession();secDirty.training=false;}
@@ -1207,379 +1325,69 @@ function renderLight(){
 
 
 /* ================= Persistenz ================= */
-function touch(d){state.dirty[d]=true;queueSave();}
+// Jede Änderung bekommt eine laufende Nummer. Dadurch darf ein abgeschlossener älterer
+// Schreibvorgang nur genau die Version als erledigt markieren, die er selbst übertragen hat.
+var dirtySeq=Date.now(),
+persistRun=null,
+persistAgain=false,
+syncRetryT=null;
+
+
+function nextDirty(){return ++dirtySeq;}
+
+
+function touch(d){state.dirty[d]=nextDirty();saveLocal();queueSave();}
+
+
+function markRoutineDirty(id){state.dirtyRoutines[id]=nextDirty();saveLocal();}
+
+
+// Eigene Übungen und Anpassungen werden beim Verbinden mit dem Cloud-Stand zusammengeführt.
+// Was hier gelöscht oder zurückgesetzt wurde, steht dort aber noch drin und käme so zurück –
+// darum wird es gemerkt, bis der nächste erfolgreiche Upload es auch aus dem Konto entfernt.
+function markExtrasDirty(gone){
+  state.dirtyExtras=nextDirty();
+  if(gone){state.extrasGone=state.extrasGone||{};state.extrasGone[gone]=1;}
+  saveLocal();
+}
+
 
 var stTimer=null;
 
+
 function queueSave(){if(stTimer)clearTimeout(stTimer);stTimer=setTimeout(persist,700);}
 
+
 function persist(){
-  saveLocal();if(!db)return;
-  var p=Object.keys(state.dirty);state.dirty={};
-  p.forEach(function(d){var b=state.days[d];if(!b)return;
-    db.doc("days/"+d).set({sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}).catch(function(){});});
-  var r=Object.keys(state.dirtyRoutines);state.dirtyRoutines={};
-  r.forEach(function(id){if(state.routines[id])db.doc("routines/"+id).set(state.routines[id]).catch(function(){});else db.doc("routines/"+id).delete().catch(function(){});});
-  if(state.profile)db.doc("state/profile").set(state.profile).catch(function(){});
-  // Eigene und geaenderte Uebungen gehoeren genauso zum Konto wie Profil, Tage und
-  // Routinen - ohne sie waeren sie beim Oeffnen auf einem anderen Geraet oder in einer
-  // neuen Fassung der App verloren.
-  db.doc("state/exoverrides").set({v:state.exOverrides||{}}).catch(function(){});
-  db.doc("state/customex").set({v:state.customEx||[]}).catch(function(){});
-}
-
-// Beim Verbinden dieselben beiden Dokumente wieder einlesen. Was lokal schon vorhanden
-// ist, hat Vorrang (das ist der zuletzt auf diesem Geraet bearbeitete Stand).
-function fw_syncPullExtras(d){
-  return d.doc("state/exoverrides").get().then(function(es){
-    var v=es&&es.exists?cloneWritable(es.data()):null;v=v&&v.v;
-    if(v&&typeof v==="object"){
-      state.exOverrides=state.exOverrides||{};
-      Object.keys(v).forEach(function(id){if(!state.exOverrides[id])state.exOverrides[id]=v[id];});
-    }
-    return d.doc("state/customex").get();
-  }).then(function(cs){
-    var v=cs&&cs.exists?cloneWritable(cs.data()):null;v=v&&v.v;
-    if(Array.isArray(v)){
-      state.customEx=state.customEx||[];
-      var have={};state.customEx.forEach(function(e){if(e&&e.id)have[e.id]=1;});
-      v.forEach(function(e){if(e&&e.id&&!have[e.id])state.customEx.push(e);});
-    }
-    applyCustomEx();applyExOverrides();
-    secDirty.entdecken=true;secDirty.training=true;
-  }).catch(function(){});
-}
-
-var syncState={k:"",t:"nur dieses Gerät"}
-;
-
-function setSync(k,t){
-  syncState={k:k,t:t};
-  $("syncdot").className="dot"+(k?" "+k:"");$("synctxt").textContent=t;
-  secDirty.werte=true;
-}
-
-
-/* ================= Onboarding ================= */
-var ob=null,
-obStep=0,
-OB=["Über dich","Hauptübungen","Krafttest","Rhythmus","Startwert"];
-
-function candidatesFor(pat){return EX.filter(function(e){return e.pat===pat&&e.std;});}
-
-function startOnboarding(old){
-  ob={age:old?old.age:28,sex:old?old.sex:"m",bw:old?old.bodyweight:78,hr:old?old.restHr:60,main:{},val:{},kg:{},mode:{},
-      goals:old?{days:old.goals.days,mob:old.goals.mob,cardio:old.goals.cardio}:{days:4,mob:3,cardio:150},cardioPick:(old&&old.cardioPick)||"run"};
-  if(old&&old.mainEx)old.mainEx.forEach(function(id){var e=exById(id);if(e)ob.main[e.pat]=id;});
-  else ob.main={push_h:"pushup",push_v:"ohp",pull_v:"pullup",pull_h:"row_bb",squat:"squat",hinge:"deadlift",core:"plank"};
-  obStep=0;$("ob").hidden=false;document.body.style.overflow="hidden";drawOb();
-}
-
-function mainList(){var o=[];for(var k in ob.main)if(ob.main[k])o.push(ob.main[k]);return o;}
-
-function obProfile(){return {age:ob.age,sex:ob.sex,bodyweight:ob.bw,restHr:ob.hr,cooper:0};}
-
-function baseValue(id){
-  var e=exById(id);if(!e)return 0;
-  if(e.t==="load"){if(ob.mode[id]==="max")return ob.kg[id]||0;return e1rm(effectiveKg(e,ob.kg[id]),ob.val[id]||0);}
-  return (ob.val[id]||0);
-}
-
-function drawOb(){
-  var w=$("ob-inner");w.innerHTML="";
-  w.appendChild(el("div","ob-step","Schritt "+(obStep+1)+" von "+OB.length+" · "+OB[obStep]));
-  var prog=el("div","progress");for(var i=0;i<OB.length;i++){var b=el("i");if(i<=obStep)b.className="done";prog.appendChild(b);}
-
-  if(obStep===0){
-    w.appendChild(el("h2","","Ein paar Eckdaten"));
-    w.appendChild(el("p","intro","Alter, Geschlecht und Körpergewicht bestimmen, woran deine Kraft gemessen wird. Ziele trägst du nirgends ein – die ergeben sich daraus."));
-    w.appendChild(prog);
-    function qr(lab,sub,node){var r=el("div","qrow"),q=el("div","q");q.innerHTML="<b>"+lab+"</b><span>"+sub+"</span>";var qi=el("div","qin");qi.appendChild(node);r.appendChild(q);r.appendChild(qi);w.appendChild(r);return qi;}
-    function ni(v,mn,mx,st,cb){var n=document.createElement("input");n.type="number";n.inputMode="decimal";n.min=mn;n.max=mx;n.step=st;n.value=v;n.oninput=function(){cb(parseFloat(n.value.replace(",","."))||0);};return n;}
-    qr("Alter","Kraftstufen und Ausdauer sind altersgewichtet",ni(ob.age,12,99,1,function(v){ob.age=v;})).appendChild(el("span","unit","J."));
-    var sx=document.createElement("select");sx.style.width="130px";
-    [["m","männlich"],["w","weiblich"]].forEach(function(o){var e=document.createElement("option");e.value=o[0];e.textContent=o[1];sx.appendChild(e);});
-    sx.value=ob.sex;sx.onchange=function(){ob.sex=sx.value;};
-    qr("Geschlecht","Referenzwerte und Körperfigur",sx);
-    qr("Körpergewicht","Bezug für alle Kraftstufen",ni(ob.bw,30,250,0.5,function(v){ob.bw=v;})).appendChild(el("span","unit","kg"));
-    qr("Ruhepuls","morgens im Liegen – daraus wird die Ausdauer geschätzt",ni(ob.hr,0,140,1,function(v){ob.hr=v;})).appendChild(el("span","unit","bpm"));
-    var h=el("div","hint");h.innerHTML="<b>Keinen Ruhepuls zur Hand?</b> Lass 0 stehen – die Ausdauer zählt dann nur über deine Wochenminuten. Nachtragen geht jederzeit unter „Werte“.";w.appendChild(h);
-  }
-  if(obStep===1){
-    w.appendChild(el("h2","","Deine Hauptübungen"));
-    w.appendChild(el("p","intro","Für jedes Bewegungsmuster eine Übung als Startmessung. Nimm die, die du wirklich regelmäßig machst – später zählt ohnehin jede Übung mit Kraftstandard, die du einträgst."));
-    w.appendChild(prog);
-    PATTERNS.filter(function(p){return p.id!=="cardio";}).forEach(function(pt){
-      w.appendChild(el("div","grouplab",pt.name));var g=el("div","pickgrid");
-      candidatesFor(pt.id).forEach(function(e){
-        var b=el("button","pick");b.type="button";b.innerHTML=e.n+"<small>"+e.e+"</small>";
-        b.setAttribute("aria-pressed",String(ob.main[pt.id]===e.id));
-        b.onclick=function(){ob.main[pt.id]=(ob.main[pt.id]===e.id?null:e.id);
-          Array.prototype.forEach.call(g.children,function(c){c.setAttribute("aria-pressed","false");});
-          if(ob.main[pt.id]===e.id)b.setAttribute("aria-pressed","true");};
-        g.appendChild(b);});
-      w.appendChild(g);});
-    w.appendChild(el("div","grouplab","Ausdauer"));var g2=el("div","pickgrid");
-    EX.filter(function(e){return e.t==="cardio";}).slice(0,8).forEach(function(e){
-      var b=el("button","pick");b.type="button";b.innerHTML=e.n+"<small>"+e.intens+" intensiv</small>";
-      b.setAttribute("aria-pressed",String(ob.cardioPick===e.id));
-      b.onclick=function(){ob.cardioPick=e.id;Array.prototype.forEach.call(g2.children,function(c){c.setAttribute("aria-pressed","false");});b.setAttribute("aria-pressed","true");};
-      g2.appendChild(b);});
-    w.appendChild(g2);
-  }
-  if(obStep===2){
-    w.appendChild(el("h2","","Wo stehst du heute?"));
-    w.appendChild(el("p","intro","Die wichtigste Angabe der ganzen App. Trag einen schweren Arbeitssatz ein, den du bis nahe ans Limit geführt hast – daraus wird dein Einer-Maximum berechnet. Kennst du dein Einer-Maximum, trag es direkt ein."));
-    w.appendChild(prog);
-    mainList().forEach(function(id){
-      var e=exById(id),pr=obProfile(),card=el("div","card");card.style.marginBottom="10px";
-      card.appendChild(el("h3",null,e.n));
-      if(e.t==="load"){
-        var seg=el("div","segbtn");
-        [["set","Arbeitssatz"],["max","1RM bekannt"]].forEach(function(o){
-          var bb=el("button",null,o[1]);bb.type="button";bb.setAttribute("aria-selected",String((ob.mode[id]||"set")===o[0]));
-          bb.onclick=function(){ob.mode[id]=o[0];var y=window.scrollY;drawOb();window.scrollTo(0,y);};seg.appendChild(bb);});
-        card.appendChild(seg);
-      }
-      var isMax=e.t==="load"&&ob.mode[id]==="max",grid=el("div","grid2");
-      function nfield(lab,val,step,cb){var f=el("div","field");f.appendChild(el("label",null,lab));
-        var n=document.createElement("input");n.type="number";n.inputMode="decimal";n.step=step;n.min="0";n.value=val||"";n.placeholder="0";
-        n.oninput=function(){cb(parseFloat(n.value.replace(",","."))||0);upd();};f.appendChild(n);return f;}
-      if(e.t==="load")grid.appendChild(nfield(isMax?"Einer-Maximum (kg)":"Gewicht (kg)",ob.kg[id],"2.5",function(v){ob.kg[id]=v;}));
-      if(!isMax)grid.appendChild(nfield(e.t==="sec"?"Sekunden":"Wiederholungen",ob.val[id],"1",function(v){ob.val[id]=v;}));
-      card.appendChild(grid);
-      var out=el("div","calcout");card.appendChild(out);
-      function upd(){
-        var v=baseValue(id);
-        if(v<=0){out.textContent="Noch nichts eingetragen – die Übung wird erst gewertet, wenn du sie das erste Mal einträgst.";return;}
-        var g=grade(e,v,pr),th=thresholds(e,pr);
-        var txt=(e.t==="load"&&ob.mode[id]!=="max")?"Einer-Maximum <b>"+(Math.round(v*2)/2)+" kg</b>":"Gewertet als <b>"+fmtVal(v,e.t)+"</b>";
-        if(g)txt+="<br>Stufe <b>"+g.name+"</b>"+(g.next?" · nächste ab "+fmtVal(g.next,e.t):" · Höchststufe");
-        else if(th)txt+="<br>Stufe „"+LEVELS[0]+"“ ab "+fmtVal(th[0],e.t);
-        out.innerHTML=txt;
-      }
-      upd();w.appendChild(card);
-    });
-    var h2=el("div","hint");h2.innerHTML="<b>Sätze mit bis zu 15 Wiederholungen</b> lassen sich gut umrechnen. Bei sehr langen Sätzen wird die Schätzung unsicher – dann lieber ein schwereres Gewicht mit weniger Wiederholungen eintragen.";w.appendChild(h2);
-  }
-  if(obStep===3){
-    w.appendChild(el("h2","","Welchen Rhythmus hältst du?"));
-    w.appendChild(el("p","intro","Der Maßstab für Konstanz, Mobilität und Ausdauer. Nimm die normale Woche, nicht die Idealwoche – ein Ziel, das du zu 90 % erfüllst, trägt dich; eins, das du zu 40 % erfüllst, zermürbt."));
-    w.appendChild(prog);
-    [["days","Trainingstage pro Woche","Tage","jeder Tag mit mindestens einem Satz",1,7,"1"],["mob","Mobilität pro Woche","×","Dehnen, Hüfte, Schulter",0,7,"1"],["cardio","Ausdauerminuten pro Woche","min","WHO empfiehlt 150 moderate Minuten",0,600,"15"]].forEach(function(g){
-      var r=el("div","qrow"),q=el("div","q");q.innerHTML="<b>"+g[1]+"</b><span>"+g[3]+"</span>";var qi=el("div","qin");
-      var n=document.createElement("input");n.type="number";n.inputMode="numeric";n.min=g[4];n.max=g[5];n.step=g[6];n.value=ob.goals[g[0]];n.oninput=function(){ob.goals[g[0]]=parseInt(n.value,10)||0;};
-      qi.appendChild(n);qi.appendChild(el("span","unit",g[2]));r.appendChild(q);r.appendChild(qi);w.appendChild(r);});
-    var h=el("div","hint");h.innerHTML="<b>Warum rollierend?</b> Alles misst die letzten 30 Tage, die Muskelkarte die letzten 7. Eine gute Woche hebt den Wert, eine faule senkt ihn von allein – ohne Strafpunkte, das Fenster schiebt sich einfach weiter.";w.appendChild(h);
-  }
-  if(obStep===4){
-    var pv=preview();
-    w.appendChild(el("h2","","Dein Startwert"));
-    w.appendChild(el("p","intro","Deine Testwerte zählen als erster bestätigter Messpunkt. Konstanz, Abdeckung und Ausdauer bauen sich in den nächsten Wochen aus echten Einträgen auf – dass sie jetzt niedrig stehen, ist richtig so."));
-    w.appendChild(prog);
-    var card=el("div","card"),big=el("div","hero-val");big.innerHTML='<b class="num">'+pv.fitness+'</b><i>/ 100 zum Start</i>';card.appendChild(big);
-    SKILLDEF.forEach(function(sd){
-      var v=pv[sd.key],m=el("div","meter");m.style.padding="9px 0";m.style.borderBottom="0";
-      var top=el("div","meter-top"),nm=el("div","meter-name"),sw=el("span","sw");sw.style.background=sd.color;nm.appendChild(sw);nm.appendChild(document.createTextNode(sd.name));
-      var val=el("div","meter-val");val.innerHTML='<span class="num">'+Math.round(v)+'</span>';top.appendChild(nm);top.appendChild(val);
-      var bar=el("div","bar"),fi=el("i");fi.style.background=sd.color;fi.style.width=clamp(v,0,100)+"%";bar.appendChild(fi);
-      m.appendChild(top);m.appendChild(bar);card.appendChild(m);});
-    w.appendChild(card);
-    if(pv.grades.length){var c2=el("div","card flush");
-      pv.grades.forEach(function(g){var r=el("div","row"),m=el("div","main");m.appendChild(el("b",null,g.name));
-        m.appendChild(el("span",null,g.val+(g.next!=="max"?" · nächste Stufe ab "+g.next:"")));r.appendChild(m);
-        r.appendChild(el("span","pill g"+clamp(g.idx,0,LEVELS.length-1),g.lvl));c2.appendChild(r);});
-      w.appendChild(c2);}
-    var h=el("div","hint");h.innerHTML="<b>Konstanz und Abdeckung stehen noch niedrig</b> – sie messen, was du in den letzten Tagen wirklich getan hast. Nach zwei Wochen Eintragen sind sie aussagekräftig.";w.appendChild(h);
-  }
-  var nav=el("div","ob-nav");
-  var back=el("button","btn ghost",obStep===0?"Abbrechen":"Zurück");back.type="button";
-  back.onclick=function(){
-    try{if(obStep===0){if(state.profile){$("ob").hidden=true;document.body.style.overflow="";}return;}obStep--;drawOb();}
-    catch(e){try{console.error("onboarding-back error",e);}catch(e2){}toast("Fehler: "+(e&&e.message?e.message:"unbekannt"));}
-  };
-  if(obStep===0&&!state.profile)back.style.visibility="hidden";
-  var next=el("button","btn primary",obStep===4?"Los geht's":"Weiter");next.type="button";
-  next.onclick=function(){
-    // Absicherung: falls beim Abschluss (Profil bauen, Sätze eintragen, rendern) irgendwo ein
-    // unerwarteter Fehler auftritt, blieb die Oberfläche bisher stumm hängen ("nichts passiert").
-    // Jetzt wird der Fehler sichtbar gemacht, statt die Aktion lautlos zu verschlucken.
-    try{
-      if(obStep===1&&!mainList().length){toast("Wähl mindestens eine Hauptübung.");return;}
-      if(obStep===4){finishOnboarding();return;}
-      obStep++;drawOb();
-    }catch(e){
-      try{console.error("onboarding-next error",e);}catch(e2){}
-      toast("Fehler beim Fortfahren: "+(e&&e.message?e.message:"unbekannt"));
-    }
-  };
-  nav.appendChild(back);nav.appendChild(next);
-  var navWrap=$("ob-navwrap");navWrap.innerHTML="";navWrap.appendChild(nav);
-  $("ob-scroll") /* no-op guard if missing */;
-  var scroller=document.querySelector(".ob-scroll");if(scroller)scroller.scrollTop=0;
-}
-
-function buildProfile(){
-  return {version:3,age:ob.age,sex:ob.sex,bodyweight:ob.bw,restHr:ob.hr,cooper:0,mainEx:mainList(),cardioPick:ob.cardioPick,
-    goals:{days:ob.goals.days,mob:ob.goals.mob,cardio:ob.goals.cardio},peaks:{},startedAt:TODAY};
-}
-
-function preview(){
-  var old=state.profile;state.profile=buildProfile();
-  var grades=[],sum=0,n=0;
-  mainList().forEach(function(id){var e=exById(id),v=baseValue(id),g=v>0?grade(e,v):null;sum+=g?g.score:0;n++;
-    if(g)grades.push({name:e.n,val:fmtVal(v,e.t),lvl:g.name,idx:g.idx,next:g.next?fmtVal(g.next,e.t):"max"});});
-  var kraft=n?sum/n:0,c=compute(TODAY);state.profile=old;
-  c.kraft=kraft;c.fitness=Math.round(W.kraft*kraft+W.konst*c.konst+W.deckung*c.deckung+W.ausdauer*c.ausdauer+W.mob*c.mob);c.grades=grades;return c;
-}
-
-function finishOnboarding(){
-  state.profile=buildProfile();var d=day(TODAY);
-  mainList().forEach(function(id){
-    var e=exById(id),v=baseValue(id);if(v<=0)return;
-    if(d.sets.some(function(s){return s.ex===id;}))return;
-    if(e.t==="load"){if(ob.mode[id]==="max")d.sets.push({ex:id,kg:ob.kg[id]||0,reps:1});else d.sets.push({ex:id,kg:ob.kg[id]||0,reps:ob.val[id]||1});}
-    else d.sets.push({ex:id,kg:0,reps:ob.val[id]||0});
+  saveLocal();if(!db)return Promise.resolve(false);
+  // Cloud-Schreibvorgänge seriell ausführen. Sonst kann ein langsamer älterer Stand einen
+  // neueren überholen und zuletzt in der Datenbank landen.
+  if(persistRun){persistAgain=true;return persistRun;}
+  var p=Object.keys(state.dirty),pv={},r=Object.keys(state.dirtyRoutines),rv={},ev=state.dirtyExtras,jobs=[];
+  p.forEach(function(d){pv[d]=state.dirty[d];var b=state.days[d];if(!b)return;
+    jobs.push(db.doc("days/"+d).set({sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}));});
+  r.forEach(function(id){rv[id]=state.dirtyRoutines[id];
+    jobs.push(state.routines[id]?db.doc("routines/"+id).set(state.routines[id]):db.doc("routines/"+id).delete());});
+  if(state.profile)jobs.push(db.doc("state/profile").set(state.profile));
+  jobs.push(db.doc("state/exoverrides").set({v:state.exOverrides||{}}));
+  jobs.push(db.doc("state/customex").set({v:state.customEx||[]}));
+  persistRun=Promise.all(jobs).then(function(){
+    p.forEach(function(d){if(state.dirty[d]===pv[d])delete state.dirty[d];});
+    r.forEach(function(id){if(state.dirtyRoutines[id]===rv[id])delete state.dirtyRoutines[id];});
+    if(state.dirtyExtras===ev){state.dirtyExtras=0;state.extrasGone={};}
+    if(syncRetryT){clearTimeout(syncRetryT);syncRetryT=null;}
+    saveLocal();setSync("on","synchronisiert");return true;
+  },function(){
+    // Nichts als erledigt markieren: alle Versionen bleiben im localStorage und werden
+    // beim nächsten Versuch oder sogar nach einem Neustart erneut übertragen.
+    saveLocal();setSync("off","Sync gestört – lokal gespeichert");
+    if(syncRetryT)clearTimeout(syncRetryT);
+    syncRetryT=setTimeout(function(){syncRetryT=null;persist();},30000);
+    return false;
+  }).then(function(ok){
+    persistRun=null;
+    if(persistAgain){persistAgain=false;setTimeout(persist,0);}
+    return ok;
   });
-  touch(TODAY);$("ob").hidden=true;document.body.style.overflow="";persist();renderAll();
+  return persistRun;
 }
-
-
-/* ================= Start ================= */
-function validWorkout(w){
-  if(!w||typeof w!=="object"||!Array.isArray(w.exercises)||!w.startedAt)return null;
-  if(Date.now()-w.startedAt>12*3600*1000)return null;           // älter als 12 h: vergessen → verwerfen
-  if(!w.rest)w.rest={endAt:0,len:90};if(w.pausedMs==null)w.pausedMs=0;if(!w.id)w.id=rid();if(!w.name)w.name="Training";
-  // Zwei gueltige Formen: Kraftuebung (sets-Array) und Ausdauer (cardioRec). Frueher wurde
-  // hier nur auf sets geprueft - jede Ausdauer-Einheit fiel dadurch beim Laden aus dem
-  // Training heraus und war nach einem Neustart weg.
-  w.exercises=w.exercises.filter(function(e){
-    return e&&exById(e.ex)&&(Array.isArray(e.sets)||(e.cardioRec&&typeof e.cardioRec==="object"));});
-  relinkCardio(w);
-  return w;
-}
-
-loadLocal();
-try{var lw=localStorage.getItem("formwert-workout");if(lw)workout=validWorkout(JSON.parse(lw));}
-catch(e){workout=null;}
-
-/* Erst starten, wenn das ganze Skript durchgelaufen ist. Die Nachschlagetabellen des
-   3D-Modells (FW3D_MESH2FINE, FW3D_FORCE_TRANSPARENT_GROUPS) werden weiter unten
-   zugewiesen; wurde hier schon gerendert, liefen die Figuren des Heute-Tabs in ein noch
-   undefiniertes Nachschlagewerk und blieben leer. Sichtbar wurde das nur, wenn fuer heute
-   bereits Saetze eingetragen waren - deshalb ist es lange nicht aufgefallen. */
-// Name der eigenen Uebung -> ID der jetzt eingebauten Entsprechung. Nur exakte Namens-
-// treffer, damit nichts Falsches zusammengelegt wird.
-var LEGACY_EX_MERGE={"Rotierende Torso Maschine":"torso_rot","Einbeiniges Balancieren":"balance_sl"}
-;
-
-function mergeDuplicateCustomEx(){
-  var changed=false;
-  (state.customEx||[]).slice().forEach(function(ce){
-    var newId=LEGACY_EX_MERGE[ce.n];
-    if(!newId||ce.id===newId||!exById(newId))return;
-    var oldId=ce.id;
-    for(var d in state.days){
-      var dd=state.days[d],touched=false;
-      (dd.sets||[]).forEach(function(s){if(s.ex===oldId){s.ex=newId;touched=true;}});
-      (dd.cardio||[]).forEach(function(c){if(c.ex===oldId){c.ex=newId;touched=true;}});
-      if(touched){state.dirty[d]=true;changed=true;}
-    }
-    for(var rid2 in state.routines){
-      var r=state.routines[rid2],touched2=false;
-      (r.items||[]).forEach(function(it){if(it.ex===oldId){it.ex=newId;touched2=true;}});
-      if(touched2){state.dirtyRoutines[rid2]=true;changed=true;}
-    }
-    if(workout&&Array.isArray(workout.exercises)){
-      var touched3=false;
-      workout.exercises.forEach(function(we){if(we.ex===oldId){we.ex=newId;touched3=true;}});
-      if(touched3){changed=true;saveWorkout();}
-    }
-    state.customEx=state.customEx.filter(function(x){return x.id!==oldId;});
-    for(var i=EX.length-1;i>=0;i--)if(EX[i].id===oldId)EX.splice(i,1);
-    if(EX_BY_ID)delete EX_BY_ID[oldId];
-    changed=true;
-  });
-  if(changed)saveLocal();
-  return changed;
-}
-
-/* Wird genau einmal wirksam: entweder die App zeigen (Profil vorhanden) oder die
-   Einrichtung starten (wirklich keins vorhanden - weder hier noch in der Cloud). */
-var bootSettled=false;
-
-function fwBootReady(){
-  if(bootSettled)return;
-  bootSettled=true;
-  var bw=$("bootwait");if(bw)bw.hidden=true;
-  document.body.style.overflow="";
-  if(state.profile&&state.profile.version>=3)renderAll();
-  else startOnboarding(state.profile&&state.profile.version>=2?state.profile:null);
-}
-
-function fwBoot(){
-  selectTab("tab-heute");
-  mergeDuplicateCustomEx();
-  // Liegt hier schon ein Profil, geht es sofort weiter - kein Warten, kein Flackern.
-  if(state.profile&&state.profile.version>=3){fwBootReady();return;}
-  // Sonst: nicht sofort nach den Eckdaten fragen. Erst muss feststehen, ob in der
-  // Cloud eins liegt. connect() meldet sich; die Notbremse greift, falls gar nichts
-  // antwortet (kein Netz, Capability nicht verfuegbar, haengende Verbindung).
-  var bw=$("bootwait");if(bw)bw.hidden=false;
-  document.body.style.overflow="hidden";
-  setTimeout(fwBootReady,12000);
-}
-
-setSync("","nur dieses Gerät");
-
-var connectTries=0;
-
-function connect(){
-  if(!window.claude||!window.claude.use){setSync("off","nur dieses Gerät");fwBootReady();return;}
-  window.claude.use("db").then(function(d){
-    if(!d){setSync("off","nur dieses Gerät");fwBootReady();return;}
-    db=d;
-    // Eine offline begonnene Wiederherstellung muss VOR jedem Cloud-Download abgeschlossen
-    // werden. Sonst würden gerade ersetzte lokale Daten wieder mit dem alten Kontostand vermischt.
-    if(cloudReplacePending()){
-      setSync("","Backup wird übertragen");
-      return replaceCloudFromState(d).then(function(){
-        markCloudReplacePending(false);connectTries=0;setSync("on","synchronisiert");connect();
-      }).catch(function(){
-        setSync("off","Backup nur lokal – Übertragung wird wiederholt");fwBootReady();setTimeout(connect,30000);
-      });
-    }
-    setSync("on","synchronisiert");
-    d.doc("state/profile").get().then(function(s){
-      var sd=s.exists?cloneWritable(s.data()):null;
-      if(sd&&sd.version>=3&&!state.profile)state.profile=sd;
-      // Ab hier steht fest, ob es ein gespeichertes Profil gibt - der Startbildschirm
-      // darf weg. Tage und Einheiten kommen gleich danach und rendern nochmal.
-      fwBootReady();
-      return d.collection("days").limit(400).get();
-    }).then(function(qs){
-      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(!b)return;
-        if(doc.id===TODAY&&state.days[TODAY]&&(state.days[TODAY].sets||[]).length)return;
-        state.days[doc.id]={sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""};});
-      return d.doc("state/workout").get().then(function(ws){if(ws.exists&&!workout){workout=validWorkout(cloneWritable(ws.data()));if(!workout)d.doc("state/workout").delete().catch(function(){});else{secDirty.training=true;if(tab==="tab-training")renderSession();renderBanner();}}}).catch(function(){}).then(function(){return fw_syncPullExtras(d);}).then(function(){return d.collection("routines").limit(100).get();});
-    }).then(function(qs){
-      if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id)state.routines[b.id]=b;});
-      mergeDuplicateCustomEx();
-      if(state.profile&&state.profile.version>=3)renderAll();persist();
-      connectTries=0;setSync("on","synchronisiert");
-    }).catch(function(){
-      // Ein einzelner Netzwerk-Hänger (z. B. direkt beim App-Start, wenn parallel schon ein
-      // Training gestartet wird) sollte die Sync-Anzeige nicht für immer auf "gestört" einfrieren:
-      // ein paar Mal zügig erneut versuchen, danach im Hintergrund weiter alle 30 s, damit sich
-      // die Verbindung von selbst erholt, sobald das Netz wieder mitspielt.
-      connectTries++;
-      if(connectTries<=3)setTimeout(connect,Math.min(1500*connectTries,6000));
-      else{setSync("off","Sync gestört – lokal gespeichert");setTimeout(connect,30000);}
-      // Nach einem Fehlversuch nicht ewig auf dem Startbildschirm stehen bleiben:
-      // beim ersten Versuch noch kurz weiterwarten, danach freigeben.
-      if(connectTries>1)fwBootReady();
-    });
-  }).catch(function(){setSync("off","nur dieses Gerät");fwBootReady();});
-}
-
-var FW3D_HTML_B64="__DATEN_ENTFERNT__base64__11174024_ZEICHEN__";

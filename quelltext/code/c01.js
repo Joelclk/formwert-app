@@ -1,6 +1,6 @@
 /* Formwert - Lesekopie, nicht ausfuehrbar.
    Erzeugt aus formwert_app.html von werkzeug/zerlegen.py.
-   Enthaelt: (Anweisung) bis SCAP_TMAJ
+   Enthaelt: (Anweisung) bis SCAP_TMIN
 */
 
 "use strict";
@@ -235,7 +235,7 @@ function setLabel(ex,s){
 /* ================= State ================= */
 var TODAY=iso(new Date());
 
-var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},customEx:[],exOverrides:{}}
+var state={profile:null,days:{},routines:{},dirty:{},dirtyRoutines:{},dirtyExtras:0,extrasGone:{},customEx:[],exOverrides:{}}
 ;
 
 var session=null,
@@ -283,6 +283,10 @@ function applyExOverrides(){
     var merged=Object.assign({},base);
     delete merged.mob;delete merged.wt;delete merged.uni;
     Object.assign(merged,state.exOverrides[id]);
+    // Ältere Fassungen des Formulars haben bei Ausdauer-Übungen Art und Bewegungsmuster leer
+    // gespeichert. Leer ist nie gewollt – dann gilt wieder das Original.
+    if(!merged.t)merged.t=base.t;
+    if(!merged.pat)merged.pat=base.pat;
     Object.keys(ex).forEach(function(k){delete ex[k];});
     Object.assign(ex,merged);
   });
@@ -290,20 +294,20 @@ function applyExOverrides(){
 
 function setExOverride(id,patch){
   state.exOverrides=state.exOverrides||{};
-  state.exOverrides[id]=patch;
+  state.exOverrides[id]=patch;if(state.extrasGone)delete state.extrasGone["ov:"+id];markExtrasDirty();
   applyExOverrides();saveLocal();queueSave();secDirty.entdecken=true;
 }
 
 function resetExOverride(id){
   if(!state.exOverrides)return;
-  delete state.exOverrides[id];
+  delete state.exOverrides[id];markExtrasDirty("ov:"+id);
   var base=EX_BASE[id],ex=exById(id);
   if(base&&ex){Object.keys(ex).forEach(function(k){delete ex[k];});Object.assign(ex,base);}
   saveLocal();queueSave();secDirty.entdecken=true;
 }
 
 function loadLocal(){try{var r=localStorage.getItem(LSK)||localStorage.getItem("formwert-v2");
-  if(r){var o=JSON.parse(r);if(o&&o.profile){state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];state.exOverrides=o.exOverrides||{};}}}catch(e){}
+  if(r){var o=JSON.parse(r);if(o&&o.profile){state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];state.exOverrides=o.exOverrides||{};state.dirty=o.dirty||{};state.dirtyRoutines=o.dirtyRoutines||{};state.dirtyExtras=o.dirtyExtras||0;state.extrasGone=o.extrasGone||{};}}}catch(e){}
   applyCustomEx();applyExOverrides();}
 
 // Dokumente, die aus der Cloud-Datenbank kommen, können vom Capability-Wrapper eingefroren
@@ -326,7 +330,8 @@ function warnSaveFailed(){
 }
 
 function saveLocal(){try{localStorage.setItem(LSK,JSON.stringify(
-  {profile:state.profile,days:state.days,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides}));}catch(e){warnSaveFailed();}}
+  {profile:state.profile,days:state.days,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides,
+   dirty:state.dirty,dirtyRoutines:state.dirtyRoutines,dirtyExtras:state.dirtyExtras,extrasGone:state.extrasGone}));}catch(e){warnSaveFailed();}}
 
 // renderAll()/renderLight() laufen nach praktisch jeder Nutzer-Interaktion (jeder Satz, jedes
 // Tab-Wechseln, jeder Eintrag) – riefen bisher aber direkt saveLocal() auf, das bei jedem Aufruf
@@ -346,7 +351,7 @@ function uniqueExId(){var id;do{id="custom_"+rid();}while(exById(id));return id;
 
 function addCustomExercise(ex){
   ex.id=uniqueExId();ex.custom=true;
-  EX.push(ex);if(EX_BY_ID)EX_BY_ID[ex.id]=ex;state.customEx.push(ex);saveLocal();queueSave();secDirty.entdecken=true;
+  EX.push(ex);if(EX_BY_ID)EX_BY_ID[ex.id]=ex;state.customEx.push(ex);markExtrasDirty();saveLocal();queueSave();secDirty.entdecken=true;
   return ex;
 }
 
@@ -354,7 +359,7 @@ function removeCustomExercise(id){
   state.customEx=state.customEx.filter(function(e){return e.id!==id;});
   for(var i=0;i<EX.length;i++){if(EX[i].id===id){EX.splice(i,1);break;}}
   if(EX_BY_ID)delete EX_BY_ID[id];
-  saveLocal();queueSave();secDirty.entdecken=true;
+  markExtrasDirty("ex:"+id);saveLocal();queueSave();secDirty.entdecken=true;
 }
 
 
@@ -1054,12 +1059,17 @@ function exerciseForm(b,existing){
   [["load","Gewicht × Wdh"],["reps","Wiederholungen"],["sec","Sekunden halten"]].forEach(function(o){
     var op=document.createElement("option");op.value=o[0];op.textContent=o[1];typeSel.appendChild(op);
   });
+  // Ausdauer-Übungen lassen sich bearbeiten, aber nicht neu anlegen – darum fehlt die Option
+  // sonst. Ohne sie würde das Feld leer, und die Übung verlöre beim Speichern ihre Art: Sie
+  // verschwand aus der Ausdauer-Auswahl und wurde wie eine Kraftübung behandelt.
+  if(existing&&existing.t==="cardio"){var opT=document.createElement("option");opT.value="cardio";opT.textContent="Ausdauer (Minuten)";typeSel.appendChild(opT);}
   if(existing)typeSel.value=existing.t;
   typeF.appendChild(typeSel);grid.appendChild(typeF);
 
   var patF=el("div","field");patF.appendChild(el("label",null,"Bewegungsmuster"));
   var patSel=document.createElement("select");
   movementGroups().forEach(function(p){var op=document.createElement("option");op.value=p.id;op.textContent=p.name;patSel.appendChild(op);});
+  if(existing&&existing.pat==="cardio"){var opP=document.createElement("option");opP.value="cardio";opP.textContent="Ausdauer";patSel.appendChild(opP);}
   if(existing)patSel.value=existing.pat;
   patF.appendChild(patSel);grid.appendChild(patF);
   b.appendChild(grid);
@@ -1172,7 +1182,7 @@ function sheetEditExercise(ex,onDone){
       var patch=form.getPatch();if(!patch)return;
       if(ex.custom){
         Object.keys(ex).forEach(function(k){if(k!=="id"&&k!=="custom")delete ex[k];});
-        Object.assign(ex,patch);saveLocal();secDirty.entdecken=true;
+        Object.assign(ex,patch);markExtrasDirty();saveLocal();queueSave();secDirty.entdecken=true;
       } else {
         setExOverride(ex.id,patch);
       }
@@ -1619,13 +1629,13 @@ function sheetEditLoggedSet(ex,date,setIdx,onChange){
       s.kg=kgF?(parseFloat(kgF.input.value)||0):0;
       s.reps=reps;
       if(ex.uni){s.repsL=parseInt(repLF.input.value,10)||0;s.repsR=parseInt(repRF.input.value,10)||0;}
-      touch(date);saveLocal();closeSheet();renderAll();onChange();
+      syncWorkoutRec(s,false);touch(date);saveLocal();closeSheet();renderAll();onChange();
     };
     b.appendChild(save);
     var del=el("button","btn ghost block","Satz löschen");del.style.marginTop="8px";
     del.onclick=function(){
       askConfirm("Satz löschen?","Dieser Satz vom "+deDate(date)+" wird entfernt.","Löschen",function(){
-        state.days[date].sets.splice(setIdx,1);touch(date);saveLocal();closeSheet();renderAll();onChange();
+        syncWorkoutRec(state.days[date].sets.splice(setIdx,1)[0],true);touch(date);saveLocal();closeSheet();renderAll();onChange();
       },true);
     };
     b.appendChild(del);
@@ -1884,7 +1894,7 @@ function renderToday(){
       // haben, nur hier im Tages-Log).
       del.onclick=function(){var idx=arr[arr.length-1].i;
         askConfirm("Letzten Satz löschen?",ex.n+" · "+setLabel(ex,d.sets[idx])+" wird entfernt.","Löschen",function(){
-          d.sets.splice(idx,1);touch(dateKey);renderAll();
+          syncWorkoutRec(d.sets.splice(idx,1)[0],true);touch(dateKey);renderAll();
         },true);};r.appendChild(del);
     }
     box.appendChild(r);
@@ -1897,7 +1907,7 @@ function renderToday(){
       var del=el("button","iconbtn");del.setAttribute("aria-label","Löschen");del.innerHTML=svgIcon(IC_TRASH,1.6);
       del.onclick=function(){
         askConfirm("Eintrag löschen?",(ex?ex.n:c.ex)+" · "+c.min+" Minuten wird entfernt.","Löschen",function(){
-          d.cardio.splice(i,1);touch(dateKey);renderAll();
+          dropWorkoutCardio(d.cardio.splice(i,1)[0]);touch(dateKey);renderAll();
         },true);};r.appendChild(del);
     }
     box.appendChild(r);
@@ -2097,10 +2107,15 @@ function placeCallout(ms){
   var selFine=effFine(),selSet=effSet();   // lokale Sicht auf die offene Ebene
   if(!selFine&&!selSet){co.innerHTML='<span class="co-hint">Tipp einen Muskel an – oder wähl oben eine Region.</span>';return;}
   if(selFine&&FINE[selFine]){
-    var f=FINE[selFine],m=muscleById(f.g),v=Math.round((ms[f.g]||0)*10)/10,z=zoneOf(v,m),em=emphasisSets(selFine,TODAY);
+    var f=FINE[selFine],m=muscleById(f.g);
+    // Hand, Fuß, Hals, tiefe Wade usw. sind im 3D-Modell antippbar, gehören aber zu keiner
+    // gezählten Muskelgruppe. Ohne diese Abfrage brach zoneOf() ab und die Anzeige blieb stehen.
+    if(!m){co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em>Wird im Training nicht eigens gezählt</em>';return;}
+    var v=Math.round((ms[f.g]||0)*10)/10,z=zoneOf(v,m),em=emphasisSets(selFine,TODAY);
     co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em class="z'+z+'">'+reizPct(v,m)+' % Reiz · '+v+' Sätze · '+zoneLabel(z)+(em!=null?' · '+em+' mit Betonung hier':'')+'</em>';
   } else {
-    var ids=[];selSet.forEach(function(k){var g=FINE[k].g;if(ids.indexOf(g)<0)ids.push(g);});
+    var ids=[];selSet.forEach(function(k){var g=FINE[k].g;if(ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
+    if(!ids.length){co.innerHTML='<b>'+selLabel+'</b><em>Wird im Training nicht eigens gezählt</em>';return;}
     var tot=0,ok=0;ids.forEach(function(id){var mm=muscleById(id),vv=ms[id]||0;tot+=vv;var zz=zoneOf(vv,mm);if(zz===1)ok++;});
     var names=ids.map(function(id){return muscleById(id).name;}).join(" · ");
     co.innerHTML='<b>'+selLabel+'</b>'+(names!==selLabel?'<span>'+names+'</span>':'')+'<em class="'+(ok?"z1":"z0")+'">'+(Math.round(tot*10)/10)+' Sätze · '+ok+' von '+ids.length+' im Korridor</em>';
@@ -2180,14 +2195,3 @@ var DELT_LINE_BACK=[[0.028,0.574],[0.055,0.549],[0.081,0.507],[0.107,0.467],[0.1
 var SCAP_INFRA=[[0.393,0.002],[0.423,0.006],[0.446,0.015],[0.466,0.021],[0.547,0.073],[0.625,0.174],[0.643,0.198],[0.657,0.22],[0.671,0.243],[0.672,0.26],[0.664,0.279],[0.657,0.298],[0.651,0.315],[0.644,0.334],[0.64,0.348],[0.632,0.356],[0.618,0.357],[0.601,0.357],[0.353,0.2],[0.21,0.083],[0.205,0.074],[0.301,0.025],[0.321,0.015],[0.34,0.009],[0.361,0.005],[0.382,0.003]];
    // Untergrätenmuskel
 var SCAP_TMIN=[[0.09,0.124],[0.176,0.09],[0.26,0.151],[0.283,0.17],[0.269,0.175]];
-     // kleiner Rundmuskel
-// Der Umriss der "lats"-Maske besteht oben aus einem eigenen, separat gezeichneten Teilpfad (neben
-// dem großen Lat-Dreieck) – er deckt Untergräten- und kleinen Rundmuskel ab, reicht aber medial
-// (zur Wirbelsäule hin) noch etwas über SCAP_INFRA/SCAP_TMIN hinaus: ein schmaler Zwickel direkt an
-// der Nahtlinie zum Trapezius, der zu keinem der beiden Muskeln gehört. Direkt aus diesem Teilpfad
-// übernommen (nicht neu geschätzt), damit die Kontur exakt passt. Per "exclude" aus der Lat-Restfläche
-// herausgeschnitten, ohne einem Muskel zugeordnet zu sein – sichtbares Ergebnis: an dieser Stelle
-// bleibt die Grundzeichnung ungefärbt statt fälschlich als Lat-Fläche eingefärbt zu werden.
-var LATS_UPPER_SHAPE=[[0.584,0.357],[0.6,0.356],[0.353,0.2],[0.21,0.083],[0.205,0.074],[0.199,0.077],[0.146,0.1],[0.1,0.12],[0.176,0.09],[0.26,0.151],[0.283,0.17],[0.269,0.175],[0.091,0.124],[0.084,0.127],[0.057,0.139],[0.238,0.182],[0.301,0.2],[0.367,0.23],[0.471,0.289],[0.56,0.357]];
-
-var SCAP_TMAJ=[[-0.001,0.174],[0.01,0.204],[0.054,0.26],[0.125,0.294],[0.167,0.309],[0.226,0.326],[0.317,0.342],[0.447,0.354],[0.56,0.357],[0.471,0.289],[0.367,0.23],[0.301,0.2],[0.238,0.182],[0.048,0.137],[0.006,0.155]];
