@@ -1,0 +1,164 @@
+/* ==========================================================
+   2-designsystem.css - Designsystem 2: ueberschreibende Schicht fuer die Bausteine aus 1-basis.css
+   Reihenfolge der Dateien ist wichtig: spaetere Regeln ueberschreiben fruehere.
+   Inhalt:
+   - Formwert Designsystem 2
+   - Grundlagen
+   - Kopfzeile
+   - Abschnittsüberschriften
+   - Karten
+   - Listenzeilen
+   - Buttons
+   - Status-Chips
+   - Fortschrittsbalken
+   - Leere Zustände
+   - Eingabefelder
+   - Filter-Chips
+   - Bottom-Sheets
+   - Untere Navigation
+   ========================================================== */
+/* =====================================================================================
+   Formwert Designsystem 2
+   Eine Schicht über den bisherigen Bausteinen: gleiche Klassennamen, gleiche Struktur,
+   ruhigere Hierarchie. Steht bewusst am Ende, damit sie gezielt überschreibt statt die
+   gewachsenen Einzelregeln darüber anzufassen – so bleibt jede Sonderregel (Trainingsseite,
+   3D-Ansicht, Figuren) funktionsfähig, und die neue Optik liegt an einer Stelle.
+   ===================================================================================== */
+
+/* ---------- Grundlagen ---------- */
+body{background:var(--ground);font-size:15.5px;line-height:1.5;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+button:focus-visible,.btn:focus-visible{outline-offset:3px}
+.wrap{padding:0 var(--s4) calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 40px);max-width:680px}
+section[id^="p-"]:not([hidden]){animation:fwPage var(--t-slow) var(--ease) both}
+@keyframes fwPage{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fwPop{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes fwFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ---------- Kopfzeile ---------- */
+.appbar{padding:14px 0 12px;margin:0 calc(-1 * var(--s4));padding-left:var(--s4);padding-right:var(--s2);
+  background:color-mix(in srgb,var(--ground) 86%,transparent);
+  -webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);gap:6px}
+.appbar>div:first-child{flex:1;min-width:0}
+.appbar h1{font-family:var(--f-cond);font-weight:700;font-size:28px;line-height:1.1;letter-spacing:-.01em;text-transform:none}
+.appbar .sub{font-family:var(--f-body);font-size:12.5px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.sync{font-family:var(--f-body);font-size:11.5px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3);
+  background:var(--surface);box-shadow:var(--card-sh);border-radius:var(--r-pill);padding:5px 10px 5px 9px;max-width:44vw;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+.sync .dot{width:6px;height:6px}
+.appbar-gear{margin-left:0}
+
+/* ---------- Abschnittsüberschriften ---------- */
+h2.sec{font-family:var(--f-cond);font-weight:600;font-size:17px;letter-spacing:0;text-transform:none;color:var(--ink);
+  margin:var(--s7) 2px var(--s3);align-items:baseline}
+h2.sec span{font-family:var(--f-body);font-size:12.5px;font-weight:500;color:var(--ink-3);letter-spacing:0}
+h2.sec .sec-t,h2.sec #todaylabel{font-family:var(--f-cond);font-size:17px;font-weight:600;color:var(--ink)}
+.eyebrow{font-family:var(--f-body);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ---------- Karten ---------- */
+.card{border-radius:var(--r);box-shadow:var(--card-sh);padding:var(--s4) var(--s4);margin-bottom:var(--s3)}
+.card>h3{font-family:var(--f-cond);font-weight:600;font-size:16px;letter-spacing:0}
+.card.flush{padding:0}
+.note{font-size:13px;color:var(--ink-3)}
+.hint{border-left:0;border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px var(--rule)}
+
+/* ---------- Listenzeilen ---------- */
+.row{padding:14px var(--s4);min-height:56px;gap:var(--s3);border-bottom:1px solid var(--rule)}
+.row .main b{font-family:var(--f-body);font-weight:600;font-size:15px;letter-spacing:0}
+.row .main span{font-size:13px;color:var(--ink-3);line-height:1.4}
+.row .val{font-size:14px;color:var(--ink-2)}
+.row.tap{transition:background var(--t-fast) ease}
+.row.tap:active,.row.tap:hover{background:var(--surface-2)}
+.chev{display:grid;place-items:center;color:var(--ink-3);opacity:.8}
+.chev svg{width:18px;height:18px}
+.iconbtn{min-width:44px;min-height:44px;display:inline-grid;place-items:center;padding:10px;color:var(--ink-3);transition:background var(--t-fast) ease,color var(--t-fast) ease}
+.iconbtn:hover{color:var(--ink)}
+.iconbtn:active{background:var(--surface-2);color:var(--ink)}
+.grouplab{font-family:var(--f-body);font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.empty{font-size:14px;padding:28px 18px}
+
+/* ---------- Buttons ---------- */
+.btn{border-radius:var(--r-pill);font-family:var(--f-body);font-weight:600;font-size:15px;min-height:50px;padding:13px 22px;
+  background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-2);
+  transition:transform var(--t-fast) var(--ease),background var(--t-fast) ease,box-shadow var(--t-fast) ease}
+.btn svg{flex:none}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 6px 16px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
+.btn.primary:hover{background:color-mix(in srgb,var(--accent) 90%,var(--ink))}
+.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule)}
+.btn.small{min-height:40px;padding:8px 16px;font-size:13.5px}
+.btn:disabled{opacity:.42;transform:none}
+.linkbtn{color:var(--accent-strong);min-height:40px;font-size:14px}
+
+/* ---------- Status-Chips ---------- */
+.pill{font-family:var(--f-body);font-size:11.5px;font-weight:600;letter-spacing:.01em;text-transform:none;padding:3px 9px;border-radius:var(--r-pill);line-height:1.45}
+.pill.l2{background:var(--good-soft);color:var(--good)}
+.pill.l0{background:var(--surface-2);color:var(--ink-3);box-shadow:inset 0 0 0 1px var(--rule)}
+.pill.pr{background:var(--accent-soft);color:var(--accent-strong)}
+.pill.pr::before{content:"★ "}
+.chip-s{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-body);font-size:11.5px;font-weight:600;
+  padding:3px 9px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--rule);white-space:nowrap}
+.chip-s.acc{background:var(--accent-soft);color:var(--accent-strong);box-shadow:none}
+.chip-s.good{background:var(--good-soft);color:var(--good);box-shadow:none}
+
+/* ---------- Fortschrittsbalken ---------- */
+.bar{height:8px;background:var(--sunken)}
+.bar i{transition:width .6s var(--ease)}
+.minibar{height:6px;background:var(--sunken)}
+.pbar{position:relative;height:6px;border-radius:var(--r-pill);background:var(--sunken);overflow:hidden}
+.pbar i{position:absolute;left:0;top:0;bottom:0;border-radius:inherit;background:var(--accent);transition:width .6s var(--ease)}
+.pbar.good i{background:var(--good)}
+
+/* ---------- Leere Zustände ---------- */
+.estate{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:var(--s4) var(--s4) var(--s5)}
+.estate b{font-family:var(--f-body);font-weight:600;font-size:15px}
+.estate p{margin:0 0 6px;font-size:13.5px;line-height:1.45;color:var(--ink-3);max-width:40ch}
+.estate .btnrow{width:100%}
+.estate-quiet{margin:0;padding:var(--s3) var(--s4) var(--s4);font-size:13.5px;color:var(--ink-3)}
+
+/* ---------- Eingabefelder ---------- */
+input[type=text],input[type=number],input[type=search],select,textarea{background:var(--surface-2);border:1px solid var(--rule-2);
+  border-radius:var(--r-sm);min-height:50px;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease,background var(--t-fast) ease}
+input[type=text]:focus,input[type=number]:focus,input[type=search]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);background:var(--surface)}
+input:disabled{opacity:1}
+.field label{font-family:var(--f-body);font-weight:600;font-size:12px;letter-spacing:.02em;text-transform:none;color:var(--ink-2)}
+.stepper{border-radius:var(--r-sm)}
+
+/* ---------- Filter-Chips ---------- */
+.fchip{font-family:var(--f-body);font-weight:600;font-size:13.5px;min-height:40px;padding:8px 15px;background:var(--surface);
+  box-shadow:inset 0 0 0 1px var(--rule-2);color:var(--ink-2);transition:background var(--t-fast) ease,color var(--t-fast) ease}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--surface);box-shadow:none}
+.fchip[aria-pressed="true"]::before{content:"✓";margin-right:6px;font-weight:700}
+.chipbar.sub .fchip{background:var(--surface)}
+.chipbar.sub .fchip[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.segbtn{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule)}
+
+/* ---------- Bottom-Sheets ---------- */
+.scrim{background:rgba(18,14,10,.42);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.sheet{border-radius:26px 26px 0 0;box-shadow:var(--sheet-sh);padding:6px var(--s4) calc(24px + env(safe-area-inset-bottom,0px));
+  transition:transform .3s var(--ease)}
+.grab{width:40px;height:5px;background:var(--rule-2);margin:6px auto 14px}
+.sheet h3{font-family:var(--f-cond);font-weight:700;font-size:21px;letter-spacing:-.005em}
+.sheet .row{padding-left:var(--s4);padding-right:var(--s4)}
+.calcout{border-radius:var(--r-sm);font-family:var(--f-body);font-size:13.5px}
+.wo-sum div{border-radius:var(--r-sm)}
+.wo-sum b{font-size:19px}
+.wo-sum span{font-family:var(--f-body);font-size:11px;letter-spacing:.03em;text-transform:none}
+
+/* ---------- Untere Navigation ---------- */
+nav.bottom{background:color-mix(in srgb,var(--surface) 88%,transparent);border-top:1px solid color-mix(in srgb,var(--rule) 80%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(18px);backdrop-filter:saturate(1.5) blur(18px);
+  padding:0 max(6px,env(safe-area-inset-left,0px)) env(safe-area-inset-bottom,0px) max(6px,env(safe-area-inset-right,0px));
+  justify-content:center}
+nav.bottom button{max-width:120px;min-height:var(--nav-h);padding:8px 0 7px;gap:3px;font-family:var(--f-body);font-weight:500;font-size:11px;
+  letter-spacing:.01em;text-transform:none;color:var(--ink-3);transition:color var(--t-fast) ease}
+nav.bottom button svg{width:56px;height:30px;padding:4px 16px;border-radius:var(--r-pill);box-sizing:border-box;
+  transition:background var(--t-mid) var(--ease),color var(--t-fast) ease}
+nav.bottom button[aria-selected="true"]{color:var(--ink);font-weight:600}
+nav.bottom button[aria-selected="true"] svg{background:var(--accent-soft);color:var(--accent-strong)}
+nav.bottom button:focus-visible{outline-offset:-4px;border-radius:14px}
+.fab{width:56px;height:56px;right:18px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 18px);
+  box-shadow:0 10px 24px -10px color-mix(in srgb,var(--accent) 80%,#000);transition:transform var(--t-fast) var(--ease)}
+.toast{border-radius:var(--r-pill);font-weight:500;box-shadow:var(--lift);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 20px)}

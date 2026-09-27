@@ -1,0 +1,269 @@
+/* ==========================================================
+   4-anpassungen.css - Bildschirmgroessen, weniger Bewegung, Nachschaerfungen
+   Reihenfolge der Dateien ist wichtig: spaetere Regeln ueberschreiben fruehere.
+   Inhalt:
+   - Größere Bildschirme
+   - Sehr schmale Geräte
+   - Weniger Bewegung
+   - Nachschärfungen
+   ========================================================== */
+/* ---------- Größere Bildschirme ---------- */
+@media (min-width:720px){
+  .wrap{padding-left:var(--s6);padding-right:var(--s6)}
+  .appbar{margin:0 calc(-1 * var(--s6));padding-left:var(--s6);padding-right:var(--s4)}
+  .hero .ring{width:132px;height:132px}
+  .hero-val b{font-size:76px}
+}
+/* ---------- Sehr schmale Geräte ---------- */
+@media (max-width:370px){
+  .hero{padding:var(--s4)}
+  .hero .ring{width:92px;height:92px}
+  .hero-val b{font-size:54px}
+  .wd .pip{width:28px;height:28px}
+  .rc-fig{width:52px}
+  .disc-thumbs{flex-basis:80px}
+  .sync{max-width:36vw}
+}
+
+/* ---------- Weniger Bewegung ---------- */
+@media (prefers-reduced-motion:reduce){
+  section[id^="p-"]:not([hidden]){animation:none}
+  .wo-check.on,.wo-banner::before{animation:none}
+  .bar i,.pbar i,.wo-progbar i,.mtoggle,.mtoggle::after,.sheet{transition:none}
+}
+
+/* ---------- Nachschärfungen ---------- */
+.filterbtn{border:0}
+.dsec-mob .pill{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wgroup{margin-bottom:var(--s5)}
+.wgroup>.infobox{margin-top:var(--s2)}
+.wsub{font-family:var(--f-cond);font-weight:600;font-size:15px;margin:var(--s4) 4px var(--s2);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.wsub span{font-family:var(--f-body);font-weight:500;font-size:12.5px;color:var(--ink-3)}
+.rc-meta{white-space:normal}
+.wo-pagehead b{font-size:clamp(18px,5.4vw,22px);overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}
+.wo-pagehead .main{padding-right:4px}
+@media (max-width:400px){
+  .appbar h1{font-size:25px}
+  .sync{font-size:11px;max-width:34vw;padding:4px 8px}
+  .appbar .iconbtn{min-width:40px}
+}
+
+/* ---------- Kein versehentliches Zoomen ----------
+   Doppeltipp-Zoom aus (manipulation), Zwei-Finger-Zoom aus (nur Wischen erlaubt).
+   Die 3D-Ansichten liegen in eigenen iframes mit eigener Touch-Steuerung - dort
+   bleibt Drehen und Zoomen des Modells unberuehrt. Pinch-Gesten in Safari faengt
+   zusaetzlich 16-app-start.js ab (noZoom). */
+html{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body,button,a,input,select,textarea,label,[role="button"],.tap{touch-action:manipulation}
+.wo-pager,.exdpage-scroll,.ob-scroll,.sheet,.chipbar{touch-action:pan-x pan-y}
+/* iOS zoomt beim Antippen eines Eingabefelds hinein, wenn dessen Schrift kleiner als
+   16 px ist. Nur auf iOS-Geraeten anheben, damit sich am Desktop-Layout nichts aendert. */
+@supports (-webkit-touch-callout:none){
+  input,select,textarea{font-size:max(16px,1em)}
+  .pctrow .stepper input,.ed-row input{font-size:16px}
+}
+
+/* ---------- Satzpause: Steuerung und Ende ---------- */
+.wo-rest-pill.paused{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule-2)}
+.wo-rest-pill.paused svg,.wo-rest-pill.paused span,.wo-rest-pill.paused b{color:var(--ink-3)}
+.rest-big{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 16px}
+.rest-big b{font-family:var(--f-mono);font-size:56px;font-weight:600;line-height:1.05;color:var(--warn)}
+.rest-big span{font-size:13px;color:var(--ink-3)}
+.rest-ctl{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px}
+.rest-ctl .btn{padding-left:8px;padding-right:8px;font-variant-numeric:tabular-nums}
+@keyframes fwRestDone{0%,100%{background:transparent}20%,60%{background:color-mix(in srgb,var(--good) 22%,transparent)}}
+.wo-head.rest-done{animation:fwRestDone 1.5s ease both}
+@media (prefers-reduced-motion:reduce){.wo-head.rest-done{animation:none;background:color-mix(in srgb,var(--good) 18%,transparent)}}
+
+/* ---------- Leere Satzfelder ----------
+   Platzhalter = Wert vom letzten Mal, deutlich blasser als ein eingetragener Wert. */
+.wo-row input::placeholder,.ed-row input::placeholder{color:var(--ink-3);opacity:.5;font-weight:400}
+
+/* ---------- Einheiten-Editor: jede Uebung mit Bild und Hauptmuskeln ---------- */
+.ed-row2{display:grid;grid-template-columns:96px 1fr auto;grid-template-areas:"fig info side" "fig ctl side";
+  column-gap:12px;row-gap:8px;padding:12px 16px;border-bottom:1px solid var(--rule);align-items:start}
+.ed-figs{grid-area:fig;display:flex;gap:2px;justify-content:center;align-items:center;padding:6px 4px;border:0;border-radius:var(--r-sm);
+  background:var(--surface-2);cursor:pointer;touch-action:manipulation;min-height:112px}
+.ed-figs svg{width:44px;height:auto;display:block}
+.ed-info{grid-area:info;min-width:0}
+.ed-info>b{display:block;font-family:var(--f-body);font-weight:600;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.ed-mus{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px}
+.ed-mus.all{flex-direction:column;gap:5px}
+.ed-m{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.ed-m>i:first-child{width:9px;height:9px;border-radius:50%;flex:none}
+.ed-mus.all .ed-m{display:grid;grid-template-columns:9px 1fr 52px;gap:7px;width:100%}
+.ed-mn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-more{border:0;background:none;padding:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent-strong);cursor:pointer;touch-action:manipulation;align-self:flex-start}
+.ed-ctl{grid-area:ctl;display:flex;gap:8px}
+.ed-in{display:flex;flex-direction:column;gap:3px;width:62px}
+.ed-in span{font-size:11px;font-weight:600;color:var(--ink-3);text-align:center}
+.ed-in input{min-height:42px;padding:4px 6px;text-align:center;font-size:16px;width:100%}
+.ed-side{grid-area:side;display:flex;flex-direction:column;align-items:center;gap:2px}
+.focus-list .row:last-child{border-bottom:0}
+.focusmap svg{max-width:165px}
+.ed-name{cursor:pointer}
+.ed-name:active{opacity:.7}
+
+/* Tabwechsel: kurzes, dezentes Einblenden statt 0,34 s aus dem Nichts - sonst wirkt ein
+   Tab beim Oeffnen kurz leer, als wuerde er noch laden. */
+@keyframes fwPageQuick{from{opacity:.7}to{opacity:1}}
+section[id^="p-"]:not([hidden]){animation:fwPageQuick .12s ease-out both}
+@media (prefers-reduced-motion:reduce){section[id^="p-"]:not([hidden]){animation:none}}
+
+/* Figurenbilder weich einblenden statt hart aufpoppen; leere Bildflaechen bleiben ruhig. */
+@keyframes fwFigIn{from{opacity:0}to{opacity:1}}
+.fw-fig-in{animation:fwFigIn .22s ease-out both}
+@media (prefers-reduced-motion:reduce){.fw-fig-in{animation:none}}
+
+/* ---------- Vorschlaege im Training (Phase 2) ---------- */
+.wo-row input.sug{color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 45%,var(--rule-2));background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.wo-sugwhy{flex:0 0 auto;margin:4px 2px 0;font-size:12.5px;line-height:1.35;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.wo-sugwhy b{color:var(--accent-strong);font-weight:600}
+.exd-range{display:flex;align-items:baseline;gap:8px;width:100%;margin:6px 0 4px;padding:10px 12px;border:0;border-radius:var(--r-sm);
+  background:var(--surface-2);color:var(--ink);font:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.exd-range span{font-size:13px;color:var(--ink-3)}
+.exd-range b{font-weight:600}
+.exd-range .exd-range-edit{margin-left:auto;color:var(--accent-strong);font-weight:600}
+
+.ed-swap{color:var(--accent-strong)}
+/* Uebungskopf im Training: Name ueber die volle Breite, darunter links Infozeile, rechts die
+   Symbole (Info, Reihenfolge, Pause, Tauschen, Entfernen) - so bricht kein Name mitten im Wort. */
+.wo-pagehead{display:grid;grid-template-columns:1fr repeat(5,auto);align-items:center;column-gap:0;row-gap:2px}
+.wo-pagehead .main{display:contents}
+.wo-pagehead .main b{grid-column:1/-1;grid-row:1;overflow-wrap:normal;padding-right:0}
+.wo-pagehead .main span{grid-column:1;grid-row:2;margin-top:0;padding-right:6px}
+.wo-pagehead .iconbtn{grid-row:2;min-width:38px;padding:8px 7px}
+/* Notiz je Uebung (Training) - kompakt, die Uebungsseite hat eine feste Hoehe */
+.wo-note{flex:none;display:flex;align-items:center;gap:6px;width:100%;margin:4px 0 0;padding:5px 9px;border:0;border-radius:8px;background:var(--surface-2);color:var(--ink-2);font:inherit;font-size:13px;line-height:1.3;text-align:left;cursor:pointer;touch-action:manipulation;min-height:30px}
+.wo-note svg{width:14px;height:14px;flex:none;opacity:.7}
+.wo-note span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wo-note.empty{background:none;padding:2px 0;color:var(--ink-3);font-size:12px;min-height:26px;width:auto}
+/* Aufwaermsaetze: eine Zeile, bei Bedarf seitlich wischbar */
+.wo-warm{flex:none;display:flex;align-items:center;gap:8px;margin:6px 0 2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.wo-warm::-webkit-scrollbar{display:none}
+.wo-warm-lab{flex:none;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.wo-warm-chips{display:flex;gap:5px;flex:none}
+.wo-warm-chip{flex:none;white-space:nowrap;border:1px solid var(--rule);background:none;border-radius:999px;padding:3px 9px;font:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer;touch-action:manipulation;min-height:30px}
+.wo-warm-chip b{font-weight:700;font-family:inherit}
+.wo-warm-chip.on{background:var(--good-soft);border-color:transparent;color:var(--ink-3);text-decoration:line-through}
+/* Rekorde: Stern am Satz, Karte oben, fliegende Medaille, Zaehler, Liste beim Beenden */
+.wo-row.pr .wo-n{color:var(--gold);font-weight:700;position:relative}
+.wo-row.pr .wo-n::after{content:"★";position:absolute;top:-9px;right:-2px;font-size:11px;color:var(--gold)}
+.wo-row.pr{animation:prGlow 1.4s ease-out 1}
+@keyframes prGlow{0%{box-shadow:inset 0 0 0 2px var(--gold)}100%{box-shadow:inset 0 0 0 2px transparent}}
+.pr-burst{--prc:var(--gold);position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translate(-50%,-150%) scale(.9);z-index:90;display:flex;align-items:center;gap:12px;width:min(94vw,440px);height:78px;box-sizing:border-box;padding:10px 12px;border-radius:16px;background:var(--surface);color:var(--ink);border:1.5px solid var(--prc);box-shadow:0 12px 34px rgba(0,0,0,.2);transition:transform .45s cubic-bezier(.2,1.35,.4,1),opacity .25s,border-color .3s,box-shadow .3s;opacity:0;pointer-events:none}
+.pr-burst.on{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto;box-shadow:0 12px 34px rgba(0,0,0,.2),0 0 0 4px color-mix(in srgb,var(--prc) 18%,transparent)}
+.pr-burst.off{transform:translate(-50%,-40%) scale(.94);opacity:0;transition:transform .32s cubic-bezier(.5,0,.8,.4),opacity .28s ease-in}
+.pr-burst[data-t="kg"],.wo-prsum-l[data-t="kg"]{--prc:var(--gold)}
+.pr-burst[data-t="e1rm"],.wo-prsum-l[data-t="e1rm"]{--prc:var(--green)}
+.pr-burst[data-t="reps"],.wo-prsum-l[data-t="reps"]{--prc:var(--red)}
+.pr-burst[data-t="vol"],.wo-prsum-l[data-t="vol"]{--prc:var(--blue)}
+.pr-thumb{flex:none;width:48px;height:48px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden}
+.pr-thumb svg{width:44px;height:44px}
+.pr-txt{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;height:56px}
+.pr-txt b{font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-lab{font-size:13px;color:var(--ink-2);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-cnt{font-size:11.5px;color:var(--ink-3);white-space:nowrap;line-height:1.3}
+.pr-chip{flex:none;min-width:84px;text-align:center;box-sizing:border-box;font-style:normal;font-weight:700;font-size:13.5px;line-height:1;padding:7px 11px;border-radius:999px;background:var(--prc,var(--gold));color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pr-chip.pop{animation:prPop .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes prPop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+.pr-fly{position:fixed;left:0;top:0;width:56px;height:56px;z-index:95;pointer-events:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
+.pr-fly svg{width:56px;height:56px}
+.wo-rec{display:inline-flex;align-items:center;gap:3px;flex:none;font-size:13px;color:var(--ink-2)}
+.wo-rec svg{width:20px;height:20px}
+.wo-rec{border-radius:999px}
+.wo-rec.bump{animation:prBump .6s cubic-bezier(.2,1.6,.4,1)}
+.wo-rec.bump b{animation:prNum .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes prBump{0%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 45%,transparent)}35%{transform:scale(1.3)}100%{transform:scale(1);box-shadow:0 0 0 7px transparent}}
+@keyframes prNum{0%{transform:translateY(6px);opacity:0}100%{transform:none;opacity:1}}
+.wo-prsum{margin-top:12px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--gold) 10%,var(--surface))}
+.wo-prsum-h{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.wo-prsum-h svg{width:22px;height:22px}
+.wo-prsum-h b{font-size:14.5px}
+.wo-prsum ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wo-prsum li{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--ink-2)}
+.wo-prsum li>b{color:var(--ink);font-size:13.5px}
+.wo-prsum-l{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wo-prsum-l .pr-chip{font-size:12px;padding:4px 8px;min-width:0}
+/* Auftakt: Karte startet als runde Medaille und zieht sich in die Breite */
+.pr-burst{transition:transform .45s cubic-bezier(.2,1.35,.4,1),opacity .25s,border-color .3s,box-shadow .3s,width .5s cubic-bezier(.3,1.25,.45,1),border-radius .5s ease,padding .5s ease}
+.pr-burst>.pr-thumb,.pr-burst>.pr-txt,.pr-burst>.pr-chip{transition:opacity .28s ease .12s,transform .4s cubic-bezier(.2,1.3,.4,1) .1s}
+.pr-burst.intro{width:78px;border-radius:39px;padding:0;--prc:var(--gold)}
+.pr-burst.intro>.pr-thumb,.pr-burst.intro>.pr-txt,.pr-burst.intro>.pr-chip{opacity:0;transform:scale(.85);transition:none}
+.pr-burst.outro{width:78px;border-radius:39px;padding:0;--prc:var(--gold);transition:width .42s cubic-bezier(.55,0,.3,1),border-radius .42s ease,padding .42s ease,border-color .3s}
+.pr-burst.outro>.pr-thumb,.pr-burst.outro>.pr-txt,.pr-burst.outro>.pr-chip{opacity:0;transform:scale(.85);transition:opacity .14s ease,transform .2s ease}
+.pr-burst.outro .pr-bm{opacity:1;transform:none;transition:opacity .2s ease .1s,transform .35s cubic-bezier(.2,1.5,.4,1) .1s}
+.pr-burst.outro .pr-rays{display:none}
+.pr-spark{position:fixed;width:6px;height:6px;border-radius:50%;background:var(--gold);z-index:96;pointer-events:none}
+.pr-bm{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;pointer-events:none;opacity:0;transform:scale(.4);transition:opacity .2s ease,transform .3s ease}
+.pr-burst.intro .pr-bm{opacity:1;transform:none;transition:none}
+.pr-bm-m{position:absolute;inset:40px;display:block}
+.pr-burst.intro .pr-bm-m{animation:prIntroIn .55s cubic-bezier(.2,1.6,.4,1) .12s both}
+.pr-bm-m svg{width:100%;height:100%}
+.pr-rays{position:absolute;inset:0;width:100%;height:100%;stroke:var(--gold);stroke-width:3.2;stroke-linecap:round;opacity:0}
+.pr-burst.intro .pr-rays{animation:prRays .8s ease-out .3s both}
+@keyframes prIntroIn{0%{transform:scale(0) rotate(-30deg);opacity:0}70%{transform:scale(1.12) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes prRays{0%{transform:scale(.6) rotate(-10deg);opacity:0}40%{opacity:1}100%{transform:scale(1.08) rotate(8deg);opacity:.9}}
+@media (prefers-reduced-motion:reduce){.pr-bm{display:none}.pr-burst.on .pr-thumb,.pr-burst,.pr-chip.pop,.wo-row.pr,.wo-rec.bump{animation:none;transition:none}}
+.wo-rec b{display:inline-block}
+/* Raenge: Chip, Karte, Rangleiter, Aufstieg */
+.rk-badge{display:block;flex:none;overflow:visible}
+.rk-chip{display:inline-flex;align-items:center;gap:4px;flex:none;border:0;background:color-mix(in srgb,var(--rkc) 14%,transparent);color:var(--ink);border-radius:999px;padding:2px 9px 2px 4px;font:inherit;font-size:12px;font-weight:700;white-space:nowrap;vertical-align:middle;line-height:1.3}
+button.rk-chip{cursor:pointer;touch-action:manipulation}
+.wo-pagehead .rk-chip{display:inline-flex;margin:0 6px 0 0;font-family:var(--f-body)}
+.rk-card{display:flex;align-items:center;gap:14px;width:100%;margin:10px 0 6px;padding:12px 12px 12px 10px;border:1.5px solid color-mix(in srgb,var(--rkc) 45%,var(--rule));border-radius:16px;background:linear-gradient(100deg,color-mix(in srgb,var(--rkc) 14%,var(--surface)),var(--surface) 70%);color:var(--ink);font:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.rk-card .chev{color:var(--ink-3)}
+.rk-card-b{flex:none;width:64px;height:64px}
+.rk-card-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rk-eb{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.rk-card-t b{font-size:18px;line-height:1.15}
+.rk-title{font-size:13.5px;color:var(--ink-2);font-weight:600}
+.rk-bar{height:6px;border-radius:3px;background:var(--sunken);margin:6px 0 2px;overflow:hidden}
+.rk-bar i{display:block;height:100%;border-radius:3px;background:var(--rkc)}
+.rk-next{font-size:12px;color:var(--ink-3)}
+.wgroup>#rk-overall{margin:0 0 10px}
+.rk-none{margin:8px 0}
+.rk-ladder{margin:4px -16px 0;display:flex;flex-direction:column}
+.rk-row{display:grid;grid-template-columns:1fr 84px 1fr;align-items:center;min-height:64px;padding:0 16px}
+.rk-row-l{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.rk-row-l b{font-size:15px;letter-spacing:.02em;color:color-mix(in srgb,var(--rkc) 75%,var(--ink))}
+.rk-row-l span{font-size:11.5px;color:var(--ink-3)}
+.rk-row-b{display:flex;justify-content:center}
+.rk-row.above{opacity:.45}
+.rk-row.cur{min-height:92px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rkc) 26%,transparent) 30%,color-mix(in srgb,var(--rkc) 26%,transparent) 70%,transparent)}
+.rk-row-y{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding-left:10px}
+.rk-you{font-size:12px;font-weight:800;color:#fff;background:var(--rkc);border-radius:999px;padding:3px 10px}
+.rk-you-p{font-size:11.5px;color:var(--ink-2)}
+.rk-ladder-foot{margin-top:12px;font-weight:600;color:var(--ink-2)}
+.pr-burst[data-t="rank"]{--prc:var(--rkc)}
+.pr-thumb.rk{background:none}
+.pr-thumb.rk svg{width:48px;height:48px}
+.pr-bm-m.rk svg{width:100%;height:100%}
+.pr-bm-m.rkpop{animation:prIntroIn .5s cubic-bezier(.2,1.6,.4,1) both}
+/* Erfolge-Bereich und Vitrine */
+.erf-card{padding:14px 16px}
+.erf-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.erf-stats b{display:block;font-size:22px;line-height:1.1}
+.erf-stats span{font-size:11.5px;color:var(--ink-3)}
+.erf-row{display:flex;gap:10px;overflow-x:auto;margin:14px -4px 0;padding:0 4px 2px;scrollbar-width:none}
+.erf-row::-webkit-scrollbar{display:none}
+.erf-row .md-item{min-width:64px}
+.erf-row .md-item>span{font-size:10.5px;color:var(--ink-3);text-align:center;line-height:1.2}
+.erf-next{display:flex;align-items:center;gap:8px;margin-top:12px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--ink-2)}
+.erf-next svg{flex:none}
+.md-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.md-item>b{font-size:11.5px;white-space:nowrap}
+.md-item>span{font-size:10.5px;color:var(--ink-3)}
+.md-item.off{opacity:.55}
+.md-item.off>b{color:var(--ink-3);font-weight:600}
+.md-line{padding:10px 0 12px;border-bottom:1px solid var(--rule)}
+.md-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.md-head b{font-size:15px}
+.md-head span{font-size:12px;color:var(--ink-3)}
+.md-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.md-rem{margin-top:6px;font-size:12px;color:var(--ink-2)}
+/* Wappen immer vollstaendig zeigen - nichts abschneiden */
+.rk-badge{overflow:visible}
+.pr-thumb.rk{overflow:visible}
+.rk-card-b,.rk-row-b,.pr-bm-m.rk{overflow:visible}
+.rk-card-b svg{width:64px;height:64px}
