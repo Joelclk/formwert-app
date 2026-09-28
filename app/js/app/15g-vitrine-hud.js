@@ -127,19 +127,71 @@ function vtTrophies(b){
     });
   }
 }
+/* Abzeichen: je Stufe eine Sammlung (alle 17 Medaillen dieser Stufe) als Karte mit
+   aufgefaecherten echten Medaillen-Bildern, Balken und Liste zum Antippen; oben drueber das
+   Endziel (alle 85). */
+var VT_FAN_PREF=["bench","streak","records","pullup","big3","days","squat","fit","rank","deadlift","volume","balance","row","ohp","dips","pushup","plank"];
+function vtFanPick(i,k){
+  var got=[],rest=[];
+  VT_FAN_PREF.forEach(function(id){var r=vtRow(id);if(!r)return;(r.n>i?got:rest).push(r);});
+  vt.rows.forEach(function(r){if(VT_FAN_PREF.indexOf(r.m.id)<0)(r.n>i?got:rest).push(r);});
+  return got.concat(rest).slice(0,k).map(function(r){return {r:r,got:r.n>i};});
+}
+function vtFan(items,size){
+  var f=el("div","vt-fan"),n=items.length;f.style.setProperty("--n",n);
+  items.forEach(function(it,j){
+    var w=el("div","fm");w.innerHTML=medalSvg(it.i,"",size,!it.got,it.m);
+    w.style.setProperty("--rot",((j-(n-1)/2)*11).toFixed(1)+"deg");w.style.zIndex=String(j===Math.floor(n/2)?9:j);
+    f.appendChild(w);
+  });
+  return f;
+}
+function vtBar(p,col){var b=el("div","vt-bar"),i=el("i");i.style.width=Math.max(p>0?3:0,p)+"%";i.style.background=col;b.appendChild(i);return b;}
 function vtBadges(b){
-  var L=vt.L,tierGot=[0,0,0,0,0],got=0;
+  var L=vt.L,tierGot=[0,0,0,0,0],got=0,N=MILESTONES.length,total=N*5;
   L.forEach(function(x){if(x.got){tierGot[x.i]++;got++;}});
+  // Endziel
+  b.appendChild(el("div","vt-lab","Endziel"));
+  var lg=el("div","vt-set legend"+(got>=total?" done":""));
+  var fanL=[0,1,2,3,4].map(function(i){var r=vtRow(VT_FAN_PREF[i*3%VT_FAN_PREF.length])||vt.rows[0];return {i:i,m:r.m,got:tierGot[i]>0};});
+  lg.appendChild(vtFan(fanL,54));
+  var lt=el("div","tx");lt.appendChild(el("b",null,"Legende-Trophäe"));
+  lt.appendChild(el("span",null,got>=total?"Geschafft – du bist eine Legende":"Alle "+total+" Medaillen sammeln"));
+  lt.appendChild(vtBar(Math.floor(got/total*100),"linear-gradient(90deg,#FFD84A,#FF6FA8,#7A6BFF)"));
+  lt.appendChild(el("span","ct",got+" / "+total));
+  lg.appendChild(lt);b.appendChild(lg);
+  // Sammlungen
   b.appendChild(el("div","vt-lab","Sammlungen"));
   VT_SETNAMES.forEach(function(nm,i){
-    var r=el("div","vt-row static"),ic=el("div","ic");ic.innerHTML=medalSvg(i,"",34,tierGot[i]===0);r.appendChild(ic);
-    var tx=el("div","tx");tx.appendChild(el("b",null,nm));tx.appendChild(el("span",null,"Alle "+MILESTONES.length+" "+MEDAL_LV[i].n+"-Medaillen · "+tierGot[i]+" / "+MILESTONES.length));
-    r.appendChild(tx);r.appendChild(vtRing(Math.floor(tierGot[i]/MILESTONES.length*100),MEDAL_LV[i].m));b.appendChild(r);
+    var c=MEDAL_LV[i],k=tierGot[i],card=el("button","vt-set"+(k?" on":"")+(k>=N?" full":""));card.type="button";
+    card.style.setProperty("--tc",c.m);card.setAttribute("aria-label",nm+", "+k+" von "+N);
+    card.appendChild(vtFan(vtFanPick(i,3).map(function(x){return {i:i,m:x.r.m,got:x.got};}),50));
+    var tx=el("div","tx");tx.appendChild(el("b",null,nm));
+    tx.appendChild(el("span",null,k>=N?"Komplett – alle "+N+" "+c.n+"-Medaillen":"Alle "+N+" "+c.n+"-Medaillen"));
+    tx.appendChild(vtBar(Math.floor(k/N*100),c.m));tx.appendChild(el("span","ct",k+" / "+N));
+    card.appendChild(tx);
+    var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);card.appendChild(ch);
+    card.onclick=function(){vtSetSheet(i);};
+    b.appendChild(card);
   });
-  b.appendChild(el("div","vt-lab","Endziel"));
-  var total=MILESTONES.length*5,r2=el("div","vt-row static"),ic2=el("div","ic","★");ic2.style.color="#ff6fa8";r2.appendChild(ic2);
-  var tx2=el("div","tx");tx2.appendChild(el("b",null,"Legende-Trophäe"));tx2.appendChild(el("span",null,got>=total?"Geschafft – du bist eine Legende":"Alle "+total+" Medaillen sammeln · "+got+" / "+total));
-  r2.appendChild(tx2);r2.appendChild(vtRing(got>=total?100:Math.min(99,Math.floor(got/total*100)),"#ff6fa8"));b.appendChild(r2);
+}
+/* Liste aller Medaillen einer Stufe: geholte farbig, fehlende grau mit Fortschritt; Antippen oeffnet die Reihe. */
+function vtSetSheet(i){
+  var pg=$("vitpage"),old=pg.querySelector(".vt-sheet");if(old)old.remove();
+  var sh=el("div","vt-sheet"),inn=el("div","in");sh.appendChild(inn);
+  var k=vt.rows.filter(function(r){return r.n>i;}).length;
+  inn.appendChild(el("h3",null,VT_SETNAMES[i]+" · "+k+" / "+vt.rows.length));
+  var g=el("div","vt-grid");
+  vt.rows.slice().sort(function(a,c){return (c.n>i)-(a.n>i)||c.n-a.n;}).forEach(function(r){
+    var has=r.n>i,t=el("button","vt-tile"+(has?"":" locked"));t.type="button";
+    var md=el("div","vt-medal");md.innerHTML=medalSvg(i,msShort(r.m,r.m.steps[i]),100,!has,r.m);t.appendChild(md);
+    t.appendChild(el("span","cnt",has?"✓":msShort(r.m,r.m.steps[i])));t.appendChild(el("span","nm",r.m.name));
+    t.setAttribute("aria-label",r.m.name+" "+MEDAL_LV[i].n+(has?", geschafft":""));
+    t.onclick=function(){sh.remove();vtDetail(r.m.id,i);};g.appendChild(t);
+  });
+  inn.appendChild(g);
+  sh.onclick=function(e){if(e.target===sh)sh.remove();};
+  pg.appendChild(sh);
 }
 function vtSecret(b){
   b.appendChild(el("div","vt-lab","Geheime Titel"));
