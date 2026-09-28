@@ -5,16 +5,116 @@
    aus 15f-vitrine.js (MILESTONES, vitrineData, msValue ...) und ersetzt dessen sheetVitrine().
    Gemerkt wird nur das Regal (state.profile.vitrinePins).
    ========================================================================= */
+/* Geheime Titel (Aufnaeher). Einmal verdient = fuer immer (state.profile.titles {id: Datum}),
+   einer davon tragbar (state.profile.titleWorn). h = Raetsel-Hinweis auf der verdeckten Karte,
+   how = Erklaerung nach dem Freischalten. Hinweis "???" = ganz geheim. */
 var VT_TITLES=[
- ["Discopumper","Oberkörper-Fan? Zeit für Beine"],["Beintier","Nie den Beintag skippen"],["Brustprotz","Montag ist Brusttag"],
- ["Lat-Lord","Der Rücken trägt die Show"],["Bizeps-Bürgermeister","Arme, Arme, Arme"],["Bauchladen","Sixpack im Angebot"],
- ["Schweizer Taschenmesser","Von allem etwas"],["Hahn","Früh aufstehen"],["Nachteule","Trainieren, wenn andere schlafen"],
- ["Wochenend-Krieger","Nur am Wochenende?"],["Uhrwerk","Immer dieselben Tage"],["Comeback-Kid","???"],
- ["Blitzeinschlag","Kurz und knackig"],["Marathon-Mann","???"],["Schwerlast-Sven","Wenige Wiederholungen, viel Eisen"],
- ["Pump-Hamster","Viele Wiederholungen"],["Ein-Trick-Pony","Eine Übung, immer wieder"],["Übungs-Tourist","Alles einmal probieren"],
- ["PR-Piranha","Rekorde am laufenden Band"],["Cardio-Verweigerer","Nur Eisen, kein Schweiß aus der Lunge"],
- ["Mobi-Mönch","Beweglichkeit ist Kraft"],["Ruhetag-Rebell","???"]
+ {id:"disco",   n:"Discopumper",            h:"Oberkörper-Fan? Zeit für Beine",   how:"4 Wochen lang über 80 % deiner Kraftsätze für den Oberkörper."},
+ {id:"beintier",n:"Beintier",               h:"Nie den Beintag skippen",          how:"4 Wochen lang mindestens 35 % deiner Kraftsätze für die Beine."},
+ {id:"brust",   n:"Brustprotz",             h:"Montag ist Brusttag",              how:"An 4 verschiedenen Montagen Brust trainiert."},
+ {id:"lat",     n:"Lat-Lord",               h:"Der Rücken trägt die Show",        how:"4 Wochen lang mindestens 30 % deiner Kraftsätze für den Rücken."},
+ {id:"bizeps",  n:"Bizeps-Bürgermeister",   h:"Arme, Arme, Arme",                 how:"4 Wochen lang mindestens 25 % deiner Kraftsätze für die Arme."},
+ {id:"bauch",   n:"Bauchladen",             h:"Sixpack im Angebot",               how:"4 Wochen lang mindestens 20 % deiner Kraftsätze für den Rumpf."},
+ {id:"messer",  n:"Schweizer Taschenmesser",h:"Von allem etwas",                  how:"In einer Woche alle 6 Kraftbereiche, Ausdauer und Mobilität."},
+ {id:"hahn",    n:"Hahn",                   h:"Früh aufstehen",                   how:"10 Trainings vor 7 Uhr begonnen."},
+ {id:"eule",    n:"Nachteule",              h:"Trainieren, wenn andere schlafen", how:"10 Trainings nach 21 Uhr begonnen."},
+ {id:"wochenende",n:"Wochenend-Krieger",    h:"Nur am Wochenende?",               how:"6 Wochen, in denen du nur samstags oder sonntags trainiert hast."},
+ {id:"uhrwerk", n:"Uhrwerk",                h:"Immer dieselben Tage",             how:"6 Wochen in Folge an genau denselben Wochentagen trainiert."},
+ {id:"comeback",n:"Comeback-Kid",           h:"???",                              how:"Nach mindestens 3 Wochen Pause wieder eingestiegen."},
+ {id:"blitz",   n:"Blitzeinschlag",         h:"Kurz und knackig",                 how:"5 Trainings unter 30 Minuten mit mindestens 10 Sätzen."},
+ {id:"marathon",n:"Marathon-Mann",          h:"???",                              how:"Ein Training über 2 Stunden."},
+ {id:"schwer",  n:"Schwerlast-Sven",        h:"Wenige Wiederholungen, viel Eisen",how:"50 Sätze mit Gewicht und höchstens 5 Wiederholungen."},
+ {id:"pump",    n:"Pump-Hamster",           h:"Viele Wiederholungen",             how:"50 Sätze mit Gewicht und mindestens 15 Wiederholungen."},
+ {id:"pony",    n:"Ein-Trick-Pony",         h:"Eine Übung, immer wieder",         how:"Dieselbe Übung an 10 Trainingstagen in Folge."},
+ {id:"tourist", n:"Übungs-Tourist",         h:"Alles einmal probieren",           how:"40 verschiedene Übungen gemacht."},
+ {id:"piranha", n:"PR-Piranha",             h:"Rekorde am laufenden Band",        how:"5 Rekorde an einem einzigen Tag."},
+ {id:"cardiono",n:"Cardio-Verweigerer",     h:"Nur Eisen, kein Schweiß aus der Lunge",how:"6 Wochen mit mindestens 12 Trainingstagen und keiner Minute Ausdauer."},
+ {id:"mobi",    n:"Mobi-Mönch",             h:"Beweglichkeit ist Kraft",          how:"An 30 Tagen Mobilität gemacht."},
+ {id:"rebell",  n:"Ruhetag-Rebell",         h:"???",                              how:"7 Tage am Stück trainiert."}
 ];
+function vtTitleById(id){for(var i=0;i<VT_TITLES.length;i++)if(VT_TITLES[i].id===id)return VT_TITLES[i];return null;}
+/* Rechnet aus dem ganzen Verlauf, wann jeder Titel zum ersten Mal erfuellt war (Datum oder null). */
+function vtTitleEval(){
+  var days=Object.keys(state.days).filter(function(k){return k<=TODAY;}).sort(),out={};
+  var td=[],info={},CATS=["chest","shoulders","back","arms","legs","core"];
+  function hit(id,d){if(!out[id])out[id]=d;}
+  var exSeen={},exFirst=0,wkHour=[],heavy=0,pump=0;
+  days.forEach(function(k){
+    var dd=state.days[k],c={chest:0,shoulders:0,back:0,arms:0,legs:0,core:0},n=0,exs={},minTs=null;
+    (dd.sets||[]).forEach(function(s){var ex=exById(s.ex);if(!ex||ex.mob||!(s.reps>0))return;
+      var cid=catOfEx(ex);if(cid&&c[cid]!=null){c[cid]++;n++;}exs[ex.id]=1;
+      if(!exSeen[ex.id]){exSeen[ex.id]=1;exFirst++;if(exFirst>=40)hit("tourist",k);}
+      if(ex.t==="load"&&(s.kg||0)>0){if(s.reps<=5){heavy++;if(heavy>=50)hit("schwer",k);}if(s.reps>=15){pump++;if(pump>=50)hit("pump",k);}}
+      if(s.ts&&(minTs==null||s.ts<minTs))minTs=s.ts;});
+    var cardio=(dd.cardio||[]).reduce(function(a,x){return a+(x.min||0);},0),mob=mobDay(dd).units>=1,train=isTrainDay(dd);
+    (dd.workouts||[]).forEach(function(w){if(w.start&&(minTs==null||w.start<minTs))minTs=w.start;
+      if(w.dur>=7200)hit("marathon",k);
+      if(w.dur>0&&w.dur<1800&&(w.sets||0)>=10){info.blitz=(info.blitz||0)+1;if(info.blitz>=5)hit("blitz",k);}});
+    if(train&&minTs){var hr=new Date(minTs).getHours();
+      if(hr<7){info.hahn=(info.hahn||0)+1;if(info.hahn>=10)hit("hahn",k);}
+      if(hr>=21){info.eule=(info.eule||0)+1;if(info.eule>=10)hit("eule",k);}}
+    if(mob){info.mobi=(info.mobi||0)+1;if(info.mobi>=30)hit("mobi",k);}
+    if(train&&c.chest>0&&parseIso(k).getDay()===1){info.brust=(info.brust||0)+1;if(info.brust>=4)hit("brust",k);}
+    td.push({d:k,c:c,n:n,exs:exs,cardio:cardio,mob:mob,train:train});
+  });
+  var T=td.filter(function(x){return x.train;});
+  // Serien: 7 Tage am Stueck, Comeback nach 21 Tagen Pause (mit mindestens 5 Trainingstagen davor)
+  var run=0,runEx={},prev=null;
+  T.forEach(function(x,i){
+    run=prev&&daysBetween(prev.d,x.d)===1?run+1:1;if(run>=7)hit("rebell",x.d);
+    if(prev&&i>=5&&daysBetween(prev.d,x.d)>=22)hit("comeback",x.d);
+    var nr={};Object.keys(x.exs).forEach(function(id){nr[id]=(runEx[id]||0)+1;if(nr[id]>=10)hit("pony",x.d);});runEx=nr;
+    prev=x;
+  });
+  // Rollende 4-Wochen-Fenster fuer die Anteils-Titel (mindestens 8 Trainingstage, 40 Kraftsaetze)
+  T.forEach(function(x){
+    var from=shiftDays(x.d,-27),w=T.filter(function(y){return y.d>=from&&y.d<=x.d;});
+    if(w.length<8)return;
+    var c={chest:0,shoulders:0,back:0,arms:0,legs:0,core:0},n=0;
+    w.forEach(function(y){CATS.forEach(function(k){c[k]+=y.c[k];});n+=y.n;});
+    if(n<40)return;
+    if((c.chest+c.shoulders+c.back+c.arms)/n>=0.8)hit("disco",x.d);
+    if(c.legs/n>=0.35)hit("beintier",x.d);
+    if(c.back/n>=0.30)hit("lat",x.d);
+    if(c.arms/n>=0.25)hit("bizeps",x.d);
+    if(c.core/n>=0.20)hit("bauch",x.d);
+    var from6=shiftDays(x.d,-41),w6=td.filter(function(y){return y.d>=from6&&y.d<=x.d;});
+    if(w6.filter(function(y){return y.train;}).length>=12&&!w6.some(function(y){return y.cardio>0;}))hit("cardiono",x.d);
+  });
+  // Wochen (Mo-So): alles in einer Woche, nur Wochenende, gleiche Wochentage
+  var wk={},order=[];
+  td.forEach(function(x){var ws=weekStartOf(x.d);if(!wk[ws]){wk[ws]={c:{},cardio:0,mob:false,dow:[],end:x.d};order.push(ws);}var W=wk[ws];
+    CATS.forEach(function(k){if(x.c[k])W.c[k]=1;});W.cardio+=x.cardio;if(x.mob)W.mob=true;W.end=x.d;
+    if(x.train)W.dow.push(parseIso(x.d).getDay());});
+  var wkEnd=0,same=0,lastKey=null,lastWs=null;
+  order.forEach(function(ws){var W=wk[ws];
+    if(Object.keys(W.c).length===6&&W.cardio>0&&W.mob)hit("messer",W.end);
+    if(W.dow.length&&W.dow.every(function(g){return g===0||g===6;})){wkEnd++;if(wkEnd>=6)hit("wochenende",W.end);}
+    var key=W.dow.slice().sort().join(",");
+    if(W.dow.length>=2&&key===lastKey&&lastWs&&daysBetween(lastWs,ws)===7)same++;else same=W.dow.length>=2?1:0;
+    if(same>=6)hit("uhrwerk",W.end);
+    lastKey=key;lastWs=ws;
+  });
+  // Rekorde an einem Tag
+  var D=vt.D||vitrineData(),perDay={};
+  (D.prList||[]).forEach(function(p){perDay[p.d]=(perDay[p.d]||0)+1;if(perDay[p.d]>=5)hit("piranha",p.d);});
+  return out;
+}
+/* Neu verdiente Titel dauerhaft merken - einmal verdient bleibt verdient. */
+function vtTitleSync(){
+  if(!state.profile)return {};
+  var have=state.profile.titles||{},ev={},changed=false;
+  try{ev=vtTitleEval();}catch(e){ev={};}
+  Object.keys(ev).forEach(function(id){if(!have[id]){have[id]=ev[id];changed=true;}});
+  if(changed||!state.profile.titles){state.profile.titles=have;try{persist();}catch(e){}}
+  return have;
+}
+function vtPatch(t,size,locked){
+  var w=el("div","vt-patch"+(locked?" locked":""));w.style.width=w.style.height=size+"px";
+  if(!locked&&window.TITLE_IMG&&TITLE_IMG.indexOf(t.id)>=0){w.innerHTML='<img src="assets/titles/'+t.id+'.webp" alt="" loading="lazy">';w.classList.add("img");}
+  else{var i=el("span",null,locked?"?":t.n.charAt(0));i.style.fontSize=Math.round(size*.4)+"px";w.appendChild(i);}
+  return w;
+}
 var VT_SETNAMES=["Bronze-Set","Silber-Set","Gold-Set","Diamant-Set","Champion-Set"];
 var vt={tab:"tro",D:null,L:null,rows:null};
 
@@ -23,7 +123,7 @@ function vtData(){
     var v=msValue(m,D),n=0;m.steps.forEach(function(s){if(v!=null&&v>=s)n++;});
     return {m:m,v:v,n:n};
   });
-  vt.D=D;vt.L=L;vt.rows=rows;
+  vt.D=D;vt.L=L;vt.rows=rows;vt.titles=vtTitleSync();
 }
 function vtRow(id){for(var i=0;i<vt.rows.length;i++)if(vt.rows[i].m.id===id)return vt.rows[i];return null;}
 function vtProg(r){
@@ -80,7 +180,9 @@ function vtBackBtn(fn){
 }
 function vtRender(){
   var pg=$("vitpage");pg.innerHTML="";
-  var top=el("div","vt-top");top.appendChild(vtBackBtn(vtClose));top.appendChild(el("h1",null,"Deine Vitrine"));top.appendChild(el("span","vt-rb ghost"));pg.appendChild(top);
+  var top=el("div","vt-top");top.appendChild(vtBackBtn(vtClose));var hh=el("div","vt-h");hh.appendChild(el("h1",null,"Deine Vitrine"));
+  var wid=state.profile&&state.profile.titleWorn,wt=wid&&vt.titles&&vt.titles[wid]?vtTitleById(wid):null;
+  if(wt)hh.appendChild(el("span","vt-wt",wt.n));top.appendChild(hh);top.appendChild(el("span","vt-rb ghost"));pg.appendChild(top);
   var shelf=el("div","vt-shelf"),pins=vtPins();
   pins.forEach(function(id,i){
     var b=el("button","vt-slot"+(id?" filled":""));b.type="button";
@@ -194,13 +296,37 @@ function vtSetSheet(i){
   pg.appendChild(sh);
 }
 function vtSecret(b){
-  b.appendChild(el("div","vt-lab","Geheime Titel"));
-  b.appendChild(el("p","vt-note","Diese Titel bekommst du für dein Trainingsverhalten – die Berechnung wird gerade gebaut. Hier siehst du schon, welche kommen."));
-  VT_TITLES.forEach(function(t){
-    var unknown=t[1]==="???",r=el("div","vt-row static"),ic=el("div","ic",unknown?"?":t[0][0]);r.appendChild(ic);
-    var tx=el("div","tx");tx.appendChild(el("b",null,unknown?"???":t[0]));tx.appendChild(el("span",null,unknown?"???":"Hinweis: "+t[1]));
-    r.appendChild(tx);r.appendChild(vtRing(0));b.appendChild(r);
+  var have=vt.titles||{},got=VT_TITLES.filter(function(t){return have[t.id];}).length,worn=state.profile&&state.profile.titleWorn;
+  var wt=worn&&have[worn]?vtTitleById(worn):null;
+  if(wt){var wc=el("button","vt-worn");wc.type="button";wc.appendChild(vtPatch(wt,52));
+    var tx=el("div","tx");tx.appendChild(el("span",null,"Dein Titel"));tx.appendChild(el("b",null,wt.n));wc.appendChild(tx);
+    wc.onclick=function(){vtTitleSheet(wt);};b.appendChild(wc);}
+  b.appendChild(el("div","vt-lab",got+" von "+VT_TITLES.length+" entdeckt"));
+  if(!got)b.appendChild(el("p","vt-note","Geheime Titel bekommst du für deine Art zu trainieren. Was genau zählt, erfährst du erst, wenn du einen hast."));
+  var g=el("div","vt-tgrid");
+  VT_TITLES.slice().sort(function(a,c){return (have[c.id]?1:0)-(have[a.id]?1:0);}).forEach(function(t){
+    var on=!!have[t.id],c=el("button","vt-tcard"+(on?" on":"")+(worn===t.id?" worn":""));c.type="button";
+    c.appendChild(vtPatch(t,64,!on));
+    c.appendChild(el("b",null,on?t.n:"???"));
+    c.appendChild(el("span",null,on?"seit "+shortDate(have[t.id]):(t.h==="???"?"Ganz geheim":t.h+"…")));
+    c.onclick=function(){vtTitleSheet(t);};g.appendChild(c);
   });
+  b.appendChild(g);
+}
+function vtTitleSheet(t){
+  var pg=$("vitpage"),old=pg.querySelector(".vt-sheet");if(old)old.remove();
+  var have=vt.titles||{},on=!!have[t.id],sh=el("div","vt-sheet"),inn=el("div","in tsheet");sh.appendChild(inn);
+  inn.appendChild(vtPatch(t,140,!on));
+  inn.appendChild(el("h3",null,on?t.n:"???"));
+  if(on){
+    inn.appendChild(el("p","vt-note","Verdient am "+shortDate(have[t.id])+" · "+t.how));
+    var worn=state.profile.titleWorn===t.id,bt=el("button","vt-btn primary",worn?"Titel ablegen":"Als Titel tragen");bt.type="button";
+    bt.onclick=function(){state.profile.titleWorn=worn?null:t.id;try{persist();}catch(e){}sh.remove();vtRender();};inn.appendChild(bt);
+  }else{
+    inn.appendChild(el("p","vt-note",t.h==="???"?"Zu diesem Titel gibt es keinen Hinweis. Trainier einfach – vielleicht stolperst du drüber.":"Hinweis: „"+t.h+"“. Was genau zählt, bleibt geheim, bis du ihn hast."));
+  }
+  sh.onclick=function(e){if(e.target===sh)sh.remove();};
+  pg.appendChild(sh);
 }
 
 /* ---------- Regal belegen ---------- */
