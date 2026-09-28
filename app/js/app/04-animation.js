@@ -35,7 +35,7 @@ var FW_ANIM_MODELLE={
        text:"Rechte Körperhälfte: Bein, Hüfte und Becken – Muskeln in den Farben von „Beanspruchte Muskeln“."}};
 // Wird von werkzeug/animation_einpacken.py auf true gesetzt, sobald das Beinmodell eingepackt ist.
 // Vorher bekommen die Beinübungen keinen Animationsblock statt einer Fehlermeldung.
-var FW_ANIM_BEIN=false;
+var FW_ANIM_BEIN=true;
 var fwAnimGlbs={}, fwAnimHtml=null;
 /* Grosse Datenbloecke (3D-Viewer, Animation) werden erst geladen, wenn sie gebraucht werden -
    vorher musste der Browser beim Start rund 12,5 MB Skript einlesen, bevor die App erschien. */
