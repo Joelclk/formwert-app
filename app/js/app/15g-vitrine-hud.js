@@ -169,29 +169,102 @@ function vtPick(slot){
   pg.appendChild(sh);
 }
 
-/* ---------- Detailseite ---------- */
-function vtDetail(id){
+/* ---------- Detailseite ----------
+   Jede der 5 Stufen ist antippbar: die Karte zeigt dann, was man fuer genau diese Stufe braucht,
+   wie weit man ist (Ring) und unter "Dein Stand" jeden einzelnen Bereich/Wert mit Haken. */
+function vtRkScore(step){return step>=RANK_N?100:step*100/RANK_N;}
+function vtPctFor(m,v,step){
+  if(v==null)return 0;
+  if(m.kind==="rank"){var o=overallRank();return o?Math.floor(Math.min(1,o.score/vtRkScore(step))*100):0;}
+  if(m.kind==="balance"){var c=compute(TODAY),mn=100;(c.cats||[]).forEach(function(ct){mn=Math.min(mn,ct.exs&&ct.exs.length?ct.score:0);});
+    return Math.floor(Math.min(1,mn/vtRkScore(step))*100);}
+  return Math.floor(Math.min(1,Math.max(0,v/step))*100);
+}
+/* Zeilen fuer "Dein Stand": {l:Bezeichnung, v:aktueller Wert, ok:true/false/null (null = nur Info)} */
+function vtStand(m,step){
+  var D=vt.D,out=[];
+  function fmtEx(ex,v){return ex.t==="load"?fmtNum(v)+" kg"+(ex.wt==="side"?" pro Seite":""):ex.t==="sec"?fmtSec(v):v+" Wdh.";}
+  if(m.kind==="ex"){
+    m.ex.forEach(function(id){var ex=exById(id);if(!ex)return;var v=D.best[id];
+      out.push({l:ex.n,v:v!=null?fmtEx(ex,v):"noch nicht gemacht",ok:v!=null?v>=step:false});});
+    if(m.ex.length>1)out.push({note:"Es zählt die beste der Varianten."});
+  }else if(m.kind==="big3"){
+    [["bench","Bankdrücken"],["squat","Kniebeuge"],["deadlift","Kreuzheben"]].forEach(function(p){
+      var v=D.best[p[0]];out.push({l:p[1],v:v!=null?fmtNum(v)+" kg":"noch nicht gemacht",ok:null});});
+    out.push({l:"Summe",v:fmtNum(D.big3||0)+" kg",ok:(D.big3||0)>=step,sum:true});
+  }else if(m.kind==="balance"||m.kind==="rank"){
+    var c=compute(TODAY);
+    (c.cats||[]).forEach(function(ct){
+      var has=ct.exs&&ct.exs.length,rk=has?rankFromScore(ct.score):null;
+      out.push({l:ct.name,v:rk?rk.name:"noch keine Übung",ok:m.kind==="balance"?(rk?rk.r>=step:false):null});});
+    if(m.kind==="rank"){var o=overallRank();out.push({l:"Gesamtstärke (Schnitt)",v:o?o.name:"–",ok:o?o.r>=step:false,sum:true});}
+  }else if(m.kind==="fit"){
+    var now=compute(TODAY).fitness,pk=(state.profile&&state.profile.peaks&&state.profile.peaks.fitness)||0;
+    out.push({l:"Formwert heute",v:String(now),ok:null});
+    out.push({l:"Dein bester Formwert",v:String(Math.max(now,pk)),ok:Math.max(now,pk)>=step,sum:true});
+  }else if(m.kind==="streak"){
+    var g=(state.profile&&state.profile.goals&&state.profile.goals.days)||0;
+    out.push({l:"Wochenziel",v:g?g+" Trainingstage pro Woche":"nicht gesetzt",ok:null});
+    out.push({l:"Längste Serie",v:(D.streak||0)+((D.streak||0)===1?" Woche":" Wochen"),ok:(D.streak||0)>=step,sum:true});
+  }else if(m.kind==="days"){
+    out.push({l:"Trainingstage bisher",v:String(D.trainDays.length),ok:D.trainDays.length>=step,sum:true});
+  }else if(m.kind==="vol"){
+    out.push({l:"Bewegt bisher",v:fmtNum(Math.round(D.vol*10)/10)+" t",ok:D.vol>=step,sum:true});
+  }else if(m.kind==="prs"){
+    out.push({l:"Rekorde bisher",v:String(D.prs),ok:D.prs>=step,sum:true});
+  }
+  return out;
+}
+/* "Was fehlt noch" - bei Ausgewogen/Gesamtstaerke konkreter als der allgemeine Text. */
+function vtRemain(m,v,step){
+  if(m.kind==="balance"){var c=compute(TODAY),k=0;(c.cats||[]).forEach(function(ct){var rk=ct.exs&&ct.exs.length?rankFromScore(ct.score):null;if(!rk||rk.r<step)k++;});
+    return "noch "+k+" von "+(c.cats||[]).length+" Bereichen darunter";}
+  if(m.kind==="rank"){var o=overallRank();if(!o)return "noch keine Kraftwerte";var d=step-o.r;
+    return "noch "+d+(d===1?" Stufe":" Stufen")+" ("+o.name+" → "+rankByIndex(step).name+")";}
+  return msRemain(m,v,step);
+}
+function vtDetail(id,sel,keep){
   var r=vtRow(id),m=r.m,n=r.n,pg=$("vitpage");
-  var old=pg.querySelector(".vt-detail");if(old)old.remove();
-  var d=el("div","vt-detail"),top=el("div","vt-top");
+  if(sel==null)sel=n<5?n:4;
+  var old=pg.querySelector(".vt-detail"),d;
+  if(keep&&old){d=old;d.innerHTML="";}
+  else{if(old)old.remove();d=el("div","vt-detail");}
+  var top=el("div","vt-top");
   top.appendChild(vtBackBtn(function(){d.classList.remove("on");setTimeout(function(){d.remove();},280);}));
   top.appendChild(el("h1",null,m.name));top.appendChild(el("span","vt-rb ghost"));d.appendChild(top);
   d.appendChild(el("div","vt-dcount",n+"/5 freigeschaltet"));
-  var stg=el("div","vt-stage"),gi=Math.max(0,n-1);stg.style.setProperty("--gc",MEDAL_LV[gi].m+"88");
+  var got=sel<n,step=m.steps[sel];
+  var stg=el("div","vt-stage");stg.style.setProperty("--gc",MEDAL_LV[sel].m+"88");
   stg.appendChild(el("div","glow"));
-  var big=el("div","big"+(n===0?" locked":""));big.innerHTML=medalSvg(gi,msShort(m,m.steps[gi]),190,n===0,m);stg.appendChild(big);d.appendChild(stg);
-  var tr=el("div","vt-tiers");
+  var big=el("div","big"+(got?"":" locked"));big.innerHTML=medalSvg(sel,msShort(m,step),190,!got,m);stg.appendChild(big);d.appendChild(stg);
+  var tr=el("div","vt-tiers");tr.setAttribute("role","tablist");
   m.steps.forEach(function(s,i){
-    var t=el("div","t"+(i<n?"":" off")+(i===n?" cur":""));
-    t.innerHTML=medalSvg(i,msShort(m,s),52,false,m);t.appendChild(el("div",null,MEDAL_LV[i].n));
-    if(i<n){var dt=msDate(m,vt.D,s);if(dt)t.appendChild(el("div","dt",shortDate(dt)));}
+    var t=el("button","t"+(i<n?"":" off")+(i===sel?" sel":""));t.type="button";t.setAttribute("role","tab");
+    t.setAttribute("aria-selected",String(i===sel));t.setAttribute("aria-label",MEDAL_LV[i].n+": "+msStepLabel(m,s)+(i<n?", geschafft":""));
+    t.innerHTML=medalSvg(i,msShort(m,s),52,false,m);
+    t.appendChild(el("div","nm",MEDAL_LV[i].n));t.appendChild(el("div","lv",msStepLabel(m,s)));
+    t.onclick=function(){vtDetail(id,i,true);};
     tr.appendChild(t);
   });
   d.appendChild(tr);
-  var c=el("div","vt-dcard"),h=el("div","vt-dhead"),tx=el("div","tx"),ni=n<5?n:4;
-  tx.appendChild(el("b",null,m.name+(n<5?" · "+MEDAL_LV[ni].n:" · komplett")));
-  tx.appendChild(el("span",null,n<5?vtReq(m,m.steps[ni])+" ("+msRemain(m,r.v,m.steps[ni])+")":"Alle Stufen geschafft."));
-  h.appendChild(tx);h.appendChild(vtRing(vtProg(r),n<5?MEDAL_LV[ni].m:"#3fcf7f"));c.appendChild(h);
+  var scr=el("div","vt-dscroll"),c=el("div","vt-dcard"),h=el("div","vt-dhead"),tx=el("div","tx");
+  tx.appendChild(el("b",null,m.name+" · "+MEDAL_LV[sel].n));
+  var dt=got?msDate(m,vt.D,step):null;
+  tx.appendChild(el("span",null,vtReq(m,step)));
+  tx.appendChild(el("span","st"+(got?" ok":""),got?"✓ Geschafft"+(dt?" am "+shortDate(dt):""):vtRemain(m,r.v,step)));
+  h.appendChild(tx);h.appendChild(vtRing(got?100:Math.min(99,vtPctFor(m,r.v,step)),MEDAL_LV[sel].m));c.appendChild(h);
+  var rows=vtStand(m,step);
+  if(rows.length){
+    var sd=el("div","vt-stand");sd.appendChild(el("div","hd","Dein Stand"));
+    rows.forEach(function(x){
+      if(x.note){sd.appendChild(el("div","nt",x.note));return;}
+      var rw=el("div","rw"+(x.sum?" sum":"")+(x.ok===true?" ok":x.ok===false?" no":""));
+      rw.appendChild(el("span","l",x.l));rw.appendChild(el("span","v",x.v));
+      rw.appendChild(el("span","ck",x.ok===true?"✓":x.ok===false?"–":""));
+      sd.appendChild(rw);
+    });
+    c.appendChild(sd);
+  }
   var mo=el("div","vt-more"),bt=el("button");bt.type="button";
   bt.innerHTML='<span>Zählt aus</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
   bt.onclick=function(){mo.classList.toggle("open");};mo.appendChild(bt);
@@ -203,6 +276,6 @@ function vtDetail(id){
       vtSetPins(p);vtRender();};
     c.appendChild(pn);
   }
-  d.appendChild(c);pg.appendChild(d);
-  requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.add("on");});});
+  scr.appendChild(c);d.appendChild(scr);
+  if(!(keep&&old)){pg.appendChild(d);requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.add("on");});});}
 }

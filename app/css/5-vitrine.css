@@ -74,3 +74,30 @@
 .vt-sheet .in{width:100%;max-width:600px;margin:0 auto;background:var(--vt-card);border-radius:22px 22px 0 0;padding:16px 14px calc(24px + env(safe-area-inset-bottom,0px));max-height:75%;overflow:auto}
 .vt-sheet h3{margin:0 0 10px;font-size:16px;color:#f2f3f4}
 @media (prefers-reduced-motion:reduce){.vt-stage .glow,.vt-stage .big{animation:none}.vt-detail{transition:none}}
+/* Detailseite: antippbare Stufen + "Dein Stand" */
+.vt-detail{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none}
+.vt-detail::-webkit-scrollbar{display:none}
+.vt-detail .vt-top{position:sticky;top:0;z-index:2;background:#0b0c0e}
+.vt-stage{flex:none;height:min(300px,36vh);min-height:220px}
+.vt-dscroll{flex:none}
+.vt-tiers{gap:6px}
+.vt-tiers .t{width:62px;background:none;border:1px solid transparent;border-radius:12px;padding:5px 2px 4px;cursor:pointer;color:var(--vt-dim);font-size:10px;line-height:1.25;transition:background .15s,border-color .15s}
+.vt-tiers .t .nm{font-weight:600}
+.vt-tiers .t .lv{font-size:9.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-tiers .t.sel{background:var(--vt-card);border-color:#4a5058;color:#fff}
+.vt-tiers .t.sel.off svg{opacity:.55}
+.vt-tiers .t:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.vt-dhead .tx .st{margin-top:6px;font-weight:600;color:#f2f3f4}
+.vt-dhead .tx .st.ok{color:var(--vt-ok)}
+.vt-stand{margin-top:14px;border-top:1px solid var(--vt-line);padding-top:10px}
+.vt-stand .hd{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--vt-dim);margin-bottom:4px}
+.vt-stand .rw{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.vt-stand .rw:last-child{border-bottom:0}
+.vt-stand .rw .l{flex:1;min-width:0;color:#d6d9dc}
+.vt-stand .rw .v{font-weight:600;text-align:right}
+.vt-stand .rw .ck{width:18px;text-align:center;font-weight:700;color:var(--vt-dim)}
+.vt-stand .rw.ok .ck{color:var(--vt-ok)}
+.vt-stand .rw.no .v{color:var(--vt-dim)}
+.vt-stand .rw.sum .l{font-weight:600;color:#f2f3f4}
+.vt-stand .nt{font-size:12.5px;color:var(--vt-dim);padding-top:6px}
+@media (max-height:700px){.vt-stage .big{width:150px}}
