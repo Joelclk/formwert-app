@@ -193,7 +193,7 @@ function renderAll(){
   // Bestwert-Fortschreibung oben bleibt aber immer an TODAY gebunden, unabhängig davon, welcher
   // Tag gerade angeschaut wird.
   renderHero(heuteDate===TODAY?c:compute(heuteDate),pk);
-  renderWeek();renderToday();renderBanner();
+  renderWeek();try{renderNextGoal();}catch(e){}renderToday();renderBanner();
   // "entdecken" hängt an keinen Tageswerten – dessen dirty-Status hier NICHT mit überschreiben,
   // sonst geht das anfängliche entdecken:true beim ersten renderAll() sofort wieder verloren und
   // der Katalog bliebe beim ersten Öffnen leer.

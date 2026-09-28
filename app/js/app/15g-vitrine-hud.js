@@ -703,3 +703,66 @@ function lgShowLegend(job){
   // Datum speichern (falls diese Feier ueber einen anderen Weg als lgCheck kam)
   if(!job.replay&&state.profile&&!state.profile.legendAt){state.profile.legendAt=TODAY;try{persist();}catch(e){}}
 }
+
+/* =========================================================================
+   "Naechstes Ziel" auf Heute: genau ein Ziel, das am naechsten liegt - der naechste Rang einer
+   zuletzt trainierten Uebung, die naechste Medaille oder die naechste volle Sammlung.
+   Verglichen wird der Fortschritt innerhalb der aktuellen Stufe (0-1); das hoechste gewinnt.
+   ========================================================================= */
+function nextGoalPick(){
+  var best=null;
+  // Ganz ohne Training gibt es noch nichts, das "nah dran" waere.
+  if(!Object.keys(state.days).some(function(d){return d<=TODAY&&isTrainDay(state.days[d]);}))return null;
+  function take(g){if(g&&g.p<1&&g.p>=0&&(!best||g.p>best.p))best=g;}
+  // Raenge: nur Uebungen der letzten 30 Tage - ein Ziel fuer eine laengst vergessene Uebung
+  // waere nicht "erreichbar", nur theoretisch nah.
+  var from=shiftDays(TODAY,-(WIN_STATE-1)),seen={};
+  Object.keys(state.days).forEach(function(d){if(d<from||d>TODAY)return;
+    (state.days[d].sets||[]).forEach(function(s){seen[s.ex]=1;});});
+  Object.keys(seen).forEach(function(id){
+    var ex=exById(id);if(!ex||!ex.std||ex.mob)return;
+    var rk=exRank(ex);if(!rk||rk.next==null)return;
+    var h=rankNextHint(ex,rk);if(!h||!h.rank)return;
+    take({kind:"rank",p:rk.pct,ex:ex,rk:rk,to:h.rank,
+      title:ex.n+" → "+h.rank.name,sub:h.txt?"Schaffe z. B. "+h.txt:"Noch "+Math.max(1,Math.round((1-rk.pct)*100))+" % bis dahin"});
+  });
+  // Medaillen (wie "Naechste Medaille" im Werte-Tab)
+  var D=vitrineData(),L=msList(D);
+  MILESTONES.forEach(function(m){
+    var v=msValue(m,D);if(v==null&&m.kind!=="days")return;
+    for(var i=0;i<m.steps.length;i++){if(!(v>=m.steps[i])){
+      var base=i?m.steps[i-1]:0,p=((v||0)-base)/(m.steps[i]-base);
+      take({kind:"medal",p:p,m:m,i:i,title:m.name+" · "+MEDAL_LV[i].n,sub:msRemain(m,v,m.steps[i])});
+      break;}}
+  });
+  // Sammlungen: zaehlt nur, wenn schon mindestens die Haelfte da ist
+  var st=lgState(D,L);
+  for(var k=0;k<5;k++){if(st.lit[k])continue;var q=st.t[k]/st.N;
+    if(q>=.5){var r=st.N-st.t[k];take({kind:"set",p:q,i:k,title:VT_SETNAMES[k],sub:"Noch "+r+(r===1?" Medaille":" Medaillen")+" bis zum Ring im Sockel"});}
+    break;}
+  return best;
+}
+function renderNextGoal(){
+  var box=$("nextgoal");
+  if(!box){var wc=document.querySelector("#p-heute .weekcard");if(!wc)return;
+    box=el("button","card tap nextgoal");box.id="nextgoal";box.type="button";wc.parentNode.insertBefore(box,wc.nextSibling);}
+  var g=null;try{if(state.profile)g=nextGoalPick();}catch(e){g=null;}
+  box.hidden=!g;if(!g)return;
+  box.innerHTML="";box.setAttribute("data-kind",g.kind);
+  var ic=el("div","ng-ic");
+  if(g.kind==="rank")ic.innerHTML=rankBadge(g.to,46);
+  else if(g.kind==="medal")ic.innerHTML=medalSvg(g.i,msShort(g.m,g.m.steps[g.i]),46,false,g.m);
+  else{ic.innerHTML=trophySvg({size:50,done:false,lit:lgState().lit});}
+  box.appendChild(ic);
+  var tx=el("div","ng-tx");tx.appendChild(el("span","ng-eye","Nächstes Ziel"));
+  tx.appendChild(el("b",null,g.title));tx.appendChild(el("span","ng-sub",g.sub));
+  var bar=el("div","pbar"),bi=el("i");bi.style.width=Math.max(4,Math.round(g.p*100))+"%";bar.appendChild(bi);tx.appendChild(bar);
+  box.appendChild(tx);
+  var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);box.appendChild(ch);
+  box.setAttribute("aria-label","Nächstes Ziel: "+g.title+". "+g.sub);
+  box.onclick=function(){
+    if(g.kind==="rank")sheetRankLadder(exRank(g.ex),"Rangleiter · "+g.ex.n,exRankHint(g.ex,exRank(g.ex)),g.ex);
+    else if(g.kind==="medal"){vtOpen("tro");vtDetail(g.m.id,g.i);}
+    else{vtOpen("bad");vtSetSheet(g.i);}
+  };
+}

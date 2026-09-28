@@ -231,6 +231,26 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 10) "Nächstes Ziel" auf Heute: ohne Training aus, mit Training ein Ziel, das sich nach dem
+  //     Erreichen ändert.
+  await test("Nächstes-Ziel-Karte", async () => {
+    let s = await seite({});
+    pruefe(await s.page.evaluate(() => { const c = document.getElementById("nextgoal"); return !c || c.hidden; }), "ohne Training sichtbar");
+    await s.ctx.close();
+    const days = {};
+    for (let i = 1; i <= 4; i++) { const d = new Date(); d.setDate(d.getDate() - i * 3); days[iso(d)] = Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 70 + i, reps: 6, ts: i }] }); }
+    s = await seite({ days });
+    const vorher = await s.page.evaluate(() => { const c = document.getElementById("nextgoal"); return c && !c.hidden ? c.innerText : null; });
+    pruefe(vorher && /Nächstes Ziel/i.test(vorher), "Karte fehlt: " + vorher);
+    const nachher = await s.page.evaluate(() => { const g = nextGoalPick(); let rec;
+      if (g.kind === "rank") { const need = valueForScore(g.ex, exRank(g.ex).next + 0.5); rec = { ex: g.ex.id, kg: Math.ceil(rawKg(g.ex, need)), reps: 1, ts: Date.now() }; }
+      else { const m = g.m; rec = { ex: m.ex ? m.ex[0] : "bench", kg: m.unit === "kg" ? m.steps[g.i] : 0, reps: m.unit === "kg" ? 1 : m.steps[g.i], ts: Date.now() }; }
+      day(TODAY).sets.push(rec); touch(TODAY); renderAll(); return document.getElementById("nextgoal").innerText; });
+    pruefe(nachher !== vorher, "Karte unverändert: " + nachher);
+    pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
+    await s.ctx.close();
+  });
+
   await browser.close();
   srv.close();
   const schlecht = ergebnisse.filter(e => !e[0]);
