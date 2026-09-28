@@ -64,6 +64,7 @@ function replaceCloudFromState(d){
 }
 
 function applyBackup(o){
+  backupSafetyCopy();
   state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];
   for(var i=EX.length-1;i>=0;i--)if(EX[i].custom)EX.splice(i,1);
   EX_BY_ID=null;
@@ -88,9 +89,31 @@ function applyBackup(o){
     toast("Backup lokal eingespielt – Konto folgt beim nächsten Verbinden");setTimeout(connect,30000);
   });
 }
+/* Einspielen ersetzt ALLES (Geraet und Konto) - deshalb nur Dateien annehmen, die wirklich wie
+   ein Formwert-Backup aussehen. Eine fremde oder beschaedigte Datei liess sich frueher einspielen,
+   die App brach danach ab und loeschte beim naechsten Verbinden die Tage im Konto. */
+function backupLooksValid(o){
+  if(!o||typeof o!=="object"||Array.isArray(o))return false;
+  var p=o.profile;
+  if(!p||typeof p!=="object"||!(p.version>=3)||!p.goals||typeof p.goals!=="object")return false;
+  if(!o.days||typeof o.days!=="object"||Array.isArray(o.days))return false;
+  var ok=true;
+  Object.keys(o.days).forEach(function(k){var d=o.days[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!d||typeof d!=="object"||(d.sets&&!Array.isArray(d.sets)))ok=false;});
+  if(o.routines&&(typeof o.routines!=="object"||Array.isArray(o.routines)))ok=false;
+  if(o.customEx&&!Array.isArray(o.customEx))ok=false;
+  return ok;
+}
+/* Vor dem Ersetzen den bisherigen Stand auf dem Geraet aufheben - falls sich das Einspielen als
+   Fehlgriff herausstellt, ist so nichts endgueltig verloren. Es wird immer nur die letzte
+   Sicherung behalten (Speicherplatz). */
+function backupSafetyCopy(){
+  try{localStorage.setItem("formwert-vor-backup",JSON.stringify({at:new Date().toISOString(),app:"formwert",profile:state.profile,days:state.days,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides}));return true;}
+  catch(e){return false;}
+}
 function readBackupText(txt){
   var o=null;try{o=JSON.parse(txt);}catch(e){}
-  if(!o||!o.profile||typeof o.days!=="object"){toast("Datei nicht lesbar");return;}
+  if(!backupLooksValid(o)){toast("Datei ist kein gültiges Formwert-Backup");return;}
   askConfirm("Backup einspielen?","Ersetzt alles auf diesem Gerät und im Konto durch: "+backupStats(o)+".","Einspielen",function(){applyBackup(o);},true);
 }
 function sheetRestore(){

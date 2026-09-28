@@ -1,5 +1,5 @@
-Version 449
+Version 450
 Stand: 2026-09-28
-Aenderung: Eigene Rangleitern fuer 72 Varianten aus Strength-Level-Daten, eigener Fortschritt an Maschinen
+Aenderung: Sicherheit (Daten nur fuer Besitzer, Backup-Pruefung, HTML-/CSV-Schutz, Sync ohne Datenverlust) und fluessigeres Scrollen
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand (Version 449). formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand (Version 450). formwert_app.html und quelltext/ sind veraltet.

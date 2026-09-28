@@ -132,7 +132,7 @@ function fwBoot(){
   setTimeout(fwBootReady,12000);
 }
 setSync("","nur dieses Gerät");
-var connectTries=0;
+var connectTries=0,cloudPulled=false;
 function connect(){
   if(!window.claude||!window.claude.use){setSync("off","nur dieses Gerät");fwBootReady();return;}
   window.claude.use("db").then(function(d){
@@ -143,7 +143,7 @@ function connect(){
     if(cloudReplacePending()){
       setSync("","Backup wird übertragen");
       return replaceCloudFromState(d).then(function(){
-        markCloudReplacePending(false);connectTries=0;setSync("on","synchronisiert");connect();
+        markCloudReplacePending(false);cloudPulled=true;connectTries=0;setSync("on","synchronisiert");connect();
       }).catch(function(){
         setSync("off","Backup nur lokal – Übertragung wird wiederholt");fwBootReady();setTimeout(connect,30000);
       });
@@ -168,6 +168,7 @@ function connect(){
       if(qs&&qs.docs)qs.docs.forEach(function(doc){var b=cloneWritable(doc.data());if(b&&b.id&&!state.dirtyRoutines[b.id])state.routines[b.id]=b;});
       mergeDuplicateCustomEx();
       mergeLegacyBuiltinEx();
+      cloudPulled=true;
       if(state.profile&&state.profile.version>=3)renderAll();persist();
       connectTries=0;setSync("on","synchronisiert");
     }).catch(function(){

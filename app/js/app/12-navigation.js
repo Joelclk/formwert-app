@@ -209,7 +209,10 @@ function renderLight(){
 }
 
 /* ================= Persistenz ================= */
-function touch(d){state.dirty[d]=true;localTouchDay(d);queueSave();}
+// Jede Aenderung bekommt eine neue Nummer: so erkennt persist(), ob ein Tag nach dem Absenden
+// noch einmal geaendert wurde und weiter als "offen" gelten muss.
+var fwDirtySeq=0;
+function touch(d){state.dirty[d]=++fwDirtySeq;localTouchDay(d);queueSave();}
 var stTimer=null;
 function queueSave(){if(stTimer)clearTimeout(stTimer);stTimer=setTimeout(persist,700);}
 /* Schlaegt die Uebertragung ins Konto fehl (offline, Verbindung weg), wurde das frueher
@@ -232,12 +235,21 @@ function cloudOk(){
 }
 function persist(){
   saveLocal();if(!db)return;
-  var p=Object.keys(state.dirty);state.dirty={};
-  p.forEach(function(d){var b=state.days[d];if(!b)return;
-    db.doc("days/"+d).set({d:d,sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}).then(cloudOk,function(){state.dirty[d]=true;cloudFail();});});
+  // Ein Tag bleibt als "offen" markiert, bis die Cloud den Empfang bestaetigt. Frueher wurde die
+  // Markierung schon beim Absenden geloescht: wurde die App genau dann beendet (iOS), galt der
+  // Tag als uebertragen, und beim naechsten Start ueberschrieb der aeltere Cloud-Stand ihn.
+  var p=Object.keys(state.dirty);
+  p.forEach(function(d){var b=state.days[d],tok=state.dirty[d];if(!b){delete state.dirty[d];return;}
+    db.doc("days/"+d).set({d:d,sets:b.sets||[],cardio:b.cardio||[],workouts:b.workouts||[],mobility:!!b.mobility,rest:!!b.rest,note:b.note||""}).then(function(){
+      if(state.dirty[d]===tok)delete state.dirty[d];cloudOk();},function(){cloudFail();});});
   var r=Object.keys(state.dirtyRoutines);state.dirtyRoutines={};
   r.forEach(function(id){var redo=function(){state.dirtyRoutines[id]=true;cloudFail();};
     if(state.routines[id])db.doc("routines/"+id).set(state.routines[id]).then(cloudOk,redo);else db.doc("routines/"+id).delete().then(cloudOk,redo);});
+  // Profil und eigene Uebungen erst hochladen, nachdem der Cloud-Stand einmal vollstaendig
+  // geladen wurde (cloudPulled, 14-start.js). Sonst koennte ein neues Geraet mit haengender
+  // Verbindung ein frisch eingerichtetes Profil und eine LEERE Uebungsliste ueber den
+  // Kontostand schreiben - eigene Uebungen waeren danach ueberall weg.
+  if(!cloudPulled)return;
   if(state.profile)db.doc("state/profile").set(state.profile).then(cloudOk,cloudFail);
   // Eigene und geaenderte Uebungen gehoeren genauso zum Konto wie Profil, Tage und
   // Routinen - ohne sie waeren sie beim Oeffnen auf einem anderen Geraet oder in einer

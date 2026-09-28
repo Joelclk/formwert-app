@@ -843,7 +843,8 @@ function sheetWorkoutDetail(dateKey,wo){
   body.appendChild(el("p","note exd-meta",deDate(dateKey)));
   var g=el("div","wo-sum");
   [["Dauer",fmtDur(wo.dur)],["Übungen",wo.exs],["Sätze",wo.sets],["Volumen",(wo.vol||0)+" kg"]].forEach(function(pp){
-    var c=el("div");c.innerHTML='<b class="num">'+pp[1]+'</b><span>'+pp[0]+'</span>';g.appendChild(c);
+    // Werte kommen aus gespeicherten Daten (Konto, Backup-Datei) - als Text setzen, nie als HTML.
+    var c=el("div");c.appendChild(el("b","num",String(pp[1]==null?"":pp[1])));c.appendChild(el("span",null,pp[0]));g.appendChild(c);
   });
   body.appendChild(g);
   var d=day(dateKey);

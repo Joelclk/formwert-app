@@ -221,17 +221,36 @@ function applyUiLang(root){
   /* Nicht pro eingefuegtem Knoten uebersetzen: beim Aufbau einer Liste kommen hunderte
      Einfuegungen, und jede Teilmenge wuerde mehrfach durchlaufen. Stattdessen wird EIN
      Durchlauf ueber die Seite gebuendelt und im naechsten Frame ausgefuehrt. */
-  var pending=false;
+  /* Nur die geaenderten Stellen uebersetzen, nicht jedes Mal die ganze Seite: frueher lief bei
+     jeder kleinen Aenderung (z. B. beim Scrollen in Entdecken, wenn Karten ihre Bilder bekommen)
+     ein Durchlauf ueber ALLE Texte der App - gemessen rund 4 s Rechenzeit bei einer Minute
+     Scrollen, sichtbar als Ruckeln. Auf Deutsch ist gar nichts zu tun: die App erzeugt ihre Texte
+     deutsch, und beim Zurueckschalten setzt setLang() die festen Beschriftungen einmal zurueck. */
+  var pending=false,roots=[],all=false;
   function schedule(){
     if(pending)return;
     pending=true;
     (window.requestAnimationFrame||setTimeout)(function(){
-      pending=false;applyUiLang(document.body);
+      pending=false;
+      var list=roots;roots=[];
+      if(LANG!=="en")return;
+      if(all||list.length>150){all=false;applyUiLang(document.body);return;}
+      // Nur die aeussersten geaenderten Knoten - innere werden dabei ohnehin mit erfasst.
+      list.forEach(function(n){
+        if(!n.isConnected)return;
+        for(var i=0;i<list.length;i++){var o=list[i];if(o!==n&&o.nodeType===1&&o.isConnected&&o.contains(n))return;}
+        applyUiLang(n);
+      });
     },0);
   }
-  var mo=new MutationObserver(function(){
-    if(_uiBusy)return;
-    schedule();
+  var mo=new MutationObserver(function(muts){
+    if(_uiBusy||LANG!=="en")return;
+    for(var i=0;i<muts.length;i++){var m=muts[i];
+      if(m.type==="characterData")roots.push(m.target);
+      else for(var j=0;j<m.addedNodes.length;j++){var a=m.addedNodes[j];if(a.nodeType===1||a.nodeType===3)roots.push(a);}
+      if(roots.length>150){all=true;roots=[];break;}
+    }
+    if(roots.length||all)schedule();
   });
   mo.observe(document.body,{childList:true,subtree:true,characterData:true});
 })();

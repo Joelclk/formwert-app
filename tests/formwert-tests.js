@@ -266,6 +266,56 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 12) Sicherheit: Backup nur, wenn es wirklich ein Formwert-Backup ist (vorher Sicherungskopie),
+  //     kein HTML aus gespeicherten Daten, CSV ohne ausführbare Formeln.
+  await test("Sicherheit: Backup, HTML, CSV", async () => {
+    const g = new Date(); g.setDate(g.getDate() - 2); const G = iso(g);
+    const s = await seite({ days: { [G]: Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 60, reps: 8, wid: "w1" }],
+      workouts: [{ id: "w1", name: "Test", dur: 600, exs: "<img src=x id=boese>", sets: 1, vol: "<img src=x id=boese2>" }] }) } });
+    const r = await s.page.evaluate(() => {
+      const echt = JSON.stringify(backupData()), vorher = Object.keys(state.days).length;
+      readBackupText(JSON.stringify({ profile: {}, days: {} }));            // fremde Datei
+      readBackupText(JSON.stringify({ profile: state.profile, days: [] })); // kaputte Tage
+      const nachFalsch = Object.keys(state.days).length, profilOk = !!(state.profile && state.profile.goals);
+      const gueltig = backupLooksValid(JSON.parse(echt));
+      applyBackup(JSON.parse(echt));
+      const kopie = !!localStorage.getItem("formwert-vor-backup");
+      return { vorher, nachFalsch, profilOk, gueltig, kopie };
+    });
+    pruefe(r.nachFalsch === r.vorher && r.profilOk, "ungültiges Backup hat Daten verändert: " + JSON.stringify(r));
+    pruefe(r.gueltig && r.kopie, "echtes Backup abgelehnt oder keine Sicherungskopie: " + JSON.stringify(r));
+    const html = await s.page.evaluate(G => { const wo = state.days[G].workouts[0]; sheetWorkoutDetail ? sheetWorkoutDetail(G, wo) : null;
+      return { img: !!document.getElementById("boese") || !!document.getElementById("boese2") }; }, G).catch(() => ({ img: false, skip: true }));
+    pruefe(!html.img, "HTML aus gespeicherten Daten wurde ausgeführt");
+    const csv = await s.page.evaluate(() => [csvCell("=HYPERLINK(1)"), csvCell("-2,5"), csvCell("@x"), csvCell("Bank")]);
+    pruefe(csv[0] === "'=HYPERLINK(1)" && csv[1] === "-2,5" && csv[2] === "'@x" && csv[3] === "Bank", "CSV: " + JSON.stringify(csv));
+    await s.ctx.close();
+  });
+
+  // 13) Sync: Ein Tag bleibt "offen", bis die Cloud den Empfang bestätigt; Profil und eigene
+  //     Übungen werden erst geschrieben, wenn der Cloud-Stand einmal geladen wurde.
+  await test("Sync: offen bis bestätigt, erst laden dann schreiben", async () => {
+    const s = await seite({});
+    const r = await s.page.evaluate(async () => {
+      const alt = db, altPulled = cloudPulled, writes = []; let loes = null;
+      const haengt = new Promise(res => { loes = res; });
+      db = { doc: p => ({ set: () => { writes.push(p); return p.startsWith("days/") ? haengt : Promise.resolve(); }, get: () => Promise.resolve({ exists: false }), delete: () => Promise.resolve() }) };
+      cloudPulled = false;
+      day(TODAY).note = "x"; touch(TODAY); persist();
+      const offenWaehrend = !!state.dirty[TODAY];
+      const profilGeschrieben = writes.includes("state/profile") || writes.includes("state/customex");
+      loes(); await new Promise(r => setTimeout(r, 50));
+      const offenDanach = !!state.dirty[TODAY];
+      cloudPulled = true; writes.length = 0; persist(); await new Promise(r => setTimeout(r, 50));
+      const profilJetzt = writes.includes("state/profile");
+      db = alt; cloudPulled = altPulled;
+      return { offenWaehrend, profilGeschrieben, offenDanach, profilJetzt };
+    });
+    pruefe(r.offenWaehrend && !r.offenDanach, "Offen-Markierung falsch: " + JSON.stringify(r));
+    pruefe(!r.profilGeschrieben && r.profilJetzt, "Profil zu früh/nicht geschrieben: " + JSON.stringify(r));
+    await s.ctx.close();
+  });
+
   await browser.close();
   srv.close();
   const schlecht = ergebnisse.filter(e => !e[0]);
