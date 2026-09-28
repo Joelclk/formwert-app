@@ -24,13 +24,17 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   rot_internal:"rotint",mob_bandpullapart:"reversefly",
   /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
   squat:"squat",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
-  deadlift:"deadlift",deadlift_rdl:"deadlift",deadlift_sumo:"deadlift",goodmorning:"deadlift",
+  deadlift:"deadlift",deadlift_sumo:"deadlift",
+  /* Rumänisches Kreuzheben: Hüftbeuge mit fast gestreckten Knien (bis 28.09.2026 als „deadlift“ gezeigt) */
+  deadlift_rdl:"rdl",goodmorning:"rdl",deadlift_sl:"rdl",
+  /* Hüftkreisen im Stand: Ganzkörper-Modell, weil Becken und Rumpf mitgehen */
+  mob_hip:"hipcircle",
   calf_stand:"calfraise",calf_bw:"calfraise",
   // Bein und Hüfte: eigenes Modell (assets/anim-modell-bein.js), siehe FW_ANIM_MODELL.
   mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing"};
 /* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
    werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
-var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,calfraise:1};
+var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1};
 /* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
    die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
 var FW_ANIM_MODELL={hipcar:"bein",legcircle:"bein",gate:"bein",legswing:"bein"};

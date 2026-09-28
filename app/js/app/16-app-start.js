@@ -181,8 +181,7 @@ setTimeout(function(){applyUiLang(document.body);},0);
     "Trag Dehn- oder Mobilisationsübungen ein – hier siehst du dann, welche Bereiche du bewegt hast und welche lange nicht dran waren.":"Log stretching or mobility exercises – this then shows which areas you have moved and which have been left out for a while.",
     "Gemacht":"Done","Passt dazu":"Good fits","gehalten":"static","bewegt":"dynamic",
     "zuletzt heute":"today","zuletzt gestern":"yesterday","✓ volle Einheit":"✓ full session",
-    "+ Mobilität eintragen":"+ Log mobility","Gehalten":"Static","Bewegt":"Dynamic","Alle Bereiche":"All areas","Sonstiges":"Other",
-    "Rechte Körperhälfte: Bein, Hüfte und Becken – Muskeln in den Farben von „Beanspruchte Muskeln“.":"Right side of the body: leg, hip and pelvis – muscles coloured as in “Muscles worked”."};
+    "+ Mobilität eintragen":"+ Log mobility","Gehalten":"Static","Bewegt":"Dynamic","Alle Bereiche":"All areas","Sonstiges":"Other"};
   for(var a in AREA_EN)add[a]=AREA_EN[a];
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
   var cnt={};for(var k1 in UI_EN){var v=UI_EN[k1];cnt[v]=(cnt[v]||0)+1;}
@@ -204,6 +203,29 @@ setTimeout(function(){applyUiLang(document.body);},0);
   UI_RX.unshift([/^(\d+) % einer Einheit · noch (\d+) min$/g,"$1 % of a session · $2 min to go"]);
   // Satzanzeige "10 Wdh" bzw. "8/8 Wdh" (links/rechts) – blieb bisher auch bei Kraftübungen deutsch.
   UI_RX.push([/(\d+(?:\/\d+)?) Wdh(?![.\w])/g,"$1 reps"]);
+})();
+/* Englische Texte fuer die Legende-Trophaee und ihre Feiern (15g-vitrine-hud.js). */
+(function(){
+  var TIER={"Bronze":"Bronze","Silber":"Silver","Gold":"Gold","Diamant":"Diamond","Champion":"Champion"};
+  var add={"Endziel":"Final goal","Legende-Trophäe":"Legend trophy","Sammlungen":"Collections",
+    "Geschafft – du bist eine Legende":"Done – you are a legend","Feier noch einmal ansehen":"Watch the celebration again",
+    "Tippen zum Schließen":"Tap to close","Bronze-Set":"Bronze set","Silber-Set":"Silver set","Gold-Set":"Gold set",
+    "Diamant-Set":"Diamond set","Champion-Set":"Champion set"};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+  for(var k2 in add){if(!UI_DE[add[k2]])UI_DE[add[k2]]=k2;}
+  var T="(Bronze|Silber|Gold|Diamant|Champion)";
+  UI_RX.unshift([/^Alle (\d+) Medaillen sammeln$/g,"Collect all $1 medals"]);
+  UI_RX.unshift([/^Legende-Trophäe, (\d+) von (\d+) Medaillen$/g,"Legend trophy, $1 of $2 medals"]);
+  UI_RX.unshift([/^Legende – alle (\d+) Medaillen$/g,"Legend – all $1 medals"]);
+  UI_RX.unshift([/^alle (\d+) Medaillen$/g,"all $1 medals"]);
+  UI_RX.unshift([/^Alle (\d+) Medaillen gesammelt( – seit (.+))?$/g,function(m,n,x,d){return "All "+n+" medals collected"+(x?" – since "+d:"");}]);
+  UI_RX.unshift([/^Die Trophäe gehört dir, sobald du alle (\d+) Medaillen hast\. Jeder Ring im Sockel leuchtet, wenn eine Sammlung komplett ist\.$/g,
+    "The trophy is yours once you have all $1 medals. Each ring in the base lights up when a collection is complete."]);
+  UI_RX.unshift([new RegExp("^"+T+"-Set komplett$","g"),function(m,t){return TIER[t]+" set complete";}]);
+  UI_RX.unshift([new RegExp("^Alle (\\d+) "+T+"-Medaillen gesammelt · Ring (\\d) von 5 leuchtet$","g"),function(m,n,t,r){return "All "+n+" "+TIER[t]+" medals collected · ring "+r+" of 5 lights up";}]);
+  UI_RX.unshift([new RegExp("^Komplett – alle (\\d+) "+T+"-Medaillen$","g"),function(m,n,t){return "Complete – all "+n+" "+TIER[t]+" medals";}]);
+  UI_RX.unshift([new RegExp("^Alle (\\d+) "+T+"-Medaillen$","g"),function(m,n,t){return "All "+n+" "+TIER[t]+" medals";}]);
+  UI_RX.unshift([new RegExp("^"+T+"-Set, (\\d+) von (\\d+)$","g"),function(m,t,a,b){return TIER[t]+" set, "+a+" of "+b;}]);
 })();
 (function(){var a=$("btn-newex");if(a){
   a.innerHTML=svgIcon("M12 5v14M5 12h14",2.1);
