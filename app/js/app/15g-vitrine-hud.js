@@ -14,7 +14,7 @@ var VT_TITLES=[
  {id:"brust",   n:"Brustprotz",             h:"Montag ist Brusttag",              how:"An 4 verschiedenen Montagen Brust trainiert."},
  {id:"lat",     n:"Lat-Lord",               h:"Der Rücken trägt die Show",        how:"4 Wochen lang mindestens 30 % deiner Kraftsätze für den Rücken."},
  {id:"bizeps",  n:"Bizeps-Bürgermeister",   h:"Arme, Arme, Arme",                 how:"4 Wochen lang mindestens 25 % deiner Kraftsätze für die Arme."},
- {id:"bauch",   n:"Bauchladen",             h:"Sixpack im Angebot",               how:"4 Wochen lang mindestens 20 % deiner Kraftsätze für den Rumpf."},
+ {id:"bauch",   n:"Panzerbauch",            h:"Hart wie ein Panzer",              how:"4 Wochen lang mindestens 20 % deiner Kraftsätze für den Rumpf."},
  {id:"messer",  n:"Schweizer Taschenmesser",h:"Von allem etwas",                  how:"In einer Woche alle 6 Kraftbereiche, Ausdauer und Mobilität."},
  {id:"hahn",    n:"Hahn",                   h:"Früh aufstehen",                   how:"10 Trainings vor 7 Uhr begonnen."},
  {id:"eule",    n:"Nachteule",              h:"Trainieren, wenn andere schlafen", how:"10 Trainings nach 21 Uhr begonnen."},
