@@ -268,3 +268,8 @@ button.rk-chip{cursor:pointer;touch-action:manipulation}
 .pr-thumb.rk{overflow:visible}
 .rk-card-b,.rk-row-b,.pr-bm-m.rk{overflow:visible}
 .rk-card-b svg{width:64px;height:64px}
+/* Eigener Fortschritt an Maschinen (15e-raenge.js, exOwnProgressEl) */
+.rk-own{display:flex;flex-direction:column;gap:2px;margin:-4px 0 12px;padding:10px 14px;border-radius:var(--r-sm);background:var(--good-soft)}
+.rk-own b{font-size:14.5px;font-weight:600;color:var(--good)}
+.rk-own span{font-size:13px;color:var(--ink-2)}
+.rk-own .rk-own-n{font-size:12px;color:var(--ink-3);margin-top:2px}

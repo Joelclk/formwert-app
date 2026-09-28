@@ -101,7 +101,7 @@ function valueForScoreLadder(ladder,score){
 }
 /* Wert (e1RM bzw. Wdh./Sek.) zu einem Score - Umkehrung von grade(). */
 function valueForScore(ex,score){
-  if(ex&&ex.std&&RANK_LADDER[ex.std]){
+  if(ex&&ex.std&&RANK_LADDER[ladderKey(ex)]){
     var lad=ladderThresholds(ex);
     if(lad)return valueForScoreLadder(lad,score);
   }
@@ -228,4 +228,30 @@ function rankOnTick(ex,rec){
     var nc=rankChip(after,18,function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)),ex);});nc.setAttribute("data-ex",ex.id);old.parentNode.replaceChild(nc,old);});}catch(e){}
   prQ.push({rank:true,ex:ex,from:before,to:after,kb:kb,ka:ka});
   if(!prBusy)prNext();
+}
+
+/* ---------- Eigener Fortschritt an Maschinen ----------
+   Maschinen und Kabelzuege unterscheiden sich von Studio zu Studio (Hebel, Umlenkrollen,
+   Plattengewichte) - der feste Rang ist dort nur eine grobe Einordnung. Aussagekraeftiger ist
+   der Vergleich mit dir selbst: bestes geschaetztes Maximum am ersten Trainingstag gegenueber
+   dem besten der letzten 90 Tage. Erst ab dem zweiten Trainingstag mit der Uebung. */
+function exOwnProgress(ex){
+  if(!ex||(ex.e!=="Maschine"&&ex.e!=="Kabelzug"))return null;
+  var days=Object.keys(state.days).filter(function(d){return d<=TODAY&&(state.days[d].sets||[]).some(function(s){return s.ex===ex.id&&s.reps>0;});}).sort();
+  if(days.length<2)return null;
+  var first=days[0],v0=0;
+  state.days[first].sets.forEach(function(s){if(s.ex===ex.id){var v=setValue(ex,s);if(v>v0)v0=v;}});
+  var now=exBestSet(ex).best;if(!(v0>0)||now==null)return null;
+  var pct=Math.round((now/v0-1)*100);
+  return {first:first,v0:v0,now:now,pct:pct};
+}
+function exOwnProgressEl(ex){
+  var p=exOwnProgress(ex);if(!p)return null;
+  var w=el("div","rk-own");
+  var u=ex.t==="load"?" kg":ex.t==="sec"?" s":" Wdh.";
+  var f=function(v){return ex.t==="load"?fmtNum(Math.round(rawKg(ex,v)*2)/2):String(Math.round(v));};
+  w.appendChild(el("b",null,(p.pct>0?"+":"")+p.pct+" % seit deinem ersten Training"));
+  w.appendChild(el("span",null,"Maximum "+f(p.v0)+" → "+f(p.now)+u+" · erstes Training am "+shortDate(p.first)));
+  w.appendChild(el("span","rk-own-n","Geräte unterscheiden sich von Studio zu Studio – hier zählt vor allem dein eigener Fortschritt."));
+  return w;
 }

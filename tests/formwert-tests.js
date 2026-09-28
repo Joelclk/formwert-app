@@ -251,6 +251,21 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 11) Rangleitern: jede Stufe höher als die vorige, Wert -> Rang -> Wert ergibt dasselbe –
+  //     für jede Übung mit Rang, Mann und Frau.
+  await test("Rangleitern stimmig", async () => {
+    const s = await seite({});
+    const probs = await s.page.evaluate(() => { const out = [];
+      [["m", 80], ["w", 60]].forEach(([sex, bw]) => { const prof = Object.assign({}, state.profile, { sex, bodyweight: bw });
+        EX.filter(e => e.std && RANK_LADDER[ladderKey(e)]).forEach(ex => { const L = ladderThresholds(ex, prof);
+          for (let i = 1; i < 19; i++) if (!(L[i] > L[i - 1])) out.push(sex + " " + ex.id + " Stufe " + i);
+          [1, 6, 9.5, 15, 17.5].forEach(r => { const sc = r * 100 / 18, v = valueForScoreLadder(L, sc), g = gradeLadder(L, v);
+            if (!g || Math.abs(g.score - sc) > 0.05) out.push(sex + " " + ex.id + " Rundreise " + r); }); }); });
+      return out; });
+    pruefe(!probs.length, probs.slice(0, 5).join(" | "));
+    await s.ctx.close();
+  });
+
   await browser.close();
   srv.close();
   const schlecht = ergebnisse.filter(e => !e[0]);

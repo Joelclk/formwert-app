@@ -36,12 +36,15 @@ function ageFactorV2(age){
    keinen belegten positiven Zusammenhang mit dem Koerpergewicht (eher das Gegenteil), daher dort
    keine Koerpergewichts-Skalierung - nur Alter und der Uebungs-sf wirken, die Ladder-Werte selbst
    sind schon die absoluten Sekunden/Wiederholungen bei der Referenz. */
+/* Welche Rangleiter gilt: eigene Leiter der Variante (LADDER_EX) oder die der Leituebung (std). */
+function ladderKey(ex){return (ex&&typeof LADDER_EX!=="undefined"&&LADDER_EX[ex.id])||(ex&&ex.std);}
 function ladderThresholds(ex,prof){
   var p=prof||state.profile;
   if(!ex||!ex.std||!p)return null;
-  var ladder=RANK_LADDER[ex.std];if(!ladder)return null;
+  var lk=ladderKey(ex),ladder=RANK_LADDER[lk];if(!ladder)return null;
   var sex=(p.sex==="w")?"w":"m", ratios=ladder[sex];
-  var af=ageFactorV2(p.age||30), sc=(ex.sf!=null?ex.sf:1);
+  // Eigene Leiter einer Variante (LADDER_EX, data.js) ist schon auf die Uebung selbst geeicht - kein sf.
+  var af=ageFactorV2(p.age||30), sc=(lk!==ex.std?1:(ex.sf!=null?ex.sf:1));
   if(ladder.bw===false){
     var noScale=af*sc;
     return ratios.map(function(r){return r*noScale;});
@@ -67,7 +70,7 @@ function gradeLadder(ladder,val){
   return {idx:r,name:null,score:clamp((r+p)*step,0,100),next:ladder[r+1],pct:p};
 }
 function grade(ex,val,prof){
-  if(ex&&ex.std&&RANK_LADDER[ex.std]){
+  if(ex&&ex.std&&RANK_LADDER[ladderKey(ex)]){
     var lad=ladderThresholds(ex,prof);
     if(lad){var g=gradeLadder(lad,val);if(g)return g;}
     // Fallback auf die alte Tabelle, falls z. B. das Profil fehlt.

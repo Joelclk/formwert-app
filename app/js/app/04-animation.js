@@ -151,6 +151,7 @@ function sheetExerciseDetail(ex){
   // Rang dieser Uebung (Wappen, Titel, naechster Schritt) - nur bei Uebungen mit Kraftstandard.
   try{var xrk=exRank(ex);
     if(xrk)body.appendChild(rankCard(xrk,{eyebrow:"Dein Rang",hint:exRankHint(ex,xrk),ladderTitle:"Rangleiter · "+ex.n,ex:ex}));
+    var own=exOwnProgressEl(ex);if(own)body.appendChild(own);
     else if(ex.std){
       body.appendChild(el("p","note rk-none","Noch kein Rang – ein Satz in den letzten 90 Tagen stuft dich ein."));
       var rkBtn=el("button","btn ghost small","Werte je Stufe ansehen");rkBtn.type="button";rkBtn.style.margin="-6px 0 10px";

@@ -209,7 +209,7 @@ setTimeout(function(){applyUiLang(document.body);},0);
   var TIER={"Bronze":"Bronze","Silber":"Silver","Gold":"Gold","Diamant":"Diamond","Champion":"Champion"};
   var add={"Endziel":"Final goal","Legende-Trophäe":"Legend trophy","Sammlungen":"Collections",
     "Geschafft – du bist eine Legende":"Done – you are a legend","Feier noch einmal ansehen":"Watch the celebration again",
-    "Tippen zum Schließen":"Tap to close","Nächstes Ziel":"Next goal","Neue Medaille":"New medal","Alle 5 Stufen geschafft":"All 5 tiers done","Bronze-Set":"Bronze set","Silber-Set":"Silver set","Gold-Set":"Gold set",
+    "Tippen zum Schließen":"Tap to close","Nächstes Ziel":"Next goal","Geräte unterscheiden sich von Studio zu Studio – hier zählt vor allem dein eigener Fortschritt.":"Machines differ from gym to gym – what matters most here is your own progress.","Neue Medaille":"New medal","Alle 5 Stufen geschafft":"All 5 tiers done","Bronze-Set":"Bronze set","Silber-Set":"Silver set","Gold-Set":"Gold set",
     "Diamant-Set":"Diamond set","Champion-Set":"Champion set"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
   for(var k2 in add){if(!UI_DE[add[k2]])UI_DE[add[k2]]=k2;}
@@ -230,6 +230,9 @@ setTimeout(function(){applyUiLang(document.body);},0);
   UI_RX.unshift([/^Noch (\d+) % bis dahin$/g,"$1 % to go"]);
   UI_RX.unshift([/^Noch (\d+) Medaillen? bis zum Ring im Sockel$/g,function(m,n){return n+(n==="1"?" medal":" medals")+" to go until the ring in the base";}]);
   UI_RX.unshift([/^Nächstes Ziel: (.+)$/g,"Next goal: $1"]);
+  UI_RX.unshift([/^z\. B\. (.+) für (Holz|Bronze|Silber|Gold|Diamant|Champion|Legende)( I{1,3})?$/g,function(m,x,t,r){return "e.g. "+x.replace(" pro Seite"," per side").replace(" Wdh."," reps")+" for "+RK[t]+(r||"");}]);
+  UI_RX.unshift([/^([+-]?\d+) % seit deinem ersten Training$/g,"$1 % since your first session"]);
+  UI_RX.unshift([/^Maximum (.+) → (.+) (kg|s|Wdh\.) · erstes Training am (.+)$/g,function(m,a,b,u,d){return "Max "+a+" → "+b+" "+(u==="Wdh."?"reps":u)+" · first session "+d;}]);
   // Rang-Namen (Holz I ... Legende) - Chips, Rangleiter, Ziel-Karte
   var RK={"Holz":"Wood","Bronze":"Bronze","Silber":"Silver","Gold":"Gold","Diamant":"Diamond","Champion":"Champion","Legende":"Legend"};
   UI_RX.unshift([/^(Holz|Silber|Diamant|Legende)( I{1,3})?$/g,function(m,t,r){return RK[t]+(r||"");}]);
