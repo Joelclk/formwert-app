@@ -86,6 +86,9 @@ function prNext(){
   var job=prQ.shift();
   if(!job){prBusy=false;return;}
   prBusy=true;
+  // Eigene Feiern (Sammlung komplett, Legende - 15g-vitrine-hud.js) zeigen sich selbst und
+  // rufen am Ende prNext() auf, damit die Warteschlange weiterlaeuft.
+  if(job.fn){try{job.fn(job);}catch(e){prNext();}return;}
   var b=$("pr-burst");
   if(!b){b=el("div","pr-burst");b.id="pr-burst";b.setAttribute("role","status");b.setAttribute("aria-live","polite");document.body.appendChild(b);}
   b.innerHTML="";

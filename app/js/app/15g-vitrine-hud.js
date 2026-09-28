@@ -252,16 +252,21 @@ function vtBar(p,col){var b=el("div","vt-bar"),i=el("i");i.style.width=Math.max(
 function vtBadges(b){
   var L=vt.L,tierGot=[0,0,0,0,0],got=0,N=MILESTONES.length,total=N*5;
   L.forEach(function(x){if(x.got){tierGot[x.i]++;got++;}});
-  // Endziel
+  // Endziel: die Legende-Trophaee (gesperrt grau, Ringe fuellen sich je fertiger Sammlung)
   b.appendChild(el("div","vt-lab","Endziel"));
-  var lg=el("div","vt-set legend"+(got>=total?" done":""));
-  var fanL=[0,1,2,3,4].map(function(i){var r=vtRow(VT_FAN_PREF[i*3%VT_FAN_PREF.length])||vt.rows[0];return {i:i,m:r.m,got:tierGot[i]>0};});
-  lg.appendChild(vtFan(fanL,54));
+  var done=got>=total,lg=el("button","vt-set legend"+(done?" done":""));lg.type="button";
+  lg.setAttribute("aria-label","Legende-Trophäe, "+got+" von "+total+" Medaillen");
+  var tw=el("div","vt-trophy");tw.innerHTML=trophySvg({size:84,done:done,anim:done,lit:tierGot.map(function(k){return k>=N;})});lg.appendChild(tw);
   var lt=el("div","tx");lt.appendChild(el("b",null,"Legende-Trophäe"));
-  lt.appendChild(el("span",null,got>=total?"Geschafft – du bist eine Legende":"Alle "+total+" Medaillen sammeln"));
+  lt.appendChild(el("span",null,done?"Geschafft – du bist eine Legende":"Alle "+total+" Medaillen sammeln"));
   lt.appendChild(vtBar(Math.floor(got/total*100),"linear-gradient(90deg,#FFD84A,#FF6FA8,#7A6BFF)"));
   lt.appendChild(el("span","ct",got+" / "+total));
-  lg.appendChild(lt);b.appendChild(lg);
+  var la=state.profile&&state.profile.legendAt;
+  if(done&&la)lt.appendChild(el("span","dt","seit "+shortDate(la)));
+  lg.appendChild(lt);
+  var lch=el("span","chev");lch.innerHTML=svgIcon(IC_CHEV);lg.appendChild(lch);
+  lg.onclick=function(){vtLegendSheet();};
+  b.appendChild(lg);
   // Sammlungen
   b.appendChild(el("div","vt-lab","Sammlungen"));
   VT_SETNAMES.forEach(function(nm,i){
@@ -456,4 +461,205 @@ function vtDetail(id,sel,keep){
   }
   scr.appendChild(c);d.appendChild(scr);
   if(!(keep&&old)){pg.appendChild(d);requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.add("on");});});}
+}
+
+/* =========================================================================
+   Legende-Trophaee: Endziel der Vitrine (alle 85 Medaillen).
+   Pokal im Stil der Legende-Stufe (Gold, Lila/Pink/Blau, Strahlen, Stern) auf einem Sockel
+   mit 5 Ringen - je Ring eine Sammlung (Bronze ... Champion), der leuchtet, sobald alle 17
+   Medaillen dieser Stufe da sind. Als SVG gezeichnet statt als Bild: so koennen die Ringe
+   einzeln an- und ausgehen, und der Pokal bleibt auch bei 60 px scharf.
+   Gemerkt wird nur, WANN etwas zum ersten Mal komplett war (state.profile.setsAt,
+   state.profile.legendAt) - damit jede Feier genau einmal kommt. Ob etwas komplett ist,
+   wird wie alle Medaillen immer aus dem Verlauf berechnet.
+   ========================================================================= */
+var LG_TIER_KEY=["bronze","silber","gold","diamant","champion"];
+var lgUid=0;
+/* Bild: assets/legende-trophaee.webp (farbig) und -grau.webp (gesperrte Silhouette), 576x720,
+   Zeichenflaeche 988x1236. Die 5 Ringe des Sockels als Trapeze (Index 0 = Bronze unten ...
+   4 = Champion oben): [oben, unten, linker Rand oben, linker Rand unten]; rechts gespiegelt. */
+var LG_W=988,LG_H=1236,LG_MID=496;
+var LG_BANDS=[[1096,1176,229,203],[1046,1098,249,235],[996,1048,266,256],[936,998,286,271],[874,938,309,297]];
+function lgBandPts(i){var b=LG_BANDS[i];
+  return [[b[2],b[0]],[2*LG_MID-b[2],b[0]],[2*LG_MID-b[3],b[1]],[b[3],b[1]]].map(function(p){return p[0]+","+p[1];}).join(" ");}
+/* o: {size (Hoehe in px), lit:[5 x bool], done:bool, anim:bool} */
+function trophySvg(o){
+  o=o||{};
+  var u="lt"+(++lgUid),lit=o.lit||[],done=!!o.done,H=o.size||120,W=Math.round(H*LG_W/LG_H);
+  var img=function(f,cp,cls){return '<image'+(cls?' class="'+cls+'"':'')+' href="assets/'+f+'.webp" x="0" y="0" width="'+LG_W+'" height="'+LG_H+'"'+(cp?' clip-path="url(#'+u+cp+')"':'')+'/>';};
+  var d='<defs>',rest='M0 0H'+LG_W+'V'+LG_H+'H0Z';
+  for(var i=0;i<5;i++){d+='<clipPath id="'+u+'b'+i+'"><polygon points="'+lgBandPts(i)+'"/></clipPath>';rest+='M'+lgBandPts(i).replace(/ /g,"L")+'Z';}
+  // Alles ausser den Ringen: bei freigeschalteter Trophaee farbig, die Ringe entscheiden selbst.
+  d+='<clipPath id="'+u+'rest"><path clip-rule="evenodd" d="'+rest+'"/></clipPath>';
+  if(done){
+    d+='<clipPath id="'+u+'cup"><path d="M240 250H750L700 560L600 700H390L290 560Z"/><polygon points="'+lgBandPts(4).split(" ")[0]+" "+lgBandPts(4).split(" ")[1]+" "+lgBandPts(0).split(" ")[2]+" "+lgBandPts(0).split(" ")[3]+'"/></clipPath>';
+    d+='<linearGradient id="'+u+'sheen" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>';
+  }
+  d+='</defs>';
+  var s='<svg class="lt'+(done?" done":" locked")+(o.anim&&done?" anim":"")+'" viewBox="0 0 '+LG_W+' '+LG_H+'" width="'+W+'" height="'+H+'" aria-hidden="true">'+d;
+  s+=img("legende-trophaee-grau");
+  if(done)s+=img("legende-trophaee","rest");
+  for(var j=0;j<5;j++){var bb=LG_BANDS[j];
+    s+='<g class="lt-ring'+(lit[j]?" on":"")+'" data-i="'+j+'" style="transform-origin:'+LG_MID+'px '+((bb[0]+bb[1])/2)+'px">'+
+      '<polygon class="off" points="'+lgBandPts(j)+'" fill="transparent"/>'+img("legende-trophaee","b"+j,"lit")+'</g>';}
+  if(done){
+    s+='<g clip-path="url(#'+u+'cup)"><rect class="lt-sheen" x="-300" y="0" width="260" height="'+LG_H+'" fill="url(#'+u+'sheen)" transform="skewX(-18)"/></g>';
+    s+='<g class="lt-tw"><path d="M880 150l14 38 38 14-38 14-14 38-14-38-38-14 38-14z" fill="#fff"/><path d="M90 560l10 28 28 10-28 10-10 28-10-28-28-10 28-10z" fill="#FFF3B0"/><path d="M860 820l8 22 22 8-22 8-8 22-8-22-22-8 22-8z" fill="#CFE6FF"/></g>';
+  }
+  return s+'</svg>';
+}
+/* Stand der Sammlung: je Stufe wie viele der 17 Medaillen da sind. */
+function lgState(D){
+  var L=msList(D||vitrineData()),t=[0,0,0,0,0],got=0;
+  L.forEach(function(x){if(x.got){t[x.i]++;got++;}});
+  var N=MILESTONES.length;
+  return {t:t,got:got,N:N,total:L.length,lit:t.map(function(k){return k>=N;}),done:got>=L.length&&L.length>0};
+}
+/* Blatt zur Trophaee: gross, mit den 5 Sammlungen als Ring-Legende. */
+function vtLegendSheet(){
+  var pg=$("vitpage"),old=pg.querySelector(".vt-sheet");if(old)old.remove();
+  var st=lgState(vt.D),sh=el("div","vt-sheet"),inn=el("div","in vt-lgsheet");sh.appendChild(inn);
+  var tw=el("div");tw.innerHTML=trophySvg({size:170,done:st.done,anim:st.done,lit:st.lit});inn.appendChild(tw);
+  inn.appendChild(el("h3",null,"Legende-Trophäe"));
+  var la=state.profile&&state.profile.legendAt;
+  inn.appendChild(el("p","vt-note",st.done?"Alle "+st.total+" Medaillen gesammelt"+(la?" – seit "+shortDate(la):""):
+    "Die Trophäe gehört dir, sobald du alle "+st.total+" Medaillen hast. Jeder Ring im Sockel leuchtet, wenn eine Sammlung komplett ist."));
+  var box=el("div","in2"),rl=el("div","vt-lgrings"),sa=(state.profile&&state.profile.setsAt)||{};
+  VT_SETNAMES.forEach(function(nm,i){
+    var ok=st.lit[i],rw=el("div","rw"+(ok?" ok":"")),dot=el("span","dot");
+    if(ok){dot.style.borderColor=MEDAL_LV[i].m;dot.style.background=MEDAL_LV[i].m+"66";dot.style.boxShadow="0 0 8px "+MEDAL_LV[i].m;}
+    rw.appendChild(dot);rw.appendChild(el("span","l",nm));
+    rw.appendChild(el("span","v",ok?"✓"+(sa[LG_TIER_KEY[i]]?" "+shortDate(sa[LG_TIER_KEY[i]]):""):st.t[i]+" / "+st.N));
+    rl.appendChild(rw);
+  });
+  box.appendChild(rl);inn.appendChild(box);
+  if(st.done){var rp=el("button","vt-btn","Feier noch einmal ansehen");rp.type="button";
+    rp.onclick=function(){sh.remove();lgShowLegend({replay:true});};inn.appendChild(rp);}
+  sh.onclick=function(e){if(e.target===sh)sh.remove();};
+  pg.appendChild(sh);
+}
+
+/* ---------- Feiern beim Abhaken ----------
+   Aufgerufen nach jedem abgehakten Satz (09-uebungsdetail.js). Vergleicht den Stand ohne und mit
+   dem neuen Satz - gefeiert wird nur, was genau dieser Satz komplett gemacht hat. Zusaetzlich
+   wird das Datum gespeichert, damit auch Haken-weg-Haken-dran nicht noch einmal feiert. Wer die
+   Sammlung schon vor dieser Funktion komplett hatte, bekommt das Datum still nachgetragen.
+   Leicht verzoegert, damit Rekord- und Rang-Karte (gleicher Haken) zuerst in der Warteschlange
+   stehen und das Abhaken selbst nicht auf die Rechnung wartet. */
+function lgOnTick(rec){
+  setTimeout(function(){try{lgCheck(rec);}catch(e){}},60);
+}
+function lgCheck(rec){
+  var p=state.profile;if(!p)return;
+  var after=lgState(),before=null;
+  var sets=rec&&state.days[TODAY]?state.days[TODAY].sets:null,ix=sets?sets.indexOf(rec):-1;
+  if(ix>=0){sets.splice(ix,1);try{before=lgState();}finally{sets.splice(ix,0,rec);}}
+  var sa=p.setsAt||{},changed=!p.setsAt,newSets=[],legendNew=false;
+  for(var i=0;i<5;i++){
+    var k=LG_TIER_KEY[i];
+    if(after.lit[i]&&!sa[k]){sa[k]=TODAY;changed=true;if(before&&!before.lit[i])newSets.push(i);}
+  }
+  p.setsAt=sa;
+  if(after.done&&!p.legendAt){p.legendAt=TODAY;changed=true;if(before&&!before.done)legendNew=true;}
+  if(changed){try{persist();}catch(e){}}
+  // Die 85. Medaille macht immer auch eine Sammlung voll - dann nur die grosse Feier,
+  // die ohnehin alle 5 Ringe nacheinander aufleuchten laesst.
+  if(legendNew)prQ.push({fn:lgShowLegend});
+  else newSets.forEach(function(i){prQ.push({fn:lgShowSet,i:i,lit:after.lit});});
+  if((legendNew||newSets.length)&&!prBusy)prNext();
+}
+function lgVibrate(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
+/* Funkenregen aus einem Punkt (Farben der Legende-Stufe). */
+function lgSparks(host,cx,cy,n,dist){
+  if(prReduce()||!document.body.animate)return;
+  var cols=["#FFD84A","#FF6FA8","#7A6BFF","#fff","#FFF3B0","#4B3BD6"];
+  for(var k=0;k<n;k++){
+    var a=Math.random()*Math.PI*2,d=dist*(.45+Math.random()*.7),sz=3+Math.random()*5;
+    var s=el("i","lg-spark");s.style.left=cx+"px";s.style.top=cy+"px";s.style.width=s.style.height=sz.toFixed(1)+"px";
+    s.style.background=cols[k%cols.length];if(k%4===0)s.style.borderRadius="1px";
+    host.appendChild(s);
+    var dx=Math.cos(a)*d,dy=Math.sin(a)*d;
+    var an=s.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},
+      {transform:"translate(calc(-50% + "+(dx*.8).toFixed(1)+"px),calc(-50% + "+(dy*.8).toFixed(1)+"px)) scale(1)",opacity:1,offset:.6},
+      {transform:"translate(calc(-50% + "+dx.toFixed(1)+"px),calc(-50% + "+(dy+40).toFixed(1)+"px)) scale(.3)",opacity:0}],
+      {duration:900+Math.random()*700,delay:Math.random()*120,easing:"cubic-bezier(.15,.7,.3,1)",fill:"backwards"});
+    an.onfinish=(function(e){return function(){e.remove();};})(s);
+  }
+}
+function lgRingCenter(svg,i){
+  var g=svg&&svg.querySelector('.lt-ring[data-i="'+i+'"] .off');if(!g)return null;
+  var r=g.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};
+}
+function lgOverlay(cls){
+  var o=el("div","lg-ov "+cls);o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");
+  if(prReduce())o.classList.add("still");
+  document.body.appendChild(o);
+  return o;
+}
+function lgClose(o,job){
+  if(o.dataset.closing)return;o.dataset.closing="1";
+  o.classList.add("out");
+  setTimeout(function(){o.remove();if(!job||!job.replay)prNext();},prReduce()?0:320);
+}
+/* Kleine Feier: eine Sammlung ist komplett - der passende Ring leuchtet auf. */
+function lgShowSet(job){
+  var i=job.i,c=MEDAL_LV[i],N=MILESTONES.length,o=lgOverlay("set"),reduce=prReduce();
+  o.setAttribute("aria-label",VT_SETNAMES[i]+" komplett");
+  o.style.setProperty("--tc",c.m);
+  var card=el("div","lg-card"),tw=el("div","lg-tro");
+  var lit=(job.lit||[]).slice();lit[i]=!!reduce;
+  tw.innerHTML=trophySvg({size:150,done:false,lit:lit});card.appendChild(tw);
+  var h=el("b","lg-h",VT_SETNAMES[i]+" komplett");h.style.color=c.l;card.appendChild(h);
+  card.appendChild(el("span","lg-s","Alle "+N+" "+c.n+"-Medaillen gesammelt · Ring "+(i+1)+" von 5 leuchtet"));
+  o.appendChild(card);
+  lgVibrate([30,50,90]);
+  requestAnimationFrame(function(){o.classList.add("on");});
+  var t1=setTimeout(function(){
+    var g=tw.querySelector('.lt-ring[data-i="'+i+'"]');if(!g)return;
+    g.classList.add("on","pop");
+    var pc=lgRingCenter(tw.querySelector("svg"),i);if(pc)lgSparks(o,pc.x,pc.y,18,60);
+    lgVibrate(40);
+  },reduce?0:650);
+  var t2=setTimeout(function(){lgClose(o,job);},reduce?3200:3800);
+  o.onclick=function(){clearTimeout(t1);clearTimeout(t2);lgClose(o,job);};
+}
+/* Grosse Feier: alle 85 Medaillen. Pokal steigt auf, die 5 Ringe leuchten nacheinander auf,
+   dann Strahlen, Funken und Schrift. Bleibt stehen, bis man tippt. */
+function lgShowLegend(job){
+  job=job||{};
+  var st=lgState(),o=lgOverlay("legend"),reduce=prReduce();
+  o.setAttribute("aria-label","Legende – alle "+st.total+" Medaillen");
+  o.appendChild(el("div","lg-bg"));
+  var rays=el("div","lg-rays");o.appendChild(rays);
+  var stage=el("div","lg-stage"),tw=el("div","lg-tro");
+  tw.innerHTML=trophySvg({size:Math.min(340,Math.round(window.innerHeight*.44)),done:true,anim:true,lit:reduce?[1,1,1,1,1]:[0,0,0,0,0]});
+  stage.appendChild(tw);
+  var tx=el("div","lg-txt");tx.appendChild(el("b",null,"Legende"));tx.appendChild(el("span",null,"alle "+st.total+" Medaillen"));
+  stage.appendChild(tx);o.appendChild(stage);
+  var hint=el("div","lg-hint","Tippen zum Schließen");o.appendChild(hint);
+  var ts=[],canClose=false;
+  requestAnimationFrame(function(){o.classList.add("on");});
+  lgVibrate([40,60,40]);
+  if(reduce){o.classList.add("final");canClose=true;}
+  else{
+    var svg=tw.querySelector("svg");
+    for(var i=0;i<5;i++)(function(i){ts.push(setTimeout(function(){
+      var g=svg.querySelector('.lt-ring[data-i="'+i+'"]');if(g){g.classList.add("on","pop");}
+      var pc=lgRingCenter(svg,i);if(pc)lgSparks(o,pc.x,pc.y,10,42);
+      lgVibrate(25+i*8);
+    },1250+i*330));})(i);
+    ts.push(setTimeout(function(){
+      o.classList.add("final");
+      var r=svg.getBoundingClientRect();
+      lgSparks(o,r.left+r.width/2,r.top+r.height*.35,70,Math.min(window.innerWidth*.55,260));
+      lgVibrate([80,50,80,50,240]);
+    },1250+5*330+150));
+    ts.push(setTimeout(function(){
+      var r=svg.getBoundingClientRect();lgSparks(o,r.left+r.width/2,r.top+r.height*.3,40,Math.min(window.innerWidth*.45,200));
+      canClose=true;
+    },3600));
+  }
+  o.onclick=function(){if(!canClose)return;ts.forEach(clearTimeout);lgClose(o,job);};
+  // Datum speichern (falls diese Feier ueber einen anderen Weg als lgCheck kam)
+  if(!job.replay&&state.profile&&!state.profile.legendAt){state.profile.legendAt=TODAY;try{persist();}catch(e){}}
 }

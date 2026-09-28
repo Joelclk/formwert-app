@@ -673,6 +673,7 @@ function renderSessionInner(){
         st.rec=rec;day(TODAY).sets.push(rec);touch(TODAY);
         try{prOnTick(ex,st,rec,r);}catch(e){}
         try{rankOnTick(ex,rec);}catch(e){}
+        try{lgOnTick(rec);}catch(e){}
         restAudioUnlock();
         if(we.restSec>0)restStart(we.restSec);
         saveWorkout();renderLight();tickWorkout();

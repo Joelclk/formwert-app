@@ -203,6 +203,34 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 9) Legende-Trophäe: Zähler x / 85, Ring leuchtet bei kompletter Sammlung, Feier genau einmal.
+  //    Alle Reihen außer Bankdrücken stehen per Testwert genau auf Bronze; der abgehakte
+  //    Bankdrück-Satz macht die Bronze-Sammlung voll.
+  await test("Legende-Trophäe und Sammlungs-Feier", async () => {
+    const g = new Date(); g.setDate(g.getDate() - 3);
+    const s = await seite({ days: { [iso(g)]: Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 50, reps: 5, ts: 1 }] }) } });
+    await s.page.evaluate(() => { const orig = msValue, v = {}; MILESTONES.forEach(m => { if (m.id !== "bench") v[m.id] = m.steps[0]; });
+      msValue = (m, D) => m.id in v ? v[m.id] : orig(m, D); });
+    const karte = () => s.page.evaluate(() => { vtOpen("bad"); const c = document.querySelector(".vt-set.legend");
+      const r = { ct: c.querySelector(".ct").textContent, an: [...c.querySelectorAll(".lt-ring.on")].map(x => +x.dataset.i) }; vtClose(); return r; });
+    let k = await karte();
+    pruefe(k.ct === "16 / 85" && !k.an.length, "vorher: " + JSON.stringify(k));
+    const haken = kg => s.page.evaluate(kg => { if (!workout) startWorkout(); workout.exercises.push({ ex: "bench", restSec: 0, sets: [{ kg, reps: 5, done: false }] });
+      woShape = null; renderSession(); const i = workout.exercises.length - 1; document.querySelector('.wo-page[data-i="' + i + '"] .wo-check').click(); }, kg);
+    await s.page.evaluate(() => { window.__feiern = []; const o = lgShowSet; lgShowSet = j => { window.__feiern.push(j.i); o(j); }; });
+    await haken(60);
+    for (let t = 0; t < 40 && !(await s.page.evaluate(() => window.__feiern.length)); t++) await s.warte(500);
+    await s.warte(5000);
+    k = await karte();
+    const r = await s.page.evaluate(() => ({ feiern: window.__feiern, sa: state.profile.setsAt }));
+    pruefe(r.feiern.join() === "0" && r.sa && r.sa.bronze, "Feier: " + JSON.stringify(r));
+    pruefe(k.ct === "17 / 85" && k.an.join() === "0", "nachher: " + JSON.stringify(k));
+    await haken(61); await s.warte(6000);
+    pruefe((await s.page.evaluate(() => window.__feiern.length)) === 1, "zweite Feier");
+    pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
+    await s.ctx.close();
+  });
+
   await browser.close();
   srv.close();
   const schlecht = ergebnisse.filter(e => !e[0]);
