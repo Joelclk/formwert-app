@@ -21,14 +21,28 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   row_pendlay:"row",row_tbar:"row",row_cable:"row",row_machine:"row",row_inv:"row",row_band:"row",
   latpull:"latpull",latpull_close:"latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
   pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"shrug",pullover:"pullover",
-  rot_internal:"rotint",
+  rot_internal:"rotint",mob_bandpullapart:"reversefly",
   /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
   squat:"squat",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
   deadlift:"deadlift",deadlift_rdl:"deadlift",deadlift_sumo:"deadlift",goodmorning:"deadlift",
-  calf_stand:"calfraise",calf_bw:"calfraise"};
-/* Bildunterschrift je Clip: Beinübungen zeigen den ganzen Körper, die Arm-Clips beide Oberkörperhälften */
+  calf_stand:"calfraise",calf_bw:"calfraise",
+  // Bein und Hüfte: eigenes Modell (assets/anim-modell-bein.js), siehe FW_ANIM_MODELL.
+  mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing"};
+/* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
+   werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
 var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,calfraise:1};
-var fwAnimGlb=null, fwAnimHtml=null;
+/* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
+   die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
+var FW_ANIM_MODELL={hipcar:"bein",legcircle:"bein",gate:"bein",legswing:"bein"};
+var FW_ANIM_MODELLE={
+  // text:null = Bildunterschrift je Clip über FW_ANIM_CAP_BEINE
+  arm:{asset:"anim-modell",daten:function(){return FW_ANIM_G;},text:null},
+  bein:{asset:"anim-modell-bein",daten:function(){return FW_ANIM_G_BEIN;},
+       text:"Rechte Körperhälfte: Bein, Hüfte und Becken – Muskeln in den Farben von „Beanspruchte Muskeln“."}};
+// Wird von werkzeug/animation_einpacken.py auf true gesetzt, sobald das Beinmodell eingepackt ist.
+// Vorher bekommen die Beinübungen keinen Animationsblock statt einer Fehlermeldung.
+var FW_ANIM_BEIN=true;
+var fwAnimGlbs={}, fwAnimHtml=null;
 /* Grosse Datenbloecke (3D-Viewer, Animation) werden erst geladen, wenn sie gebraucht werden -
    vorher musste der Browser beim Start rund 12,5 MB Skript einlesen, bevor die App erschien. */
 var fwAssetP={};
@@ -64,16 +78,18 @@ function fwAnimB64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.l
 function fwAnimGunzip(u){return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();}
 function exAnimBlock(ex){
   var clip=FW_ANIM_CLIP[ex.id]; if(!clip)return null;
+  var modell=FW_ANIM_MODELL[clip]||"arm",md=FW_ANIM_MODELLE[modell];
+  if(modell==="bein"&&!FW_ANIM_BEIN)return null;
   var wrap=el("div","exanim");
   var box=el("div","exanim-box"); wrap.appendChild(box);
   box.appendChild(el("span","exanim-load","3D-Modell wird geladen …"));
-  wrap.appendChild(el("p","note exanim-cap",FW_ANIM_CAP_BEINE[clip]?"Ganzer Körper: Beine, Becken, Rumpf und Arme – Muskeln in den Farben von „Beanspruchte Muskeln“.":"Oberkörper mit beiden Armen, Schultern, Brust und Rücken – Muskeln in den Farben von „Beanspruchte Muskeln“."));
+  wrap.appendChild(el("p","note exanim-cap",md.text||(FW_ANIM_CAP_BEINE[clip]?"Ganzer Körper: Beine, Becken, Rumpf und Arme – Muskeln in den Farben von „Beanspruchte Muskeln“.":"Oberkörper mit beiden Armen, Schultern, Brust und Rücken – Muskeln in den Farben von „Beanspruchte Muskeln“.")));
   if(typeof DecompressionStream==="undefined"){box.firstChild.textContent="Die 3D-Animation braucht einen neueren Browser.";return wrap;}
   var fr=document.createElement("iframe"); fr.className="exanim-frame"; fr.title="3D-Bewegungsablauf";
   box.appendChild(fr);
   var inv=exPctInv(ex)||exInvolve(ex);
-  fr._fwAnim={clip:clip,colors:fw3dColorsForInvolve(inv,"step")};
-  Promise.all([fwLoadAsset("anim-viewer"),fwLoadAsset("anim-modell")])
+  fr._fwAnim={clip:clip,modell:modell,colors:fw3dColorsForInvolve(inv,"step")};
+  Promise.all([fwLoadAsset("anim-viewer"),fwLoadAsset(md.asset)])
     .then(function(){return fwAnimHtml||fwAnimGunzip(fwAnimB64(FW_ANIM_V)).then(function(b){return (fwAnimHtml=new TextDecoder("utf-8").decode(b));});})
     .then(function(h){fr.srcdoc=h;})
     .catch(function(){box.firstChild.textContent="3D-Animation konnte nicht geladen werden.";});
@@ -85,8 +101,9 @@ window.addEventListener("message",function(ev){
   for(var i=0;i<frs.length;i++){if(frs[i].contentWindow===ev.source){fr=frs[i];break;}}
   if(!fr)return;
   if(d.type==="boot"){
-    if(!fwAnimGlb)fwAnimGlb=fwAnimB64(FW_ANIM_G);
-    var buf=fwAnimGlb.slice().buffer;
+    var mk=fr._fwAnim.modell||"arm";
+    if(!fwAnimGlbs[mk])fwAnimGlbs[mk]=fwAnimB64(FW_ANIM_MODELLE[mk].daten());
+    var buf=fwAnimGlbs[mk].slice().buffer;
     try{fr.contentWindow.postMessage({to:"fwanim",type:"init",glb:buf,clip:fr._fwAnim.clip,colors:fr._fwAnim.colors,neutral:"#B0B6BE"},"*",[buf]);}catch(e){}
   }else if(d.type==="ready"){fr.parentNode.classList.add("ready");}
   else if(d.type==="error"){var bx=fr.parentNode;bx.firstChild.textContent="3D-Animation konnte nicht geladen werden.";fr.remove();}

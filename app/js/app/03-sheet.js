@@ -383,7 +383,7 @@ function equipOptions(){
 }
 function exPicker(b,kinds,onPick,opts){
   opts=opts||{};
-  var q="",reg=opts.region||null,fine=null,mk=null;
+  var q="",reg=opts.region||null,fine=null,mk=null,mArea=null;
   var equip=[];
   var searchRow=el("div","searchrow");
   var search=document.createElement("input");
@@ -406,7 +406,7 @@ function exPicker(b,kinds,onPick,opts){
   // mit der markierten Muskelflaeche auf der Koerperfigur, plus die Cardio-Kachel mit dem
   // Laufband, statt einer reinen Text-Chip-Leiste. Erneutes Antippen einer bereits gewaehlten
   // Kachel hebt die Auswahl wieder auf (kein extra "Alle"-Element - genau wie bei Entdecken).
-  var chips=el("div","disc-mgrid"),sub=el("div","chipbar sub");
+  var chips=el("div","disc-mgrid"),sub=el("div","chipbar sub"),sub2=el("div","chipbar sub");
   function regionChips(){
     chips.innerHTML="";
     // opts.mob: Mobilitätsübungen gehören auch ins Training und in Einheiten, Ausdauer nicht.
@@ -425,15 +425,16 @@ function exPicker(b,kinds,onPick,opts){
         card.appendChild(sv);
       }
       card.appendChild(el("span",null,rg.name));
-      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;mk=null;regionChips();subChips();draw();};
+      card.onclick=function(){reg=(reg===rg?null:rg);fine=null;mk=null;mArea=null;regionChips();subChips();draw();};
       chips.appendChild(card);
     });
     discLazyObserve(chips);
   }
   function subChips(){
-    sub.innerHTML="";sub.hidden=!reg;
+    sub.innerHTML="";sub.hidden=!reg;sub2.innerHTML="";sub2.hidden=!(reg&&reg.mobility);
     if(!reg)return;
     if(reg.mobility){
+      mobAreaChips(sub2,mArea,function(a){mArea=a;subChips();draw();});
       MOB_KINDS.forEach(function(k){
         var c=el("button","fchip",k[1]);c.type="button";
         c.setAttribute("aria-pressed",String(mk===k[0]));
@@ -454,7 +455,7 @@ function exPicker(b,kinds,onPick,opts){
     });
     centerChip(sub);
   }
-  if(!kinds){regionChips();subChips();b.appendChild(chips);b.appendChild(sub);}
+  if(!kinds){regionChips();subChips();b.appendChild(chips);b.appendChild(sub);b.appendChild(sub2);}
   var addBtn=el("div","exadd");addBtn.appendChild(el("b",null,"+ Neue Übung erstellen"));
   addBtn.onclick=function(){sheetCreateExercise(kinds,onPick);};
   b.appendChild(addBtn);
@@ -468,7 +469,7 @@ function exPicker(b,kinds,onPick,opts){
     var cardioMode=!!(reg&&reg.cardio);
     return EX.filter(function(e){
       if(kinds){if(kinds.indexOf(e.t)<0)return false;}
-      else if(mobMode){if(!e.mob)return false;if(mk&&e.mk!==mk)return false;}
+      else if(mobMode){if(!e.mob)return false;if(mk&&e.mk!==mk)return false;if(mArea&&mobAreaWeight(e,mArea)!==1)return false;}
       else if(e.mob)return false;
       else if(cardioMode){if(e.t!=="cardio")return false;}
       else if(e.t==="cardio")return false;
@@ -486,6 +487,7 @@ function exPicker(b,kinds,onPick,opts){
     // Großzügige Obergrenzen statt einer harten Kappung – der Katalog soll wirklich ALLE
     // Übungen zeigen können, nicht nur die ersten paar (früher 90/60, das reichte bei
     // wachsendem Katalog nicht mehr für die ungefilterte "Alle"-Ansicht).
+    if(reg&&reg.mobility&&!mArea&&!q){mobGrouped(arr,list,item);discLazyObserve(list);return;}
     if(!ids){arr.slice(0,600).forEach(function(e){list.appendChild(item(e));});discLazyObserve(list);return;}
     var pri=arr.filter(function(e){return exHits(e,ids)>=1;}).slice(0,300);
     var sec=arr.filter(function(e){return exHits(e,ids)<1;}).slice(0,300);

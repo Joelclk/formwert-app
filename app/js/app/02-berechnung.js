@@ -447,16 +447,19 @@ function cardioMinutes(asOf,win){
    Sitzung soll eine Woche ohne Mobilität nicht aufwiegen, denn Beweglichkeit kommt aus
    Regelmäßigkeit. */
 var MOB_UNIT_MIN=10;
-// Übungen in Wiederholungen: geschätzte Sekunden je Wiederholung (sonst 4 s).
+// Übungen in Wiederholungen: geschätzte Sekunden je Wiederholung – neuere Übungen tragen das
+// selbst (ex.sw), für die älteren steht es hier; sonst 4 s.
 var MOB_SEK_WDH={mob_catcow:6,mob_wgs:15,mob_legswing:2,mob_9090:4,mob_wrist_circ:3};
 // Einnehmen der Position und Seitenwechsel kosten Zeit, die zur Einheit gehört.
 var MOB_WECHSEL_S=10;
-// "je Seite" in der Anleitung heißt: der eingetragene Wert gilt für jede Seite einzeln.
-function mobSides(ex){return (ex.uni||/je (Richtung und )?Seite/.test(ex.how||""))?2:1;}
+// "je Seite" bzw. "je Richtung" in der Anleitung heißt: der eingetragene Wert gilt für jede
+// Seite bzw. Richtung einzeln; "je Richtung und Seite" also viermal.
+function mobSides(ex){var h=ex.how||"";
+  return /je Richtung und Seite/.test(h)?4:(ex.uni||/je (Seite|Richtung)/.test(h))?2:1;}
 function mobSetSec(ex,s){
   var n=(ex.uni&&s.repsL!=null&&s.repsR!=null)?(+s.repsL||0)+(+s.repsR||0):(+s.reps||0)*mobSides(ex);
   if(n<=0)return 0;
-  return (ex.t==="sec"?n:n*(MOB_SEK_WDH[ex.id]||4))+MOB_WECHSEL_S*mobSides(ex);
+  return (ex.t==="sec"?n:n*(ex.sw||MOB_SEK_WDH[ex.id]||4))+MOB_WECHSEL_S*Math.min(mobSides(ex),2);
 }
 /* Mobilität eines Tages: Minuten, Anzahl Übungen, erreichter Anteil einer Einheit (0–1). */
 function mobDay(dd){

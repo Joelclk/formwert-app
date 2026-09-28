@@ -187,6 +187,10 @@ async function main() {
     await s.page.evaluate(() => document.querySelector('#mlistmode [data-m="mob"]').click());
     const n = await s.page.evaluate(() => document.querySelectorAll("#moblist .row.tap").length);
     pruefe(n === 7, "Bereiche in der Mobilitätsansicht: " + n);
+    // Katalog: jede Mobilitätsübung hat einen Bereich und ergibt mit 10 Wdh./30 s eine Zeit.
+    const k = await s.page.evaluate(() => { const m = EX.filter(e => e.mob);
+      return { n: m.length, ohneBereich: m.filter(e => !mobAreaOf(e)).map(e => e.id), ohneZeit: m.filter(e => !(mobSetSec(e, { reps: e.t === "sec" ? 30 : 10 }) > 0)).map(e => e.id) }; });
+    pruefe(k.n >= 80 && !k.ohneBereich.length && !k.ohneZeit.length, "Katalog: " + JSON.stringify(k));
     pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
     await s.ctx.close();
   });
