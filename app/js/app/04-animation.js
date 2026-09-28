@@ -21,7 +21,13 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   row_pendlay:"row",row_tbar:"row",row_cable:"row",row_machine:"row",row_inv:"row",row_band:"row",
   latpull:"latpull",latpull_close:"latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
   pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"shrug",pullover:"pullover",
-  rot_internal:"rotint"};
+  rot_internal:"rotint",
+  /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
+  squat:"squat",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
+  deadlift:"deadlift",deadlift_rdl:"deadlift",deadlift_sumo:"deadlift",goodmorning:"deadlift",
+  calf_stand:"calfraise",calf_bw:"calfraise"};
+/* Bildunterschrift je Clip: Beinübungen zeigen den ganzen Körper, die Arm-Clips beide Oberkörperhälften */
+var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,calfraise:1};
 var fwAnimGlb=null, fwAnimHtml=null;
 /* Grosse Datenbloecke (3D-Viewer, Animation) werden erst geladen, wenn sie gebraucht werden -
    vorher musste der Browser beim Start rund 12,5 MB Skript einlesen, bevor die App erschien. */
@@ -61,7 +67,7 @@ function exAnimBlock(ex){
   var wrap=el("div","exanim");
   var box=el("div","exanim-box"); wrap.appendChild(box);
   box.appendChild(el("span","exanim-load","3D-Modell wird geladen …"));
-  wrap.appendChild(el("p","note exanim-cap","Rechte Körperhälfte: Arm, Schulter, Brust und Rücken – Muskeln in den Farben von „Beanspruchte Muskeln“."));
+  wrap.appendChild(el("p","note exanim-cap",FW_ANIM_CAP_BEINE[clip]?"Ganzer Körper: Beine, Becken, Rumpf und Arme – Muskeln in den Farben von „Beanspruchte Muskeln“.":"Oberkörper mit beiden Armen, Schultern, Brust und Rücken – Muskeln in den Farben von „Beanspruchte Muskeln“."));
   if(typeof DecompressionStream==="undefined"){box.firstChild.textContent="Die 3D-Animation braucht einen neueren Browser.";return wrap;}
   var fr=document.createElement("iframe"); fr.className="exanim-frame"; fr.title="3D-Bewegungsablauf";
   box.appendChild(fr);
