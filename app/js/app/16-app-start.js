@@ -209,7 +209,7 @@ setTimeout(function(){applyUiLang(document.body);},0);
   var TIER={"Bronze":"Bronze","Silber":"Silver","Gold":"Gold","Diamant":"Diamond","Champion":"Champion"};
   var add={"Endziel":"Final goal","Legende-Trophäe":"Legend trophy","Sammlungen":"Collections",
     "Geschafft – du bist eine Legende":"Done – you are a legend","Feier noch einmal ansehen":"Watch the celebration again",
-    "Tippen zum Schließen":"Tap to close","Bronze-Set":"Bronze set","Silber-Set":"Silver set","Gold-Set":"Gold set",
+    "Tippen zum Schließen":"Tap to close","Neue Medaille":"New medal","Alle 5 Stufen geschafft":"All 5 tiers done","Bronze-Set":"Bronze set","Silber-Set":"Silver set","Gold-Set":"Gold set",
     "Diamant-Set":"Diamond set","Champion-Set":"Champion set"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
   for(var k2 in add){if(!UI_DE[add[k2]])UI_DE[add[k2]]=k2;}
@@ -225,6 +225,13 @@ setTimeout(function(){applyUiLang(document.body);},0);
   UI_RX.unshift([new RegExp("^Alle (\\d+) "+T+"-Medaillen gesammelt · Ring (\\d) von 5 leuchtet$","g"),function(m,n,t,r){return "All "+n+" "+TIER[t]+" medals collected · ring "+r+" of 5 lights up";}]);
   UI_RX.unshift([new RegExp("^Komplett – alle (\\d+) "+T+"-Medaillen$","g"),function(m,n,t){return "Complete – all "+n+" "+TIER[t]+" medals";}]);
   UI_RX.unshift([new RegExp("^Alle (\\d+) "+T+"-Medaillen$","g"),function(m,n,t){return "All "+n+" "+TIER[t]+" medals";}]);
+  UI_RX.unshift([/^(\d+) von (\d+) neuen Medaillen$/g,"$1 of $2 new medals"]);
+  UI_RX.unshift([new RegExp("^Zusammen mit "+T+"( und "+T+")*$","g"),function(m){return "Together with "+m.replace(/^Zusammen mit /,"").split(" und ").map(function(t){return TIER[t]||t;}).join(" and ");}]);
+  UI_RX.unshift([new RegExp("^Nächste Stufe: "+T+" – (.+)$","g"),function(m,t,r){
+    var u={"Wdh.":"reps","Tag":"day","Tage":"days","Woche":"week","Wochen":"weeks","Rekord":"record","Rekorde":"records","Punkt":"point","Punkte":"points"};
+    r=r.replace(/^noch (.+?)( (Wdh\.|Tage?|Wochen?|Rekorde?|Punkte?))?$/,function(z,n,x,w){return n.replace(",",".")+(w?" "+u[w]:"")+" to go";});
+    return "Next tier: "+TIER[t]+" – "+r;}]);
+  UI_RX.unshift([new RegExp("^Neue Medaille: (.+) "+T+"$","g"),function(m,n,t){return "New medal: "+(UI_EN[n]||n)+" "+TIER[t];}]);
   UI_RX.unshift([new RegExp("^"+T+"-Set, (\\d+) von (\\d+)$","g"),function(m,t,a,b){return TIER[t]+" set, "+a+" of "+b;}]);
 })();
 (function(){var a=$("btn-newex");if(a){

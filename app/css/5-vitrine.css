@@ -182,7 +182,7 @@
   padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px)}
 .lg-ov.on{opacity:1}
 .lg-ov.out{opacity:0;transition:opacity .3s ease}
-.lg-ov.set{background:rgba(8,9,11,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.lg-ov.set,.lg-ov.medal{background:rgba(8,9,11,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .lg-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;width:min(88vw,320px);padding:20px 18px 18px;border-radius:24px;
   background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--tc) 22%,#16181b),#16181b 70%);border:1px solid color-mix(in srgb,var(--tc) 55%,#2a2e33);
   box-shadow:0 20px 50px -16px rgba(0,0,0,.8),0 0 40px -10px var(--tc);transform:translateY(24px) scale(.9);transition:transform .45s cubic-bezier(.2,1.35,.4,1)}
@@ -219,3 +219,18 @@
 .lg-ov.still.legend .lg-tro{transform:none;opacity:1}
 .lg-ov.still .lg-card{transform:none}
 .lg-ov.still .lg-rays{transform:none}
+/* Neue Medaille (lgShowMedal) */
+.lg-ov.medal .lg-card{gap:4px;padding-top:6px}
+.md-stage{position:relative;width:200px;height:190px;display:grid;place-items:center}
+.md-rays{position:absolute;inset:-30px;border-radius:50%;opacity:0;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--tc) 55%,transparent) 0deg 7deg,transparent 7deg 20deg);
+  -webkit-mask:radial-gradient(circle,#000 30%,transparent 68%);mask:radial-gradient(circle,#000 30%,transparent 68%);transition:opacity .5s ease .55s}
+.lg-ov.on .md-rays{opacity:1;animation:lgSpin 14s linear infinite}
+.md-coin{position:relative;filter:drop-shadow(0 12px 22px rgba(0,0,0,.55));transform:translateY(-55vh) rotateY(720deg) scale(.5);opacity:0}
+.lg-ov.on .md-coin{animation:mdDrop .85s cubic-bezier(.25,1.3,.4,1) .05s forwards}
+@keyframes mdDrop{0%{transform:translateY(-55vh) rotateY(720deg) scale(.5);opacity:0}20%{opacity:1}75%{transform:translateY(6px) rotateY(0) scale(1.06)}100%{transform:none;opacity:1}}
+.md-coin svg{display:block}
+.md-eye{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b9199}
+.md-chip{display:inline-block;margin-top:2px;padding:4px 12px;border:1px solid;border-radius:99px;font-size:13.5px;font-weight:700;background:rgba(0,0,0,.25)}
+.lg-ov.still .md-coin{transform:none;opacity:1}
+.lg-ov.still .md-rays{opacity:1}

@@ -1,5 +1,5 @@
-Version 446
+Version 447
 Stand: 2026-09-28
-Aenderung: Legende-Trophaee (Endziel der Vitrine) mit 5 Sockel-Ringen, Feier bei kompletter Sammlung und grosse Legende-Feier bei allen 85 Medaillen
+Aenderung: Neue Medaille wird beim Abhaken gefeiert (dazu Legende-Trophaee und Sammlungs-Feiern aus Version 446)
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand (Version 446). formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand (Version 447). formwert_app.html und quelltext/ sind veraltet.

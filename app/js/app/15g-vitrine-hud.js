@@ -509,8 +509,8 @@ function trophySvg(o){
   return s+'</svg>';
 }
 /* Stand der Sammlung: je Stufe wie viele der 17 Medaillen da sind. */
-function lgState(D){
-  var L=msList(D||vitrineData()),t=[0,0,0,0,0],got=0;
+function lgState(D,L){
+  L=L||msList(D||vitrineData());var t=[0,0,0,0,0],got=0;
   L.forEach(function(x){if(x.got){t[x.i]++;got++;}});
   var N=MILESTONES.length;
   return {t:t,got:got,N:N,total:L.length,lit:t.map(function(k){return k>=N;}),done:got>=L.length&&L.length>0};
@@ -551,22 +551,37 @@ function lgOnTick(rec){
 }
 function lgCheck(rec){
   var p=state.profile;if(!p)return;
-  var after=lgState(),before=null;
+  var La=msList(vitrineData()),after=lgState(null,La),before=null,Lb=null;
   var sets=rec&&state.days[TODAY]?state.days[TODAY].sets:null,ix=sets?sets.indexOf(rec):-1;
-  if(ix>=0){sets.splice(ix,1);try{before=lgState();}finally{sets.splice(ix,0,rec);}}
-  var sa=p.setsAt||{},changed=!p.setsAt,newSets=[],legendNew=false;
+  if(ix>=0){sets.splice(ix,1);try{Lb=msList(vitrineData());before=lgState(null,Lb);}finally{sets.splice(ix,0,rec);}}
+  var sa=p.setsAt||{},ma=p.medalsAt||{},changed=!p.setsAt||!p.medalsAt,newSets=[],newMedals=[],legendNew=false;
+  // Neue Medaillen: jetzt da, ohne diesen Satz nicht, und noch nie gefeiert (medalsAt, Schluessel
+  // "bench-2" = Reihe-Stufe). Schon vorhandene Medaillen werden still eingetragen.
+  La.forEach(function(x,k){
+    if(!x.got)return;var key=x.m.id+"-"+x.i;if(ma[key])return;
+    ma[key]=TODAY;changed=true;
+    if(Lb&&!Lb[k].got)newMedals.push(x);
+  });
   for(var i=0;i<5;i++){
     var k=LG_TIER_KEY[i];
     if(after.lit[i]&&!sa[k]){sa[k]=TODAY;changed=true;if(before&&!before.lit[i])newSets.push(i);}
   }
-  p.setsAt=sa;
+  p.setsAt=sa;p.medalsAt=ma;
   if(after.done&&!p.legendAt){p.legendAt=TODAY;changed=true;if(before&&!before.done)legendNew=true;}
   if(changed){try{persist();}catch(e){}}
-  // Die 85. Medaille macht immer auch eine Sammlung voll - dann nur die grosse Feier,
-  // die ohnehin alle 5 Ringe nacheinander aufleuchten laesst.
+  // Reihenfolge: erst die Medaille(n), dann die Sammlung, zuletzt die Legende. Die 85. Medaille
+  // macht immer auch eine Sammlung voll - dann nur die grosse Feier, die ohnehin alle 5 Ringe
+  // nacheinander aufleuchten laesst.
+  // Mehrere Stufen derselben Reihe auf einmal (z. B. Bronze bis Gold): nur die hoechste zeigen.
+  var byRow={},rows=[];
+  newMedals.forEach(function(x){var g=byRow[x.m.id];
+    if(!g){byRow[x.m.id]={x:x,also:[]};rows.push(byRow[x.m.id]);return;}
+    if(x.i>g.x.i){g.also.push(g.x.i);g.x=x;}else g.also.push(x.i);});
+  rows.sort(function(a,b){return b.x.i-a.x.i;});
+  rows.forEach(function(g,j){prQ.push({fn:lgShowMedal,x:g.x,also:g.also.sort(),k:j+1,n:rows.length});});
   if(legendNew)prQ.push({fn:lgShowLegend});
   else newSets.forEach(function(i){prQ.push({fn:lgShowSet,i:i,lit:after.lit});});
-  if((legendNew||newSets.length)&&!prBusy)prNext();
+  if((legendNew||newSets.length||newMedals.length)&&!prBusy)prNext();
 }
 function lgVibrate(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
 /* Funkenregen aus einem Punkt (Farben der Legende-Stufe). */
@@ -621,6 +636,31 @@ function lgShowSet(job){
     lgVibrate(40);
   },reduce?0:650);
   var t2=setTimeout(function(){lgClose(o,job);},reduce?3200:3800);
+  o.onclick=function(){clearTimeout(t1);clearTimeout(t2);lgClose(o,job);};
+}
+/* Neue Medaille: faellt drehend herein, Strahlen in der Stufenfarbe, Funken beim Landen.
+   Mehrere Medaillen aus einem Satz laufen nacheinander ("2 von 3"). */
+function lgShowMedal(job){
+  var x=job.x,m=x.m,i=x.i,c=MEDAL_LV[i],o=lgOverlay("medal"),reduce=prReduce();
+  o.setAttribute("aria-label","Neue Medaille: "+m.name+" "+c.n);
+  o.style.setProperty("--tc",c.m);
+  var card=el("div","lg-card"),st=el("div","md-stage");
+  st.appendChild(el("div","md-rays"));
+  var md=el("div","md-coin");md.innerHTML=medalSvg(i,msShort(m,x.step),150,false,m);st.appendChild(md);
+  card.appendChild(st);
+  card.appendChild(el("span","md-eye",job.n>1?job.k+" von "+job.n+" neuen Medaillen":"Neue Medaille"));
+  card.appendChild(el("b","lg-h",m.name));
+  var chip=el("span","md-chip",c.n+" · "+msStepLabel(m,x.step));chip.style.color=c.l;chip.style.borderColor=c.m;card.appendChild(chip);
+  if(job.also&&job.also.length)card.appendChild(el("span","lg-s","Zusammen mit "+job.also.map(function(k){return MEDAL_LV[k].n;}).join(" und ")));
+  var v=msValue(m,vitrineData());
+  card.appendChild(el("span","lg-s",i<4?"Nächste Stufe: "+MEDAL_LV[i+1].n+" – "+msRemain(m,v,m.steps[i+1]):"Alle 5 Stufen geschafft"));
+  o.appendChild(card);
+  lgVibrate([30,40,80]);
+  requestAnimationFrame(function(){o.classList.add("on");});
+  var t1=setTimeout(function(){
+    var r=md.getBoundingClientRect();lgSparks(o,r.left+r.width/2,r.top+r.height*.55,22,90);lgVibrate(35);
+  },reduce?0:720);
+  var t2=setTimeout(function(){lgClose(o,job);},reduce?2600:job.n>1?2900:3400);
   o.onclick=function(){clearTimeout(t1);clearTimeout(t2);lgClose(o,job);};
 }
 /* Grosse Feier: alle 85 Medaillen. Pokal steigt auf, die 5 Ringe leuchten nacheinander auf,
