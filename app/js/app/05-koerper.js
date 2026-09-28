@@ -39,34 +39,25 @@ function gotoHeuteDate(d){
 }
 /* Einen anderen Tag anzeigen, ohne dass die Seite springt. Frueher wurde die Tagesliste
    geleert und neu aufgebaut - die Seite war dabei kurz kuerzer, der Browser hat die
-   Scrollposition nach oben korrigiert, und man landete woanders als vorher. Jetzt:
-   1) die Liste behaelt kurz ihre bisherige Hoehe (min-height), bis der neue Inhalt steht,
-   2) der Wochenstreifen bleibt genau an derselben Stelle auf dem Bildschirm (Anker),
-   3) der Fokus bleibt auf dem Wochenstreifen statt irgendwo im Dokument. */
+   Scrollposition nach oben korrigiert, und man landete woanders als vorher. Dagegen hilft:
+   die Liste behaelt kurz ihre bisherige Hoehe (min-height), bis der neue Inhalt steht - der
+   Fokus bleibt auf dem Wochenstreifen statt irgendwo im Dokument.
+   Bewusst OHNE aktiven Scroll-Ausgleich fuer die Hero-Karte darueber (Ring/Naechster-Schritt):
+   deren Hoehe unterscheidet sich legitim je Tag (z.B. "Training starten" vs. "Zurueck zu
+   heute"), und ein Ausgleich dafuer hat die Seite beim Wechsel selbststaendig nach unten
+   verschoben - genau der Sprung, den dieser ganze Mechanismus eigentlich verhindern soll. */
 var dayHoldT=null;
-function heuteScrollBy(dy){
-  if(Math.abs(dy)<0.5)return;
-  try{window.scrollBy({top:dy,left:0,behavior:"instant"});}catch(e){window.scrollBy(0,dy);}
-}
 function renderHeuteDay(){
   var ws=$("weekstrip"),lst=$("todaylist");
-  var a0=ws?ws.getBoundingClientRect().top:0;
   var hadFocus=!!(ws&&document.activeElement&&ws.contains(document.activeElement));
   if(dayHoldT){clearTimeout(dayHoldT);dayHoldT=null;}
   if(lst&&!lst.style.minHeight)lst.style.minHeight=lst.offsetHeight+"px";
   renderHero(heuteDate===TODAY?lastC:compute(heuteDate),state.profile.peaks||{});
   renderWeek();renderToday();
   $("fab").hidden=(tab!=="tab-heute")||(heuteDate!==TODAY);
-  if(ws)heuteScrollBy(ws.getBoundingClientRect().top-a0);
   if(hadFocus){var v=ws.querySelector(".wd.viewing");if(v){try{v.focus({preventScroll:true});}catch(e){}}}
-  // Sobald der neue Tag steht (Figuren nachgeladen), die Platzhalter-Hoehe wieder freigeben -
-  // auch dabei den Wochenstreifen an seiner Stelle halten.
-  dayHoldT=setTimeout(function(){
-    dayHoldT=null;if(!lst)return;
-    var a1=ws?ws.getBoundingClientRect().top:0;
-    lst.style.minHeight="";
-    if(ws)heuteScrollBy(ws.getBoundingClientRect().top-a1);
-  },1500);
+  // Sobald der neue Tag steht (Figuren nachgeladen), die Platzhalter-Hoehe wieder freigeben.
+  dayHoldT=setTimeout(function(){dayHoldT=null;if(lst)lst.style.minHeight="";},1500);
 }
 function renderWeek(){
   var box=$("weekstrip");box.innerHTML="";
@@ -337,7 +328,7 @@ var EMPH={
  tfl:["sidelying_raise","bandwalk_lat"],
  piriformis:["clamshell"],
  rectus_abdominis:["crunch","cablecrunch","situp","abwheel","legraise","kneeraise","lsit","hollow","dragonflag","deadbug"],
- transversus_abdominis:["plank","sideplank","hollow","deadbug","pallof"],
+ transversus_abdominis:["vacuum","plank","sideplank","hollow","deadbug","pallof"],
  sternocleidomastoid:["neck_flex_bw","neck_side_bw"],
  splenius_capitis:["neck_ext_bw","neck_harness","neck_bridge","neck_curl"],
  infraspinatus:["facepull","cuban","bandpullapart","reversefly"],

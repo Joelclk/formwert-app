@@ -1,5 +1,5 @@
-Version 450
+Version 456
 Stand: 2026-09-28
-Aenderung: Sicherheit (Daten nur fuer Besitzer, Backup-Pruefung, HTML-/CSV-Schutz, Sync ohne Datenverlust) und fluessigeres Scrollen
+Aenderung: Neue Uebung "Stomach Vacuum" (Rumpf, Halten, tiefe Bauchmuskulatur) und neue Mobilitaets-Kachel (Mini-Band-Kniebeuge aus dem 3D-Modell); enthaelt die Live-Staende 451-455 anderer Sitzungen
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand (Version 450). formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand (Version 456). formwert_app.html und quelltext/ sind veraltet.

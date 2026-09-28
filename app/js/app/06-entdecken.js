@@ -186,11 +186,9 @@ function cardioTreadmillIcon(){
   sv.appendChild(im);
   return sv;
 }
-// Bild der Mobilitaets-Kachel: das vom Nutzer vorgegebene Foto eines Gummibandsatzes.
-// Vorgehen wie beim Laufband, damit die beiden Sonderkacheln zusammenpassen: Hintergrund
-// freigestellt (die zusammenhaengende helle Flaeche vom Rand her entfernt, danach den Saum
-// um zwei Pixel abgetragen - sonst bleibt auf dunklem Grund ein heller Hof stehen), auf den
-// Inhalt zugeschnitten, auf 340 Pixel Breite verkleinert, 128 Farben.
+// Bild der Mobilitaets-Kachel: Mini-Band-Kniebeuge, gerendert aus dem eigenen 3D-Rig im Stil
+// der Muskel-Kacheln (Ausschnitt Huefte bis Fuesse wie bei "Waden"), damit die Kachel zu den
+// anderen passt statt ein Fremdfoto zu zeigen. 340x425 (4:5), harte Alphakante, 256 Farben.
 /* MOB_ICON_B64: ausgelagert nach assets/icon-mobilitaet.js */
 function mobBandIcon(){
   var NS="http://www.w3.org/2000/svg";
@@ -199,10 +197,9 @@ function mobBandIcon(){
   sv.setAttribute("viewBox","0 0 200 250");
   sv.setAttribute("role","img");sv.setAttribute("aria-label","Mobilität");
   var im=document.createElementNS(NS,"image");
-  // Bild ist 340x342 - vollstaendig einpassen, nichts abschneiden.
-  // Skalierung = min(200/340, 250/342) = 0,588 -> Breite 200, Hoehe 201,2, Rand oben/unten 24,4.
-  im.setAttribute("x","0");im.setAttribute("y","24.4");
-  im.setAttribute("width","200");im.setAttribute("height","201.2");
+  // Bild ist 340x425 - exakt das Seitenverhaeltnis der Kachel, fuellt sie also ohne Rand.
+  im.setAttribute("x","0");im.setAttribute("y","0");
+  im.setAttribute("width","200");im.setAttribute("height","250");
   im.setAttribute("preserveAspectRatio","xMidYMid meet");
   im.setAttribute("href","data:image/png;base64,"+MOB_ICON_B64);
   im.setAttributeNS("http://www.w3.org/1999/xlink","href","data:image/png;base64,"+MOB_ICON_B64);

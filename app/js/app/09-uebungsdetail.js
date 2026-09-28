@@ -108,6 +108,7 @@ var EX_PLUS={"bench":["rotator_sehnen", "g_schulter"],
   "lsit":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
   "sideplank":["g_handgelenk", "g_wirbelsaeule", "rumpf"],
   "hollow":["g_wirbelsaeule", "rumpf"],
+  "vacuum":["rumpf"],
   "legraise":["griff", "g_wirbelsaeule", "rumpf"],
   "kneeraise":["griff", "g_wirbelsaeule", "rumpf"],
   "crunch":["g_wirbelsaeule", "rumpf"],
@@ -977,9 +978,12 @@ function routineItemsFromWorkout(){
     return null;
   }
   workout.exercises.forEach(function(we){
+    var ex0=exById(we.ex);if(!ex0)return;
+    // Ausdauer hat keine Saetze - ohne diesen Zweig wuerde sie hier stillschweigend aus der
+    // Vorlage fallen, sobald "Ja, anpassen" den Vorlagenstand aus dem Training uebernimmt.
+    if(we.cardioRec){items.push({ex:we.ex,min:(we.cardioRec.min>0)?Math.round(we.cardioRec.min):20,sets:null,reps:null,kg:null});return;}
     if(!we.sets||!we.sets.length)return;
-    var ex=exById(we.ex);if(!ex)return;
-    var src=null;
+    var ex=ex0,src=null;
     for(var i=we.sets.length-1;i>=0&&!src;i--)if(we.sets[i].done)src=we.sets[i];
     if(!src)src=we.sets[we.sets.length-1];
     // Vorgaben bleiben, was sie waren: War Wdh./Gewicht in der Vorlage leer (oder kam die Uebung
@@ -998,7 +1002,9 @@ function routineDiffers(r,items){
   if(workout&&workout.restDefault!=null&&workout.restDefault!==routineRest(r))return true;
   for(var i=0;i<items.length;i++){
     var a=r.items[i],b=items[i];
-    if(!a||a.ex!==b.ex||(a.sets|0)!==(b.sets|0)||tplReps(a.reps)!==tplReps(b.reps)||tplKg(a.kg)!==tplKg(b.kg))return true;
+    if(!a||a.ex!==b.ex)return true;
+    if(a.min!=null||b.min!=null){if((a.min|0)!==(b.min|0))return true;continue;}
+    if((a.sets|0)!==(b.sets|0)||tplReps(a.reps)!==tplReps(b.reps)||tplKg(a.kg)!==tplKg(b.kg))return true;
   }
   return false;
 }
@@ -1013,17 +1019,19 @@ function routineChangeSummary(r,items){
   var keptOld=oldIds.filter(function(x){return newIds.indexOf(x)>=0;}).join(",");
   var keptNew=newIds.filter(function(x){return oldIds.indexOf(x)>=0;}).join(",");
   if(keptOld!==keptNew)out.push("andere Reihenfolge");
-  var nSets=0,nVals=0;
+  var nSets=0,nVals=0,nMin=0;
   items.forEach(function(it){
     var o=null;
     for(var i=0;i<r.items.length&&!o;i++)if(r.items[i].ex===it.ex)o=r.items[i];
     if(!o)return;
+    if(it.min!=null||o.min!=null){if((o.min|0)!==(it.min|0))nMin++;return;}
     if((o.sets|0)!==(it.sets|0))nSets++;
     if(tplReps(o.reps)!==tplReps(it.reps)||tplKg(o.kg)!==tplKg(it.kg))nVals++;
   });
   if(nSets)out.push(nSets===1?"1× andere Satzzahl":nSets+"× andere Satzzahl");
   if(workout&&workout.restDefault!=null&&workout.restDefault!==routineRest(r))out.push("Pause "+workout.restDefault+" s");
   if(nVals)out.push(nVals===1?"1× andere Vorgabe":nVals+"× andere Vorgaben");
+  if(nMin)out.push(nMin===1?"1× andere Minutenzahl":nMin+"× andere Minutenzahl");
   return out.join(" · ");
 }
 function finishWorkout(){

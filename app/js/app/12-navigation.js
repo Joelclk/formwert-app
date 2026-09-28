@@ -47,9 +47,11 @@ function shiftHeuteDate(delta){
 }
 (function(){
   // Wischen, um zum vorherigen/nächsten Tag zu wechseln – funktioniert überall auf der Heute-Seite
-  // (nicht nur innerhalb der Karten, auch im leeren Bereich darunter), folgt dabei live dem Finger
-  // und geht danach in einen weichen Rein-/Raus-Übergang über statt hart umzuschalten.
-  var sx=0,sy=0,tracking=false,swiped=false,dragging=false,suppressClick=false,curDx=0;
+  // (nicht nur innerhalb der Karten, auch im leeren Bereich darunter). Bewusst ohne jede eigene
+  // Optik: weder ein Mitlaufen mit dem Finger waehrend des Ziehens noch ein Uebergang danach -
+  // der Tag wechselt exakt so hart wie beim Antippen der Wochenpfeile oder eines Tages in der
+  // Woche. Die Geste selbst (touchstart/-move/-end) bleibt nur zur Erkennung bestehen.
+  var sx=0,sy=0,tracking=false,swiped=false,dragging=false,suppressClick=false;
   var sec=$("p-heute");if(!sec)return;
   function blocked(t){
     if($("scrim").classList.contains("open"))return true;         // Sheet offen
@@ -57,30 +59,18 @@ function shiftHeuteDate(delta){
     if(t&&t.closest&&(t.closest("nav.bottom")||t.closest(".fab")))return true;
     return false;
   }
-  function settle(x,op,dur,cb){
-    sec.style.transition=dur?"transform "+dur+"s ease-out, opacity "+dur+"s ease-out":"none";
-    sec.style.transform="translateX("+x+"px)";sec.style.opacity=String(op);
-    if(cb)setTimeout(cb,dur*1000);
-  }
   document.addEventListener("touchstart",function(e){
     if(tab!=="tab-heute"||e.touches.length!==1||blocked(e.target)){tracking=false;return;}
-    sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;swiped=false;dragging=false;curDx=0;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;swiped=false;dragging=false;
   },{passive:true});
   document.addEventListener("touchmove",function(e){
     if(!tracking||e.touches.length!==1)return;
     var dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
     if(!swiped){
-      if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.5){swiped=true;dragging=true;sec.style.transition="none";}
+      if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.5){swiped=true;dragging=true;}
       else if(Math.abs(dy)>10){tracking=false;return;} // eindeutig vertikales Scrollen: nicht als Wisch werten
     }
-    if(dragging){
-      if(e.cancelable)e.preventDefault(); // während des Ziehens nicht zusätzlich die Seite vertikal scrollen
-      var atEdge=(heuteDate===TODAY&&dx<0); // am heutigen Tag geht es nicht weiter in die Zukunft
-      curDx=atEdge?dx*0.25:dx;
-      var clamped=Math.max(-70,Math.min(70,curDx*0.35));
-      sec.style.transform="translateX("+clamped+"px)";
-      sec.style.opacity=String(1-Math.min(Math.abs(clamped)/70,1)*0.3);
-    }
+    if(dragging&&e.cancelable)e.preventDefault(); // während des Ziehens nicht zusätzlich die Seite vertikal scrollen
   },{passive:false});
   document.addEventListener("touchend",function(e){
     if(!tracking)return;tracking=false;if(!swiped)return;
@@ -91,16 +81,7 @@ function shiftHeuteDate(delta){
     setTimeout(function(){suppressClick=false;},400);
     var rawDx=e.changedTouches[0].clientX-sx;
     var delta=rawDx<0?1:-1,willMove=Math.abs(rawDx)>=50&&!(heuteDate===TODAY&&delta===1);
-    if(willMove){
-      settle(delta===1?-70:70,0,0.16,function(){
-        shiftHeuteDate(delta);
-        settle(delta===1?36:-36,0,0);
-        void sec.offsetWidth;
-        settle(0,1,0.2);
-      });
-    } else {
-      settle(0,1,0.2);
-    }
+    if(willMove)shiftHeuteDate(delta);
   },{passive:true});
   document.addEventListener("click",function(e){
     if(suppressClick){suppressClick=false;e.stopPropagation();e.preventDefault();}

@@ -180,9 +180,15 @@ function sheetEditor(id,preset){
             focusBox.innerHTML="";focusBox.appendChild(focusPanel(ed.items));};return n;}
         function labeled(lab,input){var w=el("label","ed-in");w.appendChild(el("span",null,lab));w.appendChild(input);return w;}
         var ctl=el("div","ed-ctl");
-        ctl.appendChild(labeled("Sätze",inp(it.sets,"1",function(v){return (it.sets=clamp(Math.round(v||0)||1,1,12));})));
-        ctl.appendChild(labeled(ex&&ex.t==="sec"?"Sek.":"Wdh.",inp(it.reps,"1",function(v){return (it.reps=(v!=null&&v>0)?Math.max(1,Math.round(v)):null);},true)));
-        if(ex&&ex.t==="load")ctl.appendChild(labeled("kg",inp(it.kg,"2.5",function(v){return (it.kg=(v!=null&&v>0)?v:null);},true)));
+        // Ausdauer hat keine Saetze/Wdh./Gewicht - stattdessen eine Minutenvorgabe, dieselbe
+        // Grundlage wie beim Hinzufuegen waehrend eines laufenden Trainings (addWorkoutCardio).
+        if(ex&&ex.t==="cardio"){
+          ctl.appendChild(labeled("Minuten",inp(it.min,"5",function(v){return (it.min=(v!=null&&v>0)?Math.round(v):20);})));
+        }else{
+          ctl.appendChild(labeled("Sätze",inp(it.sets,"1",function(v){return (it.sets=clamp(Math.round(v||0)||1,1,12));})));
+          ctl.appendChild(labeled(ex&&ex.t==="sec"?"Sek.":"Wdh.",inp(it.reps,"1",function(v){return (it.reps=(v!=null&&v>0)?Math.max(1,Math.round(v)):null);},true)));
+          if(ex&&ex.t==="load")ctl.appendChild(labeled("kg",inp(it.kg,"2.5",function(v){return (it.kg=(v!=null&&v>0)?v:null);},true)));
+        }
         // Reihenfolge aendern: bewusst zwei Pfeile statt Ziehen-und-Fallenlassen. Die Liste
         // steht in einem scrollbaren Blatt, dort ist Ziehen auf dem Telefon unzuverlaessig -
         // es kollidiert mit dem Scrollen des Blattes.
@@ -206,14 +212,20 @@ function sheetEditor(id,preset){
         sw.onclick=function(ev){
           ev.preventDefault();ev.stopPropagation();
           ed.name=ni.value;ed.rest=readRest();closeSheet();
-          var rg=null;if(ex&&ex.mob)rg=MOB_REGION;else if(ex){var p0=(ex.p||[])[0];rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;}
+          var rg=null;if(ex&&ex.t==="cardio")rg=CARDIO_REGION;else if(ex&&ex.mob)rg=MOB_REGION;else if(ex){var p0=(ex.p||[])[0];rg=REGIONS.find(function(r){return r.ids&&r.ids.indexOf(p0)>=0;})||null;}
           setTimeout(function(){openSheet(function(bb){
             sheetTitle(bb,"Übung tauschen");
-            if(ex)bb.appendChild(el("p","note","Statt „"+ex.n+"“ – "+it.sets+(it.sets===1?" Satz bleibt.":" Sätze bleiben.")));
+            if(ex)bb.appendChild(el("p","note","Statt „"+ex.n+"“ – "+(ex.t==="cardio"?"die Minutenvorgabe bleibt.":it.sets+(it.sets===1?" Satz bleibt.":" Sätze bleiben."))));
             exPicker(bb,null,function(e){
-              if(e.id!==it.ex){it.ex=e.id;it.reps=null;it.kg=null;}
+              if(e.id!==it.ex){
+                it.ex=e.id;it.reps=null;it.kg=null;
+                // Wechsel zwischen Ausdauer und Kraft: die jeweils andere Vorgabe (Minuten bzw.
+                // Saetze) ergibt keinen Sinn mehr und wird neu belegt statt nur ergaenzt.
+                if(e.t==="cardio"){it.min=(it.min>0)?it.min:20;it.sets=null;}
+                else{it.min=null;if(!(it.sets>0))it.sets=e.mob?2:3;}
+              }
               closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);
-            },{region:rg,mob:true});
+            },{region:rg,mob:true,cardio:true});
           });},180);
         };
         side.appendChild(sw);
@@ -233,7 +245,10 @@ function sheetEditor(id,preset){
     addBtn.onclick=function(){
       ed.name=ni.value;ed.rest=readRest();closeSheet();
       setTimeout(function(){openSheet(function(bb){sheetTitle(bb,"Übung hinzufügen");
-        exPicker(bb,null,function(e){ed.items.push({ex:e.id,sets:e.mob?2:3,reps:null,kg:null});closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);},{mob:true});});},180);
+        exPicker(bb,null,function(e){
+          ed.items.push(e.t==="cardio"?{ex:e.id,min:20,sets:null,reps:null,kg:null}:{ex:e.id,sets:e.mob?2:3,reps:null,kg:null});
+          closeSheet();setTimeout(function(){sheetEditor(id,ed);},180);
+        },{mob:true,cardio:true});});},180);
     };
     b.appendChild(addBtn);
     var fh=el("h2","sec","Welche Muskeln trainiert diese Einheit?");fh.style.margin="18px 0 8px";b.appendChild(fh);
@@ -244,7 +259,9 @@ function sheetEditor(id,preset){
       // Alte Einzelwerte je Uebung gibt es im Editor nicht mehr - die Einheit hat eine Pause.
       ed.items.forEach(function(it){delete it.rest;});
       // Einheitlich speichern: leere Vorgaben als null (alte Vorlagen hatten 0 kg als Platzhalter).
-      ed.items.forEach(function(it){it.kg=tplKg(it.kg);it.reps=tplReps(it.reps);});
+      ed.items.forEach(function(it){var ex2=exById(it.ex);
+        if(ex2&&ex2.t==="cardio"){it.min=(it.min!=null&&it.min>0)?Math.round(it.min):20;it.sets=null;it.reps=null;it.kg=null;return;}
+        it.kg=tplKg(it.kg);it.reps=tplReps(it.reps);});
       state.routines[ed.id]=ed;state.dirtyRoutines[ed.id]=true;closeSheet();persist();renderAll();};
     b.appendChild(save);
     if(id){var del2=el("button","btn ghost block","Einheit löschen");del2.style.marginTop="8px";

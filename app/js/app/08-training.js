@@ -72,10 +72,15 @@ function startWorkout(routineId){
   var r=routineId?state.routines[routineId]:null,rs=routineRest(r);
   workout={id:rid(),name:r?r.name:"Training",routineId:r?routineId:null,startedAt:Date.now(),pausedMs:0,paused:false,pauseStart:0,rest:{endAt:0,len:rs},restDefault:rs,exercises:[]};
     if(r)r.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
-    // Ausdauer hat keine Sätze und gehört nicht in Vorlagen. Steht sie trotzdem drin (aus der
-    // Zeit, als "Laufen & Co." nach dem Bearbeiten als Kraftübung galten), wird sie hier
-    // übersprungen – mit Sätzen angelegt brach die Trainingsansicht ab.
-    if(ex.t==="cardio")return;
+    // Ausdauer hat keine Saetze zum Abhaken - genau wie beim Hinzufuegen waehrend eines laufenden
+    // Trainings (addWorkoutCardio) legt sie sofort einen eigenen Datensatz in day(TODAY).cardio an,
+    // auf den der Eintrag in workout.exercises nur zeigt (siehe relinkCardio weiter oben).
+    if(ex.t==="cardio"){
+      var rec={ex:it.ex,min:(it.min!=null&&it.min>0)?Math.round(it.min):20,km:0,wid:workout.id};
+      day(TODAY).cardio.push(rec);touch(TODAY);
+      workout.exercises.push({ex:it.ex,cardioRec:rec});
+      return;
+    }
     var sets=[];for(var i=0;i<it.sets;i++)sets.push({kg:tplKg(it.kg),reps:tplReps(it.reps),done:false});
     workout.exercises.push({ex:it.ex,restSec:(it.rest!=null&&it.rest>=0)?it.rest:rs,sets:sets});});
   // Phase 2: leere Felder mit dem naechsten Schritt aus dem eigenen Verlauf vorbelegen.
@@ -1209,6 +1214,10 @@ var EX_PCT={
   // ===== Rumpf-Restposten: statische Halteuebungen mit Mitarbeit anderer Muskeln =====
   // Hollow Body Hold. Isometrisch, etwas mehr gerade Bauchspannung als der L-Sit, aber ohne
   // dessen zusaetzliche Schulter- und Trizepsarbeit.
+  // Stomach Vacuum. Reines Einziehen des Bauchnabels ohne aeussere Last - isoliert den queren
+  // Bauchmuskel staerker als jede Stuetzuebung, die schraegen Bauchmuskeln helfen nur mit.
+  vacuum:{  tg_bauch_tief:100,
+            tg_bauch_schraeg:20},
   hollow:{  tg_bauch_gerade:60,
             tg_quadrizeps:10},       // gestreckte Beine werden angehoben gehalten
   // L-Sit. Haelt den Rumpf gebeugt in der Luft - fordert nebenbei die gestreckten Beine,
