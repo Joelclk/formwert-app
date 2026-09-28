@@ -126,6 +126,7 @@
   EX_EN["mob_pigeon_dyn"]="Pigeon with forward folds";
   EX_EN["mob_threadneedle"]="Thread the needle";
   EX_EN["mob_butcherblock"]="Butcher's block stretch";
+  EX_EN["mob_standbackbend"]="Standing back bend";
   EX_EN["mob_openbook"]="Open book";
   EX_EN["mob_rolldown"]="Standing roll-down";
   EX_EN["mob_child"]="Child's pose";
