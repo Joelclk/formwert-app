@@ -162,9 +162,12 @@ def faserfeld(co,tri,knochen_dist,sehne,verdreht=False,ansatz_achse=None,ansatz_
         else: r1=(-c1+disk)/(2*c2); r2=(-c1-disk)/(2*c2)
     # die Wurzel nehmen, die im Bereich 0..1 liegt (sonst die naehere)
     def abst(r): return np.abs(np.clip(r,0,1)-r)
-    uu=np.where(abst(r1)<=abst(r2),r1,r2); uu=np.clip(np.nan_to_num(uu,nan=0.5),0,1)
+    # Der Faecher laeuft ueber die aeusserste Faser hinaus weiter (gleiche Richtung und Dichte):
+    # der Muskel reicht oft ueber die Linie vom untersten Ursprungspunkt zum Ansatz hinaus, dort
+    # gaebe es sonst keine Fasern.
+    uu=np.where(abst(r1)<=abst(r2),r1,r2); uu=np.clip(np.nan_to_num(uu,nan=0.5),-1.5,2.5)
     D2=E[None]+uu[:,None]*Fv[None]
-    tt=np.clip(np.sum((Q-uu[:,None]*dA[None])*D2,1)/(np.sum(D2*D2,1)+1e-18),0,1)
+    tt=np.clip(np.sum((Q-uu[:,None]*dA[None])*D2,1)/(np.sum(D2*D2,1)+1e-18),-0.3,1.3)
     L3=np.linalg.norm((B0+uu[:,None]*(B1-B0))-(A0+uu[:,None]*(A1-A0)),axis=1)
     best_u=uu; best_t=tt*L3
     D=np.stack([B0-A0,B1-A1])
@@ -172,7 +175,7 @@ def faserfeld(co,tri,knochen_dist,sehne,verdreht=False,ansatz_achse=None,ansatz_
     # Wo die Fasern zum schmalen Ansatz zusammenlaufen, werden die Linien enger. Damit sie dort nicht
     # flimmern und am breiten Ursprung nicht zu fein sind, gilt als Querbreite das geometrische Mittel.
     w_eff=float(np.sqrt(max(breite_a,1e-4)*max(breite_b,0.25*breite_a)))
-    psi=best_u*breite_a; s=best_t    # feste Faserzahl: zum Ansatz hin dichter, wie im Muskel
+    psi=(best_u+1.5)*breite_a; s=best_t-best_t.min()    # feste Faserzahl: zum Ansatz hin dichter, wie im Muskel
     L=float(np.median(np.linalg.norm(D,axis=1)))
     gl=np.ones(len(tri)); a,b,c=tri[:,0],tri[:,1],tri[:,2]
     return np.stack([psi,s],1), dict(A=(A0,A1),B=(B0,B1),L=L,teile=teile,weld=len(weld),ursprung=len(fa),ansatz=len(fb),flecken=len(flecken),info=info,phi=best_t,fa=fa,fb=fb)
