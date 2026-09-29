@@ -44,6 +44,8 @@ for o in alle:
     KP.append(tri.reshape(-1,3)+koff); KN+= [re.sub(r"\.(l|r|j)$","",o.name)]*len(m.loop_triangles); koff+=len(co)
 kbvh=BVHTree.FromPolygons(np.vstack(KV).tolist(),np.vstack(KP).tolist(),all_triangles=True)
 FASER=os.environ.get("FASER","1")=="1"
+GLATT_NORMALEN=set(x for x in os.environ.get("GLATT","").split("|") if x)
+GLATT_N=int(os.environ.get("GLATT_N","40"))
 FCACHE=ZIEL+".faser.npz"; FVOR=dict(np.load(FCACHE,allow_pickle=True)) if os.path.exists(FCACHE) else {}; FNEU={}
 t=time.time(); bvh=BVHTree.FromPolygons(V.tolist(),P.tolist(),all_triangles=True,epsilon=0.0)
 print("ohne",weg,"ausgeblendete Objekte; Suchbaum", len(P), "Dreiecke,", round(time.time()-t,1),"s")
@@ -123,6 +125,27 @@ for o in sorted(mus,key=lambda o:o.name):
         ul=m.uv_layers.get("UVMap") or m.uv_layers.new(name="UVMap")
         li=np.empty(len(m.loops),np.int32); m.loops.foreach_get("vertex_index",li)
         ul.data.foreach_set("uv",uv[li].astype(np.float32).ravel())
+    # Saubere Oberflaeche: die modellierten Runzeln nur in der Schattierung glaetten. Die Punkte
+    # bleiben, wo sie sind (gleiche Form, gleiche Umrisse); nur die Flaechennormalen werden aus
+    # einer geglaetteten Kopie berechnet, damit das Licht wie auf glattem Muskel faellt.
+    if grund(o.name) in GLATT_NORMALEN:
+        lc=np.empty(n*3); m.vertices.foreach_get("co",lc); lc=lc.reshape(-1,3)
+        m.calc_loop_triangles(); trl=np.empty(len(m.loop_triangles)*3,np.int64); m.loop_triangles.foreach_get("vertices",trl); trl=trl.reshape(-1,3)
+        Et=np.unique(np.sort(np.concatenate([trl[:,[0,1]],trl[:,[1,2]],trl[:,[2,0]]]),1),axis=0)
+        dg=np.maximum(np.bincount(Et[:,0],minlength=n)+np.bincount(Et[:,1],minlength=n),1)
+        cs=lc.copy()
+        for it in range(GLATT_N):
+            lam=0.5 if it%2==0 else -0.53
+            nbm=np.stack([np.bincount(Et[:,0],cs[Et[:,1],k],n)+np.bincount(Et[:,1],cs[Et[:,0],k],n) for k in range(3)],1)/dg[:,None]
+            cs=cs+lam*(nbm-cs)
+        fn=np.cross(cs[trl[:,1]]-cs[trl[:,0]],cs[trl[:,2]]-cs[trl[:,0]])
+        vn=np.zeros((n,3))
+        for k in range(3): np.add.at(vn,trl[:,k],fn)
+        vn/=np.linalg.norm(vn,axis=1)[:,None]+1e-18
+        alt_n=np.empty(n*3); m.vertices.foreach_get("normal",alt_n); alt_n=alt_n.reshape(-1,3)
+        vn[np.sum(vn*alt_n,1)<0]*=-1
+        m.normals_split_custom_set_from_vertices([tuple(v) for v in vn])
+        print("GLATT",o.name,n,"Punkte, Iterationen",GLATT_N)
 np.savez_compressed(CACHEDATEI,**CACHE)
 if FASER: np.savez_compressed(FCACHE,**FNEU)
 print("AO fertig:",anz,"Punkte in",round(time.time()-t,1),"s")
