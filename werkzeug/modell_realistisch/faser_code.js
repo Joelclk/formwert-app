@@ -6,11 +6,13 @@ var FW3D_FASER=null;
 function fw3d_faserTex(){
   if(FW3D_FASER)return FW3D_FASER;
   var ld=new Fr();
-  function mk(src){var t=ld.load(src);t.wrapS=t.wrapT=ai;t.colorSpace=Fn;t.anisotropy=4;return t;}
-  FW3D_FASER={n:mk(FW3D_FASER_N),r:mk(FW3D_FASER_R)};
+  // Texturkoordinaten sind in Metern gespeichert; eine Kachel deckt QUER x LAENGS Meter ab
+  function mk(src){var t=ld.load(src);t.wrapS=t.wrapT=ai;t.colorSpace=Fn;t.anisotropy=Math.max(4,Zn.capabilities.getMaxAnisotropy?Zn.capabilities.getMaxAnisotropy():4);t.repeat.set(1/FW3D_FASER_QUER,1/FW3D_FASER_LAENGS);return t;}
+  FW3D_FASER={h:mk(FW3D_FASER_H),r:mk(FW3D_FASER_R)};
   return FW3D_FASER;
 }
-/* Hauptachsen einer Punktwolke (Jacobi-Verfahren fuer die 3x3-Kovarianz) */
+/* Ersatz fuer Muskeln ohne gespeicherten Faserverlauf: Fasern entlang der Hauptachse.
+   Hauptachsen einer Punktwolke (Jacobi-Verfahren fuer die 3x3-Kovarianz) */
 function fw3d_achsen(p){
   var n=p.length/3,m=[0,0,0],i,k;
   for(i=0;i<n;i++)for(k=0;k<3;k++)m[k]+=p[i*3+k]/n;
@@ -30,9 +32,10 @@ function fw3d_achsen(p){
   var ev=[0,1,2].map(function(j){return {l:c[j][j],v:[v[0][j],v[1][j],v[2][j]]};}).sort(function(x,y){return y.l-x.l;});
   return {m:m,e:ev};
 }
-var FW3D_FASER_QUER=0.10, FW3D_FASER_LAENGS=0.20;  /* Kachelgroesse in Metern: ~9 mm breite Faserbuendel */
+var FW3D_FASER_TIEFE=2.0, FW3D_FASER_ANZ=40, FW3D_FASER_QUER=0.12, FW3D_FASER_LAENGS=0.20;  /* Kachelgroesse in Metern: 40 Fasern je 12 cm, also ~3 mm */
 function fw3d_faserUV(g){
-  if(!g||g.userData.fwUV||!g.attributes.position)return;
+  // Der anatomische Faserverlauf steckt als Texturkoordinaten im Modell (werkzeug/modell_realistisch)
+  if(!g||g.userData.fwUV||!g.attributes.position||g.attributes.uv)return;
   var pa=g.attributes.position,n=pa.count,p=new Float32Array(n*3),i;
   for(i=0;i<n;i++){p[i*3]=pa.getX(i);p[i*3+1]=pa.getY(i);p[i*3+2]=pa.getZ(i);}
   var A=fw3d_achsen(p),m=A.m,a1=A.e[0].v,a2=A.e[1].v,a3=A.e[2].v;
@@ -42,8 +45,8 @@ function fw3d_faserUV(g){
   if(!flach){for(i=0;i<n;i++){var x2=dot(a2,i),x3=dot(a3,i);rm+=Math.sqrt(x2*x2+x3*x3)/n;}}
   var kreis=Math.max(1,Math.round(2*Math.PI*rm/FW3D_FASER_QUER));
   for(i=0;i<n;i++){
-    uv[i*2+1]=dot(a1,i)/FW3D_FASER_LAENGS;
-    uv[i*2]=flach?dot(a2,i)/FW3D_FASER_QUER:(Math.atan2(dot(a3,i),dot(a2,i))/(2*Math.PI))*kreis;
+    uv[i*2+1]=dot(a1,i);
+    uv[i*2]=flach?dot(a2,i):(Math.atan2(dot(a3,i),dot(a2,i))/(2*Math.PI))*kreis*FW3D_FASER_QUER;
   }
   g.setAttribute("uv",new at(uv,2));g.userData.fwUV=1;
 }
@@ -52,21 +55,31 @@ function fw3d_faserUV(g){
    und die Grenzen zwischen Nachbarmuskeln treten hervor. */
 function fw3d_fugen(mt){
   mt.onBeforeCompile=function(sh){
-    sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute float _ao;\nvarying float vFwAo;")
-      .replace("#include <begin_vertex>","#include <begin_vertex>\nvFwAo=_ao;");
-    sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying float vFwAo;")
-      .replace("#include <color_fragment>","#include <color_fragment>\ndiffuseColor.rgb*=vFwAo;");
+    var ao=!!mt.userData.fwAo;
+    if(ao){
+      sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute float _ao;\nvarying float vFwAo;")
+        .replace("#include <begin_vertex>","#include <begin_vertex>\nvFwAo=_ao;");
+      sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying float vFwAo;")
+        .replace("#include <color_fragment>","#include <color_fragment>\ndiffuseColor.rgb*=vFwAo;");
+    }
+    // Fasern ausblenden, wo eine Faser auf dem Bildschirm schmaler als ~3 Bildpunkte wird
+    // (Ansatz, schraeger Blick, Entfernung) - sonst flimmert es dort.
+    sh.fragmentShader=sh.fragmentShader.replace("#include <bumpmap_pars_fragment>",
+      "#include <bumpmap_pars_fragment>\n#ifdef USE_BUMPMAP\nfloat fwBumpFade(){vec2 w=fwidth(vBumpMapUv);float f=max(w.x,w.y)*"+FW3D_FASER_ANZ.toFixed(1)+";return clamp((0.55-f)/0.3,0.0,1.0);}\n"+
+      "vec2 fwDH(){return dHdxy_fwd()*fwBumpFade();}\n#define dHdxy_fwd() fwDH()\n#endif");
   };
-  mt.customProgramCacheKey=function(){return "fwao";};
+  mt.customProgramCacheKey=function(){return "fw"+(mt.userData.fwAo?"a":"")+(mt.bumpMap?"b":"");};
 }
 function fw3d_faser(o,sehne){
-  if(o.geometry&&o.geometry.attributes._ao)fw3d_fugen(o.material);
+  o.material.userData.fwAo=!!(o.geometry&&o.geometry.attributes._ao);fw3d_fugen(o.material);
   if(typeof FW3D_FASER_NUR!=="undefined"&&FW3D_FASER_NUR&&!FW3D_FASER_NUR[o.userData.fwBase]){o.material.needsUpdate=true;return;}
   fw3d_faserUV(o.geometry);
   var t=fw3d_faserTex(),mt=o.material;
-  mt.normalMap=t.n;
+  // Hoehen-Textur statt Relief-Textur: sie wirkt ueber Dreieckskanten hinweg glatt, eine
+  // Relief-Textur braeuchte je Dreieck eine Ausrichtung und zeigte dort Knicke.
+  mt.bumpMap=t.h;
   // Sehnen: feiner und glaenzender als Muskelfleisch
-  if(sehne){mt.normalScale.set(0.35,-0.35);mt.roughness=0.75;}
-  else{mt.normalScale.set(0.6,-0.6);mt.roughness=1.0;mt.roughnessMap=t.r;}
+  if(sehne){mt.bumpScale=FW3D_FASER_TIEFE*0.4;mt.roughness=0.75;}
+  else{mt.bumpScale=FW3D_FASER_TIEFE;mt.roughness=1.0;mt.roughnessMap=t.r;}
   mt.needsUpdate=true;
 }

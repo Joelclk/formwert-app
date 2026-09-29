@@ -1,44 +1,36 @@
-# Erzeugt die gemeinsame, nahtlos kachelbare Faser-Textur (Normal-Map + Rauheit).
-# Fasern laufen senkrecht (entlang V). Alles periodisch aufgebaut, damit keine Naht entsteht.
+# Gemeinsame, nahtlos kachelbare Faser-Textur (Relief + Rauheit), wie im anatomischen Lehrbild:
+# feine, dichte, schnurgerade Fasern entlang V. Keine seitliche Welle - Kruemmung entsteht
+# allein durch den berechneten Faserverlauf auf dem Muskel.
 import bpy, numpy as np, os
-N=1024; rng=np.random.default_rng(7)
-y=np.arange(N)/N; x=np.arange(N)/N
-X,Y=np.meshgrid(x,y)            # Zeile=y (entlang Faser), Spalte=x (quer)
-def pnoise(X,Y,terms,fx,fy,amp):
-    s=np.zeros_like(X)
-    for _ in range(terms):
-        kx=rng.integers(0,fx+1); ky=rng.integers(1,fy+1); ph=rng.uniform(0,2*np.pi)
-        s+=np.sin(2*np.pi*(kx*X+ky*Y)+ph)*rng.uniform(.3,1)
-    return s/terms*amp
-# Bündelgrenzen: 18 Bündel ungleicher Breite, Grenzen wellen leicht entlang der Faser
-nb=11; w=rng.uniform(.5,1.6,nb); edges=np.concatenate([[0],np.cumsum(w)/w.sum()])
-warp=pnoise(X,Y,10,3,4,0.018)      # seitliches Ausweichen der Bündel
-xs=(X+warp)%1.0
-idx=np.searchsorted(edges,xs,side="right")-1
-lo=edges[idx]; hi=edges[idx+1]; t=(xs-lo)/(hi-lo)            # 0..1 quer im Bündel
-hb=rng.uniform(.7,1.0,nb)[idx]                                 # jedes Bündel etwas anders hoch
-bundle=hb*np.sin(np.pi*t)**0.8                                   # gewölbtes Bündel, Furche am Rand
-# feine Fasern im Bündel: 7 je Bündel, schwach
-nf=rng.integers(4,8,nb)[idx]
-fine=0.5+0.5*np.cos(2*np.pi*t*nf+pnoise(X,Y,8,3,8,2.5))
-# Längsverlauf: sehr sanfte Wellen und leichte Unregelmäßigkeit je Bündel
-seed=(idx*37%11)/11.0
-along=pnoise(X,Y,12,6,10,0.25)+0.15*np.sin(2*np.pi*(3*Y+seed))
-H=0.80*bundle+0.06*fine+0.14*along
-# Normal aus dem Gefälle (periodisch mit np.roll)
+N=1024; rng=np.random.default_rng(11)
+x=(np.arange(N)+0.5)/N
+FEIN=40                                   # feine Fasern je Kachelbreite (~3 mm bei 12 cm)
+# jede feine Faser eigene Hoehe und Breite, aber exakt gerade
+tf=x*FEIN; idx=np.floor(tf).astype(int)%FEIN; fr=tf-np.floor(tf)
+hoehe=rng.uniform(0.55,1.0,FEIN)[idx]; breit=rng.uniform(0.55,0.9,FEIN)[idx]
+# weiches Profil (reine Wellenform): bleibt auch bei wenigen Bildpunkten ohne Treppenstufen
+fein=hoehe*(0.5-0.5*np.cos(2*np.pi*fr))
+# Buendel: 7 Gruppen, sehr flache Woelbung, betont die Gruppierung ohne Wellen
+nb=7; edges=np.concatenate([[0],np.cumsum(rng.uniform(.7,1.3,nb))]); edges/=edges[-1]
+bi=np.searchsorted(edges,x,side="right")-1; tb=(x-edges[bi])/(edges[bi+1]-edges[bi])
+buendel=np.sin(np.pi*tb)**0.5*rng.uniform(.8,1.0,nb)[bi]
+h_quer=0.65*fein+0.35*buendel             # nur quer veraenderlich -> Fasern gerade
+# entlang der Faser nur sanfte Helligkeitsschwankung der Tiefe (periodisch, kein Versatz)
+y=(np.arange(N)+0.5)/N
+lang=1.0+0.08*np.sin(2*np.pi*(y[:,None]*1+rng.uniform(0,1,FEIN)[idx][None,:]))
+H=h_quer[None,:]*lang
 dx=(np.roll(H,-1,1)-np.roll(H,1,1))*N/2; dy=(np.roll(H,-1,0)-np.roll(H,1,0))*N/2
-s=0.010
-nx=-dx*s; ny=-dy*s; nz=np.ones_like(H)
-l=np.sqrt(nx*nx+ny*ny+nz*nz); nx/=l; ny/=l; nz/=l
-nrm=np.stack([nx*.5+.5,ny*.5+.5,nz*.5+.5,np.ones_like(H)],-1)
-# Rauheit: Furchen matter, Bündelrücken etwas glänzender (Muskelhaut)
-R=0.62-0.20*bundle+0.05*(fine-0.5)
-rough=np.stack([R,R,R,np.ones_like(R)],-1)
+st=0.0060
+nx=-dx*st; ny=-dy*st; nz=np.ones_like(H); l=np.sqrt(nx*nx+ny*ny+nz*nz)
+nrm=np.stack([nx/l*.5+.5,ny/l*.5+.5,nz/l*.5+.5,np.ones_like(H)],-1)
+R=np.broadcast_to(0.66-0.18*h_quer[None,:],H.shape)
+rough=np.stack([R,R,R,np.ones_like(H)],-1)
 def save(arr,name,size):
-    img=bpy.data.images.new(name,size,size,alpha=False,float_buffer=False)
-    img.colorspace_settings.name="Non-Color"
+    img=bpy.data.images.new(name,size,size,alpha=False); img.colorspace_settings.name="Non-Color"
     a=arr if arr.shape[0]==size else arr[::arr.shape[0]//size,::arr.shape[0]//size]
-    img.pixels.foreach_set(np.clip(a[::-1],0,1).astype(np.float32).ravel())   # Blender-Bilder beginnen unten
+    img.pixels.foreach_set(np.ascontiguousarray(np.clip(a[::-1],0,1)).astype(np.float32).ravel())
     img.filepath_raw=os.path.join(os.getcwd(),name+".png"); img.file_format="PNG"; img.save()
+Hn=(H-H.min())/(H.max()-H.min())
+save(np.stack([Hn,Hn,Hn,np.ones_like(Hn)],-1),"faser_hoehe",1024)
 save(nrm,"faser_normal",1024); save(rough,"faser_rauheit",512)
-print("Höhe min/max",H.min(),H.max(),"Neigung max",float(np.max(np.abs(nx))))
+print("ok, Neigung max",float(np.abs(nx/l).max()))

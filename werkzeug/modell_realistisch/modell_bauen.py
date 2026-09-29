@@ -32,6 +32,19 @@ for o in alle:
     tri=np.empty(len(m.loop_triangles)*3,np.int32); m.loop_triangles.foreach_get("vertices",tri)
     P.append(tri.reshape(-1,3)+off); off+=len(co)
 V=np.vstack(V); P=np.vstack(P)
+sys.path.insert(0,os.path.dirname(os.path.abspath(MUSKEL)))
+from faserfeld import faserfeld
+KV=[];KP=[];KN=[];koff=0
+for o in alle:
+    if o in mus or o.type!="MESH" or not sichtbar(o): continue
+    m=o.data; mw=o.matrix_world
+    co=np.empty(len(m.vertices)*3,np.float32); m.vertices.foreach_get("co",co); co=co.reshape(-1,3)
+    co=(np.c_[co,np.ones(len(co))]@np.array(mw).T)[:,:3]; KV.append(co)
+    m.calc_loop_triangles(); tri=np.empty(len(m.loop_triangles)*3,np.int32); m.loop_triangles.foreach_get("vertices",tri)
+    KP.append(tri.reshape(-1,3)+koff); KN+= [re.sub(r"\.(l|r|j)$","",o.name)]*len(m.loop_triangles); koff+=len(co)
+kbvh=BVHTree.FromPolygons(np.vstack(KV).tolist(),np.vstack(KP).tolist(),all_triangles=True)
+FASER=os.environ.get("FASER","1")=="1"
+FCACHE=ZIEL+".faser.npz"; FVOR=dict(np.load(FCACHE,allow_pickle=True)) if os.path.exists(FCACHE) else {}; FNEU={}
 t=time.time(); bvh=BVHTree.FromPolygons(V.tolist(),P.tolist(),all_triangles=True,epsilon=0.0)
 print("ohne",weg,"ausgeblendete Objekte; Suchbaum", len(P), "Dreiecke,", round(time.time()-t,1),"s")
 # Gleichmäßig verteilte Richtungen auf der Halbkugel (kosinusgewichtet), fest für Wiederholbarkeit
@@ -54,27 +67,49 @@ for o in sorted(mus,key=lambda o:o.name):
     co=np.empty(n*3,np.float32); m.vertices.foreach_get("co",co); co=co.reshape(-1,3)
     no=np.empty(n*3,np.float32); m.vertices.foreach_get("normal",no); no=no.reshape(-1,3)
     if m.name in VORHER and len(VORHER[m.name])==n:
-        c=VORHER[m.name]; CACHE[m.name]=c
-        att=m.attributes.get('_AO') or m.attributes.new('_AO','FLOAT','POINT'); att.data.foreach_set('value',c.astype(np.float32)); anz+=n; continue
-    ao=np.ones(n,np.float32)
-    for i in range(n):
-        p=mw@Vector(co[i]); nn=(nm@Vector(no[i])).normalized()
-        tx=nn.orthogonal().normalized(); ty=nn.cross(tx)
-        o0=p+nn*ANHEB; frei=0.0
-        for h in H:
-            d=tx*h[0]+ty*h[1]+nn*h[2]
-            hit=bvh.ray_cast(o0,d,WEITE)
-            if hit[0] is None: frei+=1
-            else: frei+=min(1.0,hit[3]/WEITE)**2      # nahe Treffer dunkeln stärker
-        ao[i]=frei/RAYS
-    # Helligkeit: nie ganz schwarz, damit die App-Farbe sichtbar bleibt. In 16 Stufen,
-    # das reicht fuers Auge und laesst sich viel kleiner speichern.
-    c=np.round((0.42+0.58*np.power(ao,1.3))*16)/16
+        c=VORHER[m.name]
+    else:
+        ao=np.ones(n,np.float32)
+        for i in range(n):
+            p=mw@Vector(co[i]); nn=(nm@Vector(no[i])).normalized()
+            tx=nn.orthogonal().normalized(); ty=nn.cross(tx)
+            o0=p+nn*ANHEB; frei=0.0
+            for h in H:
+                d=tx*h[0]+ty*h[1]+nn*h[2]
+                hit=bvh.ray_cast(o0,d,WEITE)
+                if hit[0] is None: frei+=1
+                else: frei+=min(1.0,hit[3]/WEITE)**2      # nahe Treffer dunkeln stärker
+            ao[i]=frei/RAYS
+        # Helligkeit: nie ganz schwarz, damit die App-Farbe sichtbar bleibt. In 16 Stufen,
+        # das reicht fuers Auge und laesst sich viel kleiner speichern.
+        c=np.round((0.42+0.58*np.power(ao,1.3))*16)/16
     CACHE[m.name]=c
     att=m.attributes.get("_AO") or m.attributes.new("_AO","FLOAT","POINT")
     att.data.foreach_set("value",c.astype(np.float32))
     anz+=n
+    if FASER:
+        if m.name in FVOR and len(FVOR[m.name])==n: uv=FVOR[m.name]
+        else:
+            cw=(np.c_[co,np.ones(n)]@np.array(mw).T)[:,:3]
+            m.calc_loop_triangles(); tri=np.empty(len(m.loop_triangles)*3,np.int32); m.loop_triangles.foreach_get("vertices",tri); tri=tri.reshape(-1,3)
+            kd=np.empty(n); kn=[None]*n
+            for i in range(n):
+                r=kbvh.find_nearest(Vector(cw[i])); kd[i]=r[3] if r[0] else 1.0; kn[i]=KN[r[2]] if r[0] else None
+            sehne=np.zeros(n,bool)
+            for pl in m.polygons:
+                mt=o.material_slots[pl.material_index].material if pl.material_index<len(o.material_slots) else None
+                if mt and mt.name.startswith("Tendon"): sehne[list(pl.vertices)]=True
+            uv,inf=faserfeld(cw,tri,kd,sehne)
+            def welche(f):
+                import collections
+                c=collections.Counter(kn[i] for i in f if kd[i]<0.004); return ", ".join("%s(%d)"%x for x in c.most_common(2)) or "Sehne"
+            print("FASER",o.name,"| breit:",welche(inf["fa"]),"| schmal:",welche(inf["fb"]),"| L=%.3f m psi %.3f..%.3f Teile %d Naehte %d"%(inf["L"],uv[:,0].min(),uv[:,0].max(),inf["teile"],inf["weld"]),inf["info"])
+        FNEU[m.name]=uv
+        ul=m.uv_layers.get("UVMap") or m.uv_layers.new(name="UVMap")
+        li=np.empty(len(m.loops),np.int32); m.loops.foreach_get("vertex_index",li)
+        ul.data.foreach_set("uv",uv[li].astype(np.float32).ravel())
 np.savez_compressed(CACHEDATEI,**CACHE)
+if FASER: np.savez_compressed(FCACHE,**FNEU)
 print("AO fertig:",anz,"Punkte in",round(time.time()-t,1),"s")
 # Nur das Muskelmodell exportieren, gleiche Kompression wie beim Probelauf
 for o in bpy.data.objects: o.select_set(o in mus)
