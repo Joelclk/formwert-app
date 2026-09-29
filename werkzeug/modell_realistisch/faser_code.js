@@ -32,7 +32,7 @@ function fw3d_achsen(p){
   var ev=[0,1,2].map(function(j){return {l:c[j][j],v:[v[0][j],v[1][j],v[2][j]]};}).sort(function(x,y){return y.l-x.l;});
   return {m:m,e:ev};
 }
-var FW3D_FASER_TIEFE=2.0, FW3D_FASER_ANZ=40, FW3D_FASER_QUER=0.12, FW3D_FASER_LAENGS=0.20;  /* Kachelgroesse in Metern: 40 Fasern je 12 cm, also ~3 mm */
+var FW3D_FASER_TIEFE=2.0, FW3D_FASER_ANZ=90, FW3D_FASER_QUER=0.10, FW3D_FASER_LAENGS=0.20;  /* Kachelgroesse in Metern: 90 Fasern je 10 cm, also ~1,1 mm */
 function fw3d_faserUV(g){
   // Der anatomische Faserverlauf steckt als Texturkoordinaten im Modell (werkzeug/modell_realistisch)
   if(!g||g.userData.fwUV||!g.attributes.position||g.attributes.uv)return;

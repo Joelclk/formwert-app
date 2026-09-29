@@ -99,7 +99,22 @@ for o in sorted(mus,key=lambda o:o.name):
             for pl in m.polygons:
                 mt=o.material_slots[pl.material_index].material if pl.material_index<len(o.material_slots) else None
                 if mt and mt.name.startswith("Tendon"): sehne[list(pl.vertices)]=True
-            uv,inf=faserfeld(cw,tri,kd,sehne)
+            # Die Verdrehung der Brustmuskel-Sehne liegt in der Tiefe; an der Oberflaeche kreuzen sich
+            # die Fasern nicht. Deshalb hier keine Verdrehung.
+            VERDREHT=set()
+            # Ansatz entlang eines Knochens: Name des Knochens und anatomische Breite der Ansatzlinie
+            ANSATZ={"Sternocostal head of pectoralis major muscle":("Humerus",0.05),
+                    "(Abdominal part of pectoralis major muscle)":("Humerus",0.05),
+                    "Clavicular head of pectoralis major muscle":("Humerus",0.05)}
+            achse=None; breite=0.0
+            if grund(o.name) in ANSATZ:
+                kname,breite=ANSATZ[grund(o.name)]; seite=o.name[-2:]
+                ko=bpy.data.objects.get(kname+seite) or bpy.data.objects.get(kname)
+                if ko:
+                    kc=np.array([ko.matrix_world@v.co for v in ko.data.vertices]); achse=np.linalg.svd(kc-kc.mean(0),full_matrices=False)[2][0]
+            uv,inf=faserfeld(cw,tri,kd,sehne,verdreht=grund(o.name) in VERDREHT,ansatz_achse=achse,ansatz_breite=breite)
+            fmt=lambda v:"(%.3f %.3f %.3f)"%tuple(v)
+            print("LINIEN",o.name,"Ursprung",fmt(inf["A"][0]),"->",fmt(inf["A"][1]),"Ansatz",fmt(inf["B"][0]),"->",fmt(inf["B"][1]),"Ansatzbreite %.3f m"%np.linalg.norm(inf["B"][1]-inf["B"][0]))
             def welche(f):
                 import collections
                 c=collections.Counter(kn[i] for i in f if kd[i]<0.004); return ", ".join("%s(%d)"%x for x in c.most_common(2)) or "Sehne"

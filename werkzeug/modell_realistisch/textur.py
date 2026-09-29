@@ -4,7 +4,7 @@
 import bpy, numpy as np, os
 N=1024; rng=np.random.default_rng(11)
 x=(np.arange(N)+0.5)/N
-FEIN=40                                   # feine Fasern je Kachelbreite (~3 mm bei 12 cm)
+FEIN=90                                   # feine Fasern je Kachelbreite (~1,1 mm bei 10 cm)
 # jede feine Faser eigene Hoehe und Breite, aber exakt gerade
 tf=x*FEIN; idx=np.floor(tf).astype(int)%FEIN; fr=tf-np.floor(tf)
 hoehe=rng.uniform(0.55,1.0,FEIN)[idx]; breit=rng.uniform(0.55,0.9,FEIN)[idx]

@@ -51,7 +51,7 @@ def _komponenten(n,E,maske):
     for v in np.nonzero(maske)[0]: lab[v]=f(v)
     return lab
 
-def faserfeld(co,tri,knochen_dist,sehne):
+def faserfeld(co,tri,knochen_dist,sehne,verdreht=False,ansatz_achse=None,ansatz_breite=0.0):
     """co: Weltkoordinaten (n,3); tri: Dreiecke; knochen_dist: Abstand zum naechsten Knochen;
        sehne: bool je Punkt. Rueckgabe: uv (n,2) in Metern (quer, laengs) und Infos."""
     n=len(co)
@@ -133,26 +133,46 @@ def faserfeld(co,tri,knochen_dist,sehne):
         q=ce[f]; c=q.mean(0); ax=np.linalg.svd(q-c,full_matrices=False)[2][0]; t=(q-c)@ax
         return c+ax*np.percentile(t,3), c+ax*np.percentile(t,97)
     A0,A1=linie(fa); B0,B1=linie(fb)
-    if (A1-A0)@(B1-B0)<0: B0,B1=B1,B0
-    K=96; U=np.linspace(0,1,K)
-    PA=A0+U[:,None]*(A1-A0); PB=B0+U[:,None]*(B1-B0); D=PB-PA; DD=np.sum(D*D,1)+1e-12
-    best_u=np.zeros(n); best_t=np.zeros(n)
-    for s0 in range(0,n,4096):
-        p=ce[s0:s0+4096]; w=p[:,None,:]-PA[None]; t=np.clip(np.einsum("nkc,kc->nk",w,D)/DD,0,1)
-        d2=np.sum((w-t[...,None]*D[None])**2,2)
-        # weiche Zuordnung: nahe Fasern gewichtet mitteln statt hart die naechste nehmen. Wo viele
-        # Fasern fast gleich nah sind (am Ansatz, auf stark gewoelbten Muskeln), springt sonst die
-        # Zuordnung und es entstehen Stufen.
-        dmin=d2.min(1,keepdims=True); tau=dmin+WEICH**2
-        g=np.exp(-(d2-dmin)/tau); uu=np.clip((g*U[None]).sum(1)/g.sum(1),0,1)
-        pa=A0+uu[:,None]*(A1-A0); dv=(B0+uu[:,None]*(B1-B0))-pa
-        tt=np.clip(np.sum((p-pa)*dv,1)/(np.sum(dv*dv,1)+1e-12),0,1)
-        best_u[s0:s0+4096]=uu; best_t[s0:s0+4096]=tt*np.sqrt(np.sum(dv*dv,1))
+    if ansatz_achse is not None:
+        # Der Ansatz liegt als Linie entlang des Knochens (z. B. Kamm am Oberarm), nicht quer
+        # um ihn herum: Richtung = Laengsachse des Knochens, Breite mindestens die anatomische.
+        ax=np.asarray(ansatz_achse,float); ax/=np.linalg.norm(ax)
+        q=ce[fb]; c=q.mean(0); t=(q-c)@ax
+        h=max(0.5*(np.percentile(t,97)-np.percentile(t,3)),0.5*ansatz_breite)
+        B0,B1=c-ax*h,c+ax*h
+    if verdreht:
+        # Verdrehte Sehne (z. B. grosser Brustmuskel): die untersten Fasern am Ursprung setzen am
+        # hoechsten Punkt des Ansatzes an und schieben sich hinter die oberen (Blender: z = oben).
+        if A0[2]>A1[2]: A0,A1=A1,A0
+        if B0[2]<B1[2]: B0,B1=B1,B0
+    elif (A1-A0)@(B1-B0)<0: B0,B1=B1,B0
+    # Fasern als gerade Linien in der Ebene des Muskels (wie in der Vorderansicht eines Lehrbuchs):
+    # Punkt P liegt auf der Faser u, wenn P = A(u) + t*(B(u)-A(u)). Das laesst sich in der Ebene
+    # exakt loesen (quadratische Gleichung in u) - glatt, gerade Linien, keine Kreuzungen.
+    zc=ce.mean(0); _,_,vt=np.linalg.svd(ce-zc,full_matrices=False); e1,e2=vt[0],vt[1]
+    def p2(x): x=np.atleast_2d(x)-zc; return np.stack([x@e1,x@e2],1)
+    a0,a1,b0,b1=[p2(v)[0] for v in (A0,A1,B0,B1)]
+    dA=a1-a0; E=b0-a0; Fv=(b1-b0)-dA
+    def kr(x,y): return x[...,0]*y[...,1]-x[...,1]*y[...,0]
+    Q=p2(ce)-a0
+    c2=-kr(dA,Fv); c1=kr(Q,Fv)-kr(dA,E); c0=kr(Q,E)
+    with np.errstate(invalid="ignore",divide="ignore"):
+        disk=np.sqrt(np.maximum(c1*c1-4*c2*c0,0))
+        if abs(c2)<1e-12: r1=r2=-c0/np.where(np.abs(c1)>1e-18,c1,1e-18)
+        else: r1=(-c1+disk)/(2*c2); r2=(-c1-disk)/(2*c2)
+    # die Wurzel nehmen, die im Bereich 0..1 liegt (sonst die naehere)
+    def abst(r): return np.abs(np.clip(r,0,1)-r)
+    uu=np.where(abst(r1)<=abst(r2),r1,r2); uu=np.clip(np.nan_to_num(uu,nan=0.5),0,1)
+    D2=E[None]+uu[:,None]*Fv[None]
+    tt=np.clip(np.sum((Q-uu[:,None]*dA[None])*D2,1)/(np.sum(D2*D2,1)+1e-18),0,1)
+    L3=np.linalg.norm((B0+uu[:,None]*(B1-B0))-(A0+uu[:,None]*(A1-A0)),axis=1)
+    best_u=uu; best_t=tt*L3
+    D=np.stack([B0-A0,B1-A1])
     breite_a=float(np.linalg.norm(A1-A0)); breite_b=float(np.linalg.norm(B1-B0))
     # Wo die Fasern zum schmalen Ansatz zusammenlaufen, werden die Linien enger. Damit sie dort nicht
     # flimmern und am breiten Ursprung nicht zu fein sind, gilt als Querbreite das geometrische Mittel.
     w_eff=float(np.sqrt(max(breite_a,1e-4)*max(breite_b,0.25*breite_a)))
-    psi=best_u*w_eff; s=best_t
+    psi=best_u*breite_a; s=best_t    # feste Faserzahl: zum Ansatz hin dichter, wie im Muskel
     L=float(np.median(np.linalg.norm(D,axis=1)))
     gl=np.ones(len(tri)); a,b,c=tri[:,0],tri[:,1],tri[:,2]
-    return np.stack([psi,s],1), dict(L=L,teile=teile,weld=len(weld),ursprung=len(fa),ansatz=len(fb),flecken=len(flecken),info=info,phi=best_t,fa=fa,fb=fb)
+    return np.stack([psi,s],1), dict(A=(A0,A1),B=(B0,B1),L=L,teile=teile,weld=len(weld),ursprung=len(fa),ansatz=len(fb),flecken=len(flecken),info=info,phi=best_t,fa=fa,fb=fb)
