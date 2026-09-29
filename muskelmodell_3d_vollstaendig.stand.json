@@ -1,6 +1,6 @@
 {
   "hinweis": "Von werkzeug/modell_auspacken.py erzeugt. Fingerabdruck des 3D-Betrachters, wie er zuletzt in app/assets/3d-viewer.js stand. Nicht von Hand aendern.",
-  "modell_sha256": "6d0558570a7c14cb322144f24372b6a54884d51a7cd5015061a412adbd8016d5",
-  "app_version": "Version 267",
-  "datum": "2026-09-27"
+  "modell_sha256": "a97f68a86f7a3a88df9f46a7106468c8cfb411ed78fa72c3eb53aaed61505b28",
+  "app_version": "Version 479+ (Artifact-Version 1790674799-42e2)",
+  "datum": "2026-09-29"
 }
