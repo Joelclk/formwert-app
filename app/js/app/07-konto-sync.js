@@ -271,6 +271,17 @@ function renderRoutines(){
   add.appendChild(el("span",null,"Neue Einheit"));
   add.onclick=function(){sheetEditor(null);};
   if(!rcSort)box.appendChild(add);
+  // Fertige Vorlagen (ROUTINE_TPL, data.js) als eigene Einheit uebernehmen - siehe sheetTemplates().
+  if(!rcSort&&typeof ROUTINE_TPL!=="undefined"&&ROUTINE_TPL.length){
+    var tpl=el("button","rc-add-row rc-tpl-row");tpl.type="button";
+    var tic=el("span","rc-add-ic");tic.innerHTML=svgIcon("M8 4h10a2 2 0 0 1 2 2v10M4 8h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z",2);tpl.appendChild(tic);
+    var tt=el("span","rc-tpl-txt");
+    tt.appendChild(el("span",null,"Aus Vorlage erstellen"));
+    tt.appendChild(el("small",null,"Fertige Einheiten, z. B. Mobilität"));
+    tpl.appendChild(tt);
+    tpl.onclick=function(){sheetTemplates();};
+    box.appendChild(tpl);
+  }
   if(ids.length>1){
     var tools=el("div","rc-tools");
     var so=el("button","linkbtn",rcSort?"Fertig":"Reihenfolge ändern");so.type="button";

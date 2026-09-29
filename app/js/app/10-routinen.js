@@ -253,7 +253,8 @@ function sheetEditor(id,preset){
     b.appendChild(addBtn);
     var fh=el("h2","sec","Welche Muskeln trainiert diese Einheit?");fh.style.margin="18px 0 8px";b.appendChild(fh);
     b.appendChild(focusBox);
-    var save=el("button","btn primary block","Speichern");save.style.marginTop="14px";
+    var bar=el("div","ed-stickybar");
+    var save=el("button","btn primary block","Speichern");
     save.onclick=function(){ed.name=(ni.value||"").trim()||"Einheit";if(!ed.items.length)return;
       ed.rest=readRest();
       // Alte Einzelwerte je Uebung gibt es im Editor nicht mehr - die Einheit hat eine Pause.
@@ -263,10 +264,11 @@ function sheetEditor(id,preset){
         if(ex2&&ex2.t==="cardio"){it.min=(it.min!=null&&it.min>0)?Math.round(it.min):20;it.sets=null;it.reps=null;it.kg=null;return;}
         it.kg=tplKg(it.kg);it.reps=tplReps(it.reps);});
       state.routines[ed.id]=ed;state.dirtyRoutines[ed.id]=true;closeSheet();persist();renderAll();};
-    b.appendChild(save);
-    if(id){var del2=el("button","btn ghost block","Einheit löschen");del2.style.marginTop="8px";
+    bar.appendChild(save);
+    if(id){var del2=el("button","btn ghost block","Einheit löschen");
       del2.onclick=function(){closeSheet();setTimeout(function(){askConfirm("Einheit löschen?",ed.name,"Löschen",function(){delete state.routines[id];state.dirtyRoutines[id]=true;persist();renderAll();});},180);};
-      b.appendChild(del2);}
+      bar.appendChild(del2);}
+    b.appendChild(bar);
   });
 }
 function suggestRoutine(){
@@ -281,6 +283,235 @@ function suggestRoutine(){
     items.push({ex:c[0].id,sets:clamp(Math.ceil(g.d/2),2,4),reps:null,kg:null});
   });
   sheetEditor(null,{id:rid(),name:"Lücken schließen",items:items});
+}
+
+/* ================= Vorlagen-Einheiten =================
+   Daten: ROUTINE_TPL / ROUTINE_TPL_CATS in data.js. Eine Vorlage wird nie direkt gestartet
+   oder veraendert: routineFromTpl() macht eine tiefe Kopie mit neuer id und oeffnet sie im
+   normalen Einheiten-Editor. Erst "Speichern" legt sie als eigene Einheit an. */
+function tplText(s){return (LANG==="en"&&typeof UI_EN!=="undefined"&&UI_EN[s])?UI_EN[s]:s;}
+// Geschaetzte Dauer in Minuten. Mobilitaet ueber dieselbe Rechnung wie die Tageswertung
+// (mobSetSec), sonst grob 2,5 min je Satz wie in der Einheiten-Liste.
+function tplMinutes(t){
+  var sec=0,rest=(t.rest!=null&&t.rest>=0)?t.rest:defaultRest();
+  t.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;
+    if(ex.t==="cardio"){sec+=(it.min||20)*60;return;}
+    var n=it.sets||1;
+    sec+=ex.mob?n*mobSetSec(ex,{reps:it.reps||0}):n*150;
+    sec+=Math.max(0,n-1)*rest;
+  });
+  return Math.max(1,Math.round(sec/60));
+}
+function routineFromTpl(t){
+  var name=tplText(t.name),taken={};
+  Object.keys(state.routines).forEach(function(id){var r=state.routines[id];if(r&&r.name)taken[r.name]=1;});
+  // Gleicher Name wuerde "zuletzt genutzt" (routineLastUse, nach Name) vermischen.
+  if(taken[name]){var k=2;while(taken[name+" ("+k+")"])k++;name=name+" ("+k+")";}
+  var items=JSON.parse(JSON.stringify(t.items)).filter(function(it){return !!exById(it.ex);});
+  return {id:rid(),name:name,tpl:t.id,rest:(t.rest!=null?t.rest:null),items:items};
+}
+/* Welche Muskeln eine Vorlage anspricht. Gewichtet wie in der Uebung (exSetWeights: primaer 1,
+   sekundaer 0,5) und nach Anteil an der Einheit: Mobilitaet nach Zeit (mobSetSec), Kraft nach
+   Saetzen. Ergebnis relativ zum staerksten Muskel (normInv) - dieselbe Skala wie focusPanel. */
+function tplInvolve(t){
+  var g={};
+  t.items.forEach(function(it){var ex=exById(it.ex);if(!ex||ex.t==="cardio")return;
+    var n=it.sets||1,f=ex.mob?n*mobSetSec(ex,{reps:it.reps||0})/60:n,w=exSetWeights(ex);
+    for(var m in w)g[m]=(g[m]||0)+w[m]*f;});
+  return normInv(g);
+}
+function tplTopMuscles(inv){
+  var out=[];for(var g in inv){var m=muscleById(g);if(m&&inv[g]>0)out.push({id:g,name:m.name,w:inv[g]});}
+  out.sort(function(a,b){return b.w-a.w||a.name.localeCompare(b.name,"de");});
+  return out;
+}
+// "dehnt" bei ueberwiegend statischen Vorlagen, "bewegt" bei ueberwiegend dynamischen.
+function tplVerb(t){
+  var st=0,dy=0;t.items.forEach(function(it){var ex=exById(it.ex);if(ex&&ex.mob){if(ex.mk==="dyn")dy++;else st++;}});
+  return (st||dy)?(st>=dy?"Dehnt":"Bewegt"):"Trainiert";
+}
+// Kurzform der Vorgabe: "2 × 30 s je Seite", "1 × 10 Wdh."
+function tplDose(ex,it){
+  if(ex.t==="cardio")return (it.min||20)+" min";
+  var u=ex.t==="sec"?" s":" Wdh.",h=ex.how||"";
+  var side=/je Richtung und Seite/.test(h)?" je Richtung und Seite":/je Richtung/.test(h)?" je Richtung":(ex.uni||/je Seite/.test(h))?" je Seite":"";
+  return (it.sets||1)+" × "+(it.reps!=null?it.reps+u:"–")+(ex.mob?side:"");
+}
+function tplFigs(box,inv){
+  if(!Object.keys(inv).length)return;
+  ["front","back"].forEach(function(v){
+    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");box.appendChild(sv);
+    requestAnimationFrame(function(){drawMini(sv,v,inv);});
+  });
+}
+/* Diashow im grossen Bild einer Vorlagen-Karte: erst die ganze Einheit (vorne/hinten), dann jede
+   Uebung nacheinander; im Text darunter die laufende Uebung ("2/6 · Katze-Kuh").
+   - Hat eine Uebung eine fertige 3D-Bewegung (FW_ANIM_CLIP, 04-animation.js), laeuft dort die
+     echte Ausfuehrung als Animation (exAnimBlock) und die Folie bleibt laenger stehen. Sonst
+     zeigt die Folie die Muskelfigur der Uebung. Neue Animationen erscheinen hier automatisch,
+     sobald sie in FW_ANIM_CLIP eingetragen sind.
+   - Es laeuft immer nur EINE Animation gleichzeitig (tplAnimOwner) - jede ist ein eigenes
+     WebGL-Fenster; beim Weiterblaettern wird sie wieder entfernt.
+   - Uebungsfiguren werden erst geladen, kurz bevor sie an der Reihe sind; die Karten starten
+     versetzt. Bei "Bewegung reduzieren" bleibt es beim Standbild der ganzen Einheit. Der Takt
+     endet von selbst, sobald die Karte nicht mehr im Dokument haengt (Blatt geschlossen). */
+var TPL_SLIDE_MS=2200,TPL_SLIDE_FIRST_MS=3200,TPL_SLIDE_ANIM_MS=7500,tplAnimOwner=null;
+function tplHasAnim(ex){
+  var c=typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[ex.id];
+  if(!c||typeof exAnimBlock!=="function")return false;
+  return !(FW_ANIM_MODELL[c]==="bein"&&!FW_ANIM_BEIN);
+}
+function tplSlideshow(box,cap,t,inv,offset){
+  var slides=[],items=t.items.filter(function(it){return !!exById(it.ex);});
+  var s0=el("div","tpl-slide on tpl-slide-all");tplFigs(s0,inv);box.appendChild(s0);slides.push({el:s0});
+  items.forEach(function(it){
+    var ex=exById(it.ex),sd=el("div","tpl-slide");
+    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",exFrontOrBack(ex));
+    sd.appendChild(sv);box.appendChild(sd);slides.push({el:sd,svg:sv,ex:ex,it:it,anim:tplHasAnim(ex)});
+  });
+  var dots=el("div","tpl-dots");slides.forEach(function(sl){var d=el("i");if(sl.anim)d.className="vid";dots.appendChild(d);});box.appendChild(dots);
+  var cur=0,n=items.length,animEl=null;
+  function stopAnim(){
+    if(animEl){animEl.remove();animEl=null;}
+    slides.forEach(function(sl){sl.el.classList.remove("has-anim");});
+    if(tplAnimOwner===box)tplAnimOwner=null;
+  }
+  function show(i){
+    slides[cur].el.classList.remove("on");dots.children[cur].classList.remove("on");
+    stopAnim();
+    cur=i;var sl=slides[cur];sl.el.classList.add("on");dots.children[cur].classList.add("on");
+    var vid=false;
+    if(sl.anim&&(!tplAnimOwner||!tplAnimOwner.isConnected)){
+      var a=exAnimBlock(sl.ex);
+      if(a){animEl=a;sl.el.appendChild(a);sl.el.classList.add("has-anim");tplAnimOwner=box;vid=true;}
+    }
+    cap.textContent=sl.ex?(cur+"/"+n+" · "+sl.ex.n+(vid?" · Bewegung":"")):"Ganze Einheit";
+    // Naechste Figur vorbereiten, damit sie beim Umblaettern schon da ist.
+    var nx=slides[(cur+1)%slides.length];if(nx.svg)fillExFig(nx.svg);
+    return vid;
+  }
+  dots.children[0].classList.add("on");cap.textContent="Ganze Einheit";
+  if(!n)return;
+  var reduce=false;try{reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  if(reduce){cap.textContent="";return;}
+  if(slides[1].svg)requestAnimationFrame(function(){fillExFig(slides[1].svg);});
+  function tick(){
+    if(!box.isConnected){stopAnim();return;}
+    var vid=false;
+    if(!document.hidden)vid=show((cur+1)%slides.length);
+    setTimeout(tick,cur===0?TPL_SLIDE_FIRST_MS:vid?TPL_SLIDE_ANIM_MS:TPL_SLIDE_MS);
+  }
+  setTimeout(tick,TPL_SLIDE_FIRST_MS+(offset||0)*450);
+}
+function sheetTemplates(){
+  openSheet(function(b){
+    sheetTitle(b,"Aus Vorlage erstellen");
+    b.appendChild(el("p","note","Antippen zeigt die Vorschau. Übernommen wird eine Kopie – Übungen, Sätze und Zeiten passt du danach frei an."));
+    ROUTINE_TPL_CATS.forEach(function(cat){
+      var list=ROUTINE_TPL.filter(function(t){return t.cat===cat.id;});
+      if(!list.length)return;
+      b.appendChild(el("div","grouplab",cat.name));
+      var box=el("div","tpl-list");
+      list.forEach(function(t){
+        var exs=t.items.map(function(it){var ex=exById(it.ex);return ex?ex.n:"";}).filter(Boolean);
+        var inv=tplInvolve(t),top=tplTopMuscles(inv);
+        var card=el("button","card tpl-item");card.type="button";
+        card.setAttribute("aria-label","Vorschau: "+t.name);
+        var fig=el("div","rc-fig tpl-fig");fig.setAttribute("aria-hidden","true");card.appendChild(fig);
+        var tx=el("div","tpl-txt");
+        tx.appendChild(el("b",null,t.name));
+        tx.appendChild(el("span","tpl-meta",exs.length+" Übungen · ca. "+tplMinutes(t)+" min"));
+        var now=el("span","tpl-now");tx.appendChild(now);
+        tplSlideshow(fig,now,t,inv,box.children.length);
+        if(top.length){
+          var mu=el("span","tpl-mus");
+          mu.appendChild(el("em",null,tplVerb(t)+":"));
+          top.slice(0,3).forEach(function(m){var c=el("span","ed-m");var d=el("i");d.style.background=exPctColor(m.w);c.appendChild(d);c.appendChild(el("span","ed-mn",m.name));mu.appendChild(c);});
+          if(top.length>3)mu.appendChild(el("span","tpl-more","+"+(top.length-3)));
+          tx.appendChild(mu);
+        }
+        tx.appendChild(el("span","tpl-desc",t.desc));
+        card.appendChild(tx);
+        card.onclick=function(){closeSheet();setTimeout(function(){sheetTplPreview(t);},180);};
+        box.appendChild(card);
+      });
+      b.appendChild(box);
+    });
+  });
+}
+/* Vorschau einer Vorlage: Figur, alle angesprochenen Muskeln, Ablauf mit Vorgaben. Nichts wird
+   gespeichert; erst "Übernehmen" oeffnet die Kopie im Einheiten-Editor. */
+function sheetTplPreview(t){
+  openSheet(function(b){
+    sheetTitle(b,t.name);
+    b.appendChild(el("p","note",t.desc));
+    var inv=tplInvolve(t),top=tplTopMuscles(inv),n=t.items.filter(function(it){return !!exById(it.ex);}).length;
+    var meta=el("div","tpl-pv-meta");
+    meta.appendChild(el("span",null,n+" Übungen · ca. "+tplMinutes(t)+" min"));
+    var rest=(t.rest!=null&&t.rest>=0)?t.rest:defaultRest();
+    meta.appendChild(el("span",null,rest>0?rest+" s Pause zwischen Sätzen":"ohne Pause"));
+    b.appendChild(meta);
+    if(top.length){
+      var fh=el("h2","sec",tplVerb(t)==="Bewegt"?"Was wird bewegt?":tplVerb(t)==="Dehnt"?"Was wird gedehnt?":"Welche Muskeln?");fh.style.margin="14px 0 4px";b.appendChild(fh);
+      var maps=el("div","focusmap");tplFigs(maps,inv);b.appendChild(maps);
+      var lg=el("div","focus-legend");
+      lg.innerHTML='<span><i style="background:'+exPctColor(1)+'"></i>Schwerpunkt</span>'+
+                   '<span><i style="background:'+exPctColor(0.65)+'"></i>deutlich</span>'+
+                   '<span><i style="background:'+exPctColor(0.3)+'"></i>mitbeansprucht</span>';
+      b.appendChild(lg);
+      var ml=el("div","card flush focus-list tpl-muslist");ml.style.margin="0";
+      // Erst die fuenf wichtigsten Muskeln, der Rest auf Wunsch (wie focusPanel).
+      var all=false,more=null;
+      function drawMl(){
+        ml.innerHTML="";
+        (all?top:top.slice(0,5)).forEach(function(m){
+          var r=el("div","row"),mn=el("div","main");mn.appendChild(el("b",null,m.name));r.appendChild(mn);
+          var tr=el("i","fbar");tr.style.setProperty("--c",exPctColorStep(m.w));var fl=el("b");fl.style.width=Math.max(4,Math.round(m.w*100))+"%";tr.appendChild(fl);r.appendChild(tr);
+          ml.appendChild(r);
+        });
+        if(more)more.textContent=all?"Weniger anzeigen":"Alle "+top.length+" Muskeln anzeigen";
+      }
+      b.appendChild(ml);
+      if(top.length>5){more=el("button","btn ghost block focus-more");more.type="button";more.style.marginTop="8px";
+        more.onclick=function(){all=!all;drawMl();};b.appendChild(more);}
+      drawMl();
+    }
+    var ah=el("h2","sec","Ablauf");ah.style.margin="18px 0 8px";b.appendChild(ah);
+    var list=el("div","card flush tpl-steps");list.style.margin="0";
+    var k=0;
+    t.items.forEach(function(it){var ex=exById(it.ex);if(!ex)return;k++;
+      var r=el("button","row tap tpl-step");r.type="button";
+      r.appendChild(el("span","tpl-no",String(k)));
+      var figs=el("span","tpl-stepfig");figs.setAttribute("aria-hidden","true");
+      var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+      sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",exFrontOrBack(ex));figs.appendChild(sv);
+      r.appendChild(figs);
+      var mn=el("div","main");mn.appendChild(el("b",null,ex.n));
+      mn.appendChild(el("span",null,tplDose(ex,it)+(ex.mob?" · "+(ex.mk==="dyn"?"Dynamisch":"Statisch"):"")));
+      r.appendChild(mn);
+      var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);r.appendChild(ch);
+      r.setAttribute("aria-label","Übung ansehen: "+ex.n);
+      r.onclick=function(){sheetExerciseDetail(ex);};
+      list.appendChild(r);
+    });
+    b.appendChild(list);
+    requestAnimationFrame(function(){Array.prototype.forEach.call(list.querySelectorAll("svg[data-ex]"),fillExFig);});
+    var bar=el("div","ed-stickybar");
+    var go=el("button","btn primary block","Als eigene Einheit übernehmen");go.type="button";
+    go.onclick=function(){var ed=routineFromTpl(t);closeSheet();setTimeout(function(){sheetEditor(null,ed);},180);};
+    bar.appendChild(go);
+    var bk=el("button","btn ghost block","Andere Vorlage wählen");bk.type="button";
+    bk.onclick=function(){closeSheet();setTimeout(sheetTemplates,180);};
+    bar.appendChild(bk);
+    b.appendChild(bar);
+  });
+}
+// Vorder- oder Rueckansicht, je nachdem wo die Hauptmuskeln der Uebung ueberwiegend liegen.
+function exFrontOrBack(ex){
+  var BACK=/^tg_(rueck|kniesehnen|gesaess|wade_gastro|wade_soleus|trizeps|nacken|schulter_hint|schulter_rot_infra|schulter_rot_teres)/;
+  var p=ex.p||[],nb=p.filter(function(g){return BACK.test(g);}).length;
+  return nb*2>p.length?"back":"front";
 }
 $("btn-start-empty").addEventListener("click",function(){startWorkout(null);});
 // Die früheren Buttons "Neue Einheit"/"Lücken schließen"/"Übungskatalog" unter den Karten

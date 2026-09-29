@@ -229,18 +229,18 @@ function fw3dSyncColors(ms){
   var css=getComputedStyle(document.documentElement);
   function cvar(n){return css.getPropertyValue(n).trim()||"#888888";}
   var SELCOL=cvar("--bad");
-  var colors={}, selected=[];
+  var colors={}, selected=[], colOf=bodyColorFn();
   for(var name in FW3D_MESH2FINE){
     var fk=FW3D_MESH2FINE[name], g=FINE[fk]&&FINE[fk].g; if(!g)continue;
     var r=fw3dColorForGroup(g,fk,sg,ms); if(!r)continue;
-    colors[name]=r.sel?SELCOL:fw3dBoost(volColor(r.v,r.m));
+    colors[name]=r.sel?SELCOL:fw3dBoost(colOf(r.v,r.m));
     if(r.sel)selected.push(name);
   }
   for(var name2 in FW3D_MESH2GROUP){
     if(FW3D_MESH2FINE[name2])continue;
     var g2=FW3D_MESH2GROUP[name2];
     var r2=fw3dColorForGroup(g2,null,sg,ms); if(!r2)continue;
-    colors[name2]=r2.sel?SELCOL:fw3dBoost(volColor(r2.v,r2.m));
+    colors[name2]=r2.sel?SELCOL:fw3dBoost(colOf(r2.v,r2.m));
     if(r2.sel)selected.push(name2);
   }
   for(var name3 in FW3D_DUAL){
@@ -248,7 +248,7 @@ function fw3dSyncColors(ms){
     var vAvg=0;gs3.forEach(function(gg){vAvg+=(ms[gg]||0);});vAvg/=gs3.length;
     var m3=muscleById(gs3[0]);
     var isSel3=gs3.some(function(gg){return sg.indexOf(gg)>=0;});
-    colors[name3]=isSel3?SELCOL:fw3dBoost(m3?volColor(vAvg,m3):cvar("--vol0"));
+    colors[name3]=isSel3?SELCOL:fw3dBoost(m3?colOf(vAvg,m3):cvar("--m3d0"));
     if(isSel3)selected.push(name3);
   }
   var _ef2=effFine();

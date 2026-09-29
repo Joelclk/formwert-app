@@ -206,6 +206,70 @@ function mobBandIcon(){
   sv.appendChild(im);
   return sv;
 }
+/* Kategorie-Kacheln zeigten bisher alle denselben grauen 3D-Koerper-Ausschnitt - nur der
+   Bildausschnitt unterschied sich, dazu ein sichtbares Nachladen/Blinken bis der 3D-Schnappschuss
+   fertig war. Jetzt: ein schlichtes, sofort da stehendes Koerper-Piktogramm (aus einfachen
+   Formen), bei dem nur die jeweilige Muskelregion in der Akzentfarbe gefuellt ist - kein Bezug
+   mehr zum 3D-Modell, daher auch kein Warten und keine zwei Kacheln, die fast gleich aussehen. */
+var BODY_ICON_VB="0 0 100 112";
+function bodyIconBaseParts(){
+  return [
+    {t:"circle",cx:50,cy:12,r:9},                 // Kopf
+    {t:"rect",x:45,y:20,w:10,h:6,rx:3},           // Hals
+    {t:"rect",x:35,y:25,w:30,h:34,rx:9},          // Rumpf
+    {t:"rect",x:16,y:26,w:10,h:17,rx:5},          // Oberarm links
+    {t:"rect",x:74,y:26,w:10,h:17,rx:5},          // Oberarm rechts
+    {t:"rect",x:16,y:44,w:10,h:18,rx:5},          // Unterarm links
+    {t:"rect",x:74,y:44,w:10,h:18,rx:5},          // Unterarm rechts
+    {t:"circle",cx:21,cy:65,r:5},                 // Hand links
+    {t:"circle",cx:79,cy:65,r:5},                 // Hand rechts
+    {t:"rect",x:34,y:59,w:32,h:9,rx:4},           // Huefte
+    {t:"rect",x:32,y:68,w:14,h:20,rx:6},          // Oberschenkel links
+    {t:"rect",x:54,y:68,w:14,h:20,rx:6},          // Oberschenkel rechts
+    {t:"rect",x:32,y:88,w:14,h:18,rx:6},          // Unterschenkel links
+    {t:"rect",x:54,y:88,w:14,h:18,rx:6},          // Unterschenkel rechts
+    {t:"ellipse",cx:39,cy:106,rx:8,ry:4},         // Fuss links
+    {t:"ellipse",cx:61,cy:106,rx:8,ry:4}          // Fuss rechts
+  ];
+}
+// Welche Teile des Piktogramms je Region in der Akzentfarbe hervorgehoben werden. Bizeps/Trizeps
+// und Quadrizeps/Beinbeuger sehen dabei bewusst gleich aus (Vorder- und Rueckseite lassen sich an
+// einer einzigen einfachen Silhouette nicht unterscheiden) - der Kachel-Text daneben macht den
+// Unterschied.
+var REGION_ICON_HL={
+  "Brust":[{t:"rect",x:38,y:27,w:24,h:12,rx:6}],
+  "Schultern":[{t:"circle",cx:21,cy:29,r:6},{t:"circle",cx:79,cy:29,r:6}],
+  "Rücken":[{t:"rect",x:33,y:28,w:7,h:22,rx:3},{t:"rect",x:60,y:28,w:7,h:22,rx:3}],
+  "Rückenstrecker":[{t:"rect",x:44,y:53,w:12,h:9,rx:4}],
+  "Bizeps":[{t:"rect",x:16,y:26,w:10,h:17,rx:5},{t:"rect",x:74,y:26,w:10,h:17,rx:5}],
+  "Trizeps":[{t:"rect",x:16,y:26,w:10,h:17,rx:5},{t:"rect",x:74,y:26,w:10,h:17,rx:5}],
+  "Unterarme":[{t:"rect",x:16,y:44,w:10,h:18,rx:5},{t:"rect",x:74,y:44,w:10,h:18,rx:5}],
+  "Rumpf":[{t:"rect",x:41,y:37,w:18,h:16,rx:5}],
+  "Gesäß":[{t:"rect",x:34,y:59,w:32,h:9,rx:4}],
+  "Quadrizeps":[{t:"rect",x:32,y:68,w:14,h:20,rx:6},{t:"rect",x:54,y:68,w:14,h:20,rx:6}],
+  "Beinbeuger":[{t:"rect",x:32,y:68,w:14,h:20,rx:6},{t:"rect",x:54,y:68,w:14,h:20,rx:6}],
+  "Adduktoren":[{t:"rect",x:46,y:70,w:8,h:16,rx:4}],
+  "Waden":[{t:"rect",x:32,y:88,w:14,h:18,rx:6},{t:"rect",x:54,y:88,w:14,h:18,rx:6}],
+  "Hals":[{t:"rect",x:45,y:20,w:10,h:6,rx:3}],
+  "Nacken":[{t:"rect",x:40,y:22,w:20,h:7,rx:3}]
+};
+function regionBodyIcon(name){
+  var NS="http://www.w3.org/2000/svg",sv=document.createElementNS(NS,"svg");
+  sv.setAttribute("viewBox",BODY_ICON_VB);sv.setAttribute("class","reg-icon");
+  sv.setAttribute("role","img");sv.setAttribute("aria-label",name);
+  function draw(shapes,cls){
+    (shapes||[]).forEach(function(s){
+      var e;
+      if(s.t==="circle"){e=document.createElementNS(NS,"circle");e.setAttribute("cx",s.cx);e.setAttribute("cy",s.cy);e.setAttribute("r",s.r);}
+      else if(s.t==="ellipse"){e=document.createElementNS(NS,"ellipse");e.setAttribute("cx",s.cx);e.setAttribute("cy",s.cy);e.setAttribute("rx",s.rx);e.setAttribute("ry",s.ry);}
+      else{e=document.createElementNS(NS,"rect");e.setAttribute("x",s.x);e.setAttribute("y",s.y);e.setAttribute("width",s.w);e.setAttribute("height",s.h);if(s.rx)e.setAttribute("rx",s.rx);}
+      e.setAttribute("class",cls);sv.appendChild(e);
+    });
+  }
+  draw(bodyIconBaseParts(),"reg-icon-base");
+  draw(REGION_ICON_HL[name],"reg-icon-hl");
+  return sv;
+}
 function renderDiscMuscleGrid(){
   var mgrid=$("disc-mgrid");mgrid.innerHTML="";
   REGIONS.concat([CARDIO_REGION,MOB_REGION]).forEach(function(rg){
@@ -216,17 +280,12 @@ function renderDiscMuscleGrid(){
     }else if(rg.mobility){
       card.appendChild(mobBandIcon());
     }else{
-      var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
-      sv.setAttribute("viewBox",regionCropCache[rg.key||rg.name]||CROP_DEFAULT);
-      sv.setAttribute("data-region",rg.key||rg.name);
-      sv.setAttribute("role","img");sv.setAttribute("aria-label",rg.name);
-      card.appendChild(sv);
+      card.appendChild(regionBodyIcon(rg.key||rg.name));
     }
     card.appendChild(el("span",null,rg.name));
     card.onclick=function(){discRegion=(discRegion===rg?null:rg);discFine=null;discMk=null;discMobArea=null;renderDiscMuscleGrid();renderDiscSubChips();renderDiscExGrid();};
     mgrid.appendChild(card);
   });
-  discLazyObserve(mgrid);
 }
 // Feinfilter: nach Wahl einer Muskelgruppe erscheinen darunter Chips für ihre Einzelmuskeln
 // (z.B. Brust → Obere/Mittlere/Untere Brust), damit man gezielter als nach grober Region suchen kann.
@@ -461,11 +520,19 @@ function volRowMain(title,v,m,subline){
   function px(x){return clamp(reizOf(x,m)/REIZ_MAX*100,0,100);}
   var main=el("div","main"),top=el("div","mrow-top");
   top.appendChild(el("b",null,title));
-  var val=el("span","mrow-val",String(reizPct(v,m)));val.appendChild(el("em",null,"%"));
+  // Statt reizPct() (Reiz relativ zum Optimum) zeigen wir hier den Korridor-Score
+  // (Math.round(muscleScore(v,m))): dieselbe 0-100-Groesse, die auch volColor() faerbt
+  // und die auch den Status-Pill darunter (zoneOf) bestimmt. Vorher zeigte die Zahl Reiz,
+  // die Farbe aber Korridor-Position - zwei verschiedene Bezugspunkte, weshalb zwei
+  // Muskeln bei derselben Prozentzahl in ganz unterschiedlichen Farben stehen konnten
+  // (oder eine Zeile mit "im Korridor"-Status trotzdem gelb statt gruen aussah). Zahl,
+  // Farbe und Status-Pill kommen jetzt alle aus derselben Korridor-Rechnung.
+  var val=el("span","mrow-val",String(Math.round(muscleScore(v,m))));val.appendChild(el("em",null,"%"));
   top.appendChild(val);main.appendChild(top);
   var tr=el("div","mtrack");
   tr.appendChild(el("div","tbg"));
-  var fi=el("i","tfill");fi.style.width=px(v)+"%";fi.style.background=volColor(v,m);tr.appendChild(fi);
+  var fi=el("i","tfill");fi.style.width=px(v)+"%";
+  fi.style.background=volColor(v,m);tr.appendChild(fi);
   var a=px(cm.mev),bn=px(cm.mrv);
   var rail=el("div","trail");rail.style.left=a+"%";rail.style.width=Math.max(0,bn-a)+"%";
   var notch=el("u");notch.style.left=(bn>a?(px(cm.mav)-a)/(bn-a)*100:0)+"%";
@@ -519,7 +586,11 @@ function renderMuscleList(ms){
       : s.ok+" von "+s.groups.length+" Gruppen im Korridor \u00b7 "+sets1
         +(s.high?" \u00b7 "+s.high+" zu viel":"")+(s.low&&!s.ok?" \u00b7 alle zu wenig":"")));
     r.appendChild(main);
-    var hv=el("div","val hval",String(Math.round(s.reiz*100)));
+    // Zahl zeigt jetzt denselben Korridor-Score (s.score, Mittel aus muscleScore je Muskel),
+    // der auch die Balkenfarbe oben bestimmt - vorher stand hier der Reiz-Wert (s.reiz*100),
+    // eine andere Skala als die Farbe, wodurch eine groessere Zahl trotzdem schlechter
+    // (roetlicher) aussehen konnte als eine kleinere.
+    var hv=el("div","val hval",String(s.score));
     hv.appendChild(el("em",null,"%"));
     r.appendChild(hv);
     var ch=el("span","chev");ch.innerHTML=svgIcon(open?"M5 9l7 7 7-7":IC_CHEV);r.appendChild(ch);

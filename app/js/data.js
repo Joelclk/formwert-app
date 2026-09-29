@@ -264,7 +264,7 @@ var EX=[
 {id:"cuban",       n:"Cuban Press",              t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_schulter_hint"], s:["tg_schulter_seit","tg_rueck_trapez_mit","tg_schulter_rot_infra","tg_schulter_rot_teres_min"], std:"ohp",sf:0.25,est:true, wt:"side", how:"Kurzhanteln seitlich anheben bis die Oberarme waagerecht sind, dann aus dieser Position die Unterarme nach oben rotieren (wie bei der Außenrotation), anschließend nach oben drücken – kombiniert Seitheben, Rotation und Drücken."},
 {id:"bandpullapart",n:"Band Pull-Apart",         t:"reps", pat:"iso",    e:"Band",       p:["tg_schulter_hint"], s:["tg_rueck_rhomb","tg_rueck_trapez_mit","tg_rueck_trapez_unt","tg_schulter_rot_infra","tg_schulter_rot_teres_min"], how:"Band mit beiden Händen schulterbreit vor der Brust halten, Arme gestreckt zur Seite auseinanderziehen, bis das Band die Brust berührt, dann kontrolliert zurückführen."},
 {id:"rot_internal",n:"Innenrotation am Kabelzug", t:"load", pat:"iso",    e:"Kabelzug",   p:["tg_schulter_rot_sub"], s:["tg_brust_mitte"], std:"ohp",sf:0.18,est:true, uni:true, how:"Am tief eingehängten Kabelzug seitlich stehend, Oberarm am Körper fixiert, Ellbogen 90° gebeugt. Den Unterarm zum Bauch hin nach innen rotieren, dann kontrolliert zurückführen."},
-{id:"emptycan",    n:"Empty-Can-Raise",          t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_schulter_rot_supra"], s:["tg_schulter_seit"], std:"ohp",sf:0.2,est:true, wt:"side", how:"Kurzhantel mit nach unten gedrehtem Daumen (wie beim Ausleeren einer Dose) seitlich und leicht nach vorne bis Schulterhöhe anheben – isoliert den Obergrätenmuskel der Rotatorenmanschette."},
+{id:"emptycan",    n:"Empty-Can-Raise",          t:"load", pat:"iso",    e:"Kurzhantel", p:["tg_schulter_rot_supra"], s:["tg_schulter_seit"], std:"ohp",sf:0.3,est:true, wt:"side", how:"Kurzhantel mit nach unten gedrehtem Daumen (wie beim Ausleeren einer Dose) seitlich und leicht nach vorne bis Schulterhöhe anheben – isoliert den Obergrätenmuskel der Rotatorenmanschette."},
 
 /* --- Arme isoliert --- */
 {id:"curl_bb",     n:"Langhantel-Curls",         t:"load", pat:"iso",    e:"Langhantel", p:["tg_bizeps"], s:["tg_unterarm_streck","tg_unterarm_beug"], std:"curl", how:"Langhantel mit schulterbreitem Griff vor dem Körper, Ellbogen am Körper fixiert. Stange durch Beugen der Ellbogen nach oben zur Brust curlen, dann kontrolliert absenken."},
@@ -297,7 +297,7 @@ var EX=[
 {id:"sidelying_raise", n:"Seitliches Beinheben",  t:"reps", pat:"iso", e:"Körpergewicht", p:["tg_gesaess_med"], s:["tg_gesaess_min","tg_rueck_strecker","tg_bauch_schraeg"], how:"Seitlage, oberes Bein gestreckt seitlich anheben, ohne den Oberkörper nach hinten zu kippen, dann kontrolliert absenken."},
 {id:"bandwalk_lat", n:"Seitliches Bandgehen",     t:"reps", pat:"iso", e:"Band", p:["tg_gesaess_med"], s:["tg_gesaess_min","tg_quadrizeps","tg_adduktoren","tg_bauch_gerade"], how:"Widerstandsband um beide Knöchel oder Knie, in leichter Hocke seitliche Schritte gegen den Bandwiderstand machen, Spannung im Band die ganze Zeit halten."},
 {id:"abduct",      n:"Abduktoren-Maschine",      t:"load", pat:"iso",    e:"Maschine",   p:["tg_gesaess_med"], s:["tg_gesaess_min"], std:"squat",sf:0.4,est:true, how:"An der Abduktorenmaschine sitzend die Beine gegen den Widerstand nach außen öffnen, dann kontrolliert wieder schließen."},
-{id:"copenhagen",  n:"Copenhagen Plank",         t:"sec",  pat:"iso",    e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_bauch_schraeg"], std:"plank",sf:0.6,est:true, how:"Seitstütz, oberes Bein auf einer Bank abgelegt, unteres Bein schwebt frei in der Luft. Hüfte anheben und halten – starke Belastung für die Oberschenkelinnenseite."},
+{id:"copenhagen",  n:"Copenhagen Plank",         t:"sec",  pat:"iso",    e:"Körpergewicht", p:["tg_adduktoren"], s:["tg_bauch_schraeg"], std:"plank",sf:0.4,est:true, how:"Seitstütz, oberes Bein auf einer Bank abgelegt, unteres Bein schwebt frei in der Luft. Hüfte anheben und halten – starke Belastung für die Oberschenkelinnenseite."},
 {id:"neck_curl",   n:"Neck Curls",           t:"reps", pat:"iso",    e:"Körpergewicht", p:["tg_nacken"], s:["tg_rueck_trapez_ob"], how:"Rückenlage, Kopf über die Bankkante hinausragend. Mit leichtem Handdruck oder Zusatzgewicht auf der Stirn das Kinn Richtung Brust curlen, dann kontrolliert zurückführen."},
 {id:"neck_ext_bw", n:"Nackenstrecken",           t:"reps", pat:"iso",    e:"Körpergewicht", p:["tg_nacken"], s:["tg_rueck_trapez_ob"], how:"Bauchlage, Kopf über die Bankkante hinausragend. Kopf gegen leichten Handdruck nach oben/hinten strecken, dann kontrolliert absenken."},
 {id:"neck_flex_bw",n:"Halsbeugen",               t:"reps", pat:"iso",    e:"Körpergewicht", p:["tg_hals_nacken"], s:["tg_nacken"], how:"Rückenlage oder aufrecht sitzend, mit der Hand leichten Gegendruck auf die Stirn geben und den Kopf dagegen nach vorne beugen."},
@@ -337,6 +337,8 @@ var EX=[
 {id:"mob_neck", n:"Seitliche Nackendehnung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_trapez_ob","tg_nacken"], s:["tg_hals_nacken"], mob:true, mk:"stat", how:"Im Sitzen eine Hand unter das Gesäß klemmen, damit die Schulter unten bleibt. Kopf zur Gegenseite neigen, Blick geradeaus. Kein Zug mit der Hand am Kopf – das Eigengewicht genügt. 2 × 30 Sekunden je Seite."},
 {id:"mob_lat", n:"Lat-Dehnung mit Griff über Kopf", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_lat"], s:["tg_rueck_teres_major","tg_rueck_trapez_unt"], mob:true, mk:"stat", how:"An einem festen Griff über Kopfhöhe festhalten, Hüfte nach hinten schieben, Brust Richtung Boden sinken lassen. Arme gestreckt, Kopf zwischen den Armen. 2 × 40 Sekunden je Seite."},
 {id:"mob_butcherblock", n:"Butcher's-Block-Dehnung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_lat"], s:["tg_schulter_hint","tg_rueck_trapez_unt","tg_rueck_teres_major"], mob:true, mk:"stat", how:"Kniend vor einer Bank oder einem Tisch die Unterarme schulterbreit auflegen, Hände zusammen. Mit den Knien langsam nach hinten wandern, bis der Oberkörper parallel zum Boden ist - Hüfte weder hochziehen noch durchhängen lassen. Bauch anspannen, Latissimus aktiv nach unten ziehen, Brust dabei langsam Richtung Boden sinken lassen. 2 × 30–40 Sekunden."},
+{id:"mob_butterfly_weighted", n:"Schmetterling mit Zusatzgewicht", t:"sec", pat:"mob", e:"Kurzhantel", p:["tg_adduktoren"], s:["tg_huefte"], mob:true, mk:"stat", how:"Wie der normale Schmetterling-Sitz: aufrecht sitzen, Fußsohlen zusammen, Fersen nah am Körper. Auf jedes Knie eine leichte Kurzhantel legen, mit den Händen von oben zusätzlich sanften Druck geben, mit geradem Rücken aus der Hüfte leicht nach vorn neigen. Gewicht nur so schwer wählen, dass die Dehnung sanft bleibt - nicht auf die Knie drücken. 2 × 45 Sekunden."},
+{id:"mob_hip_car_stand", n:"Hüft-CARs im Stehen", t:"reps", pat:"mob", e:"Körpergewicht", p:["tg_huefte","tg_gesaess_med"], s:["tg_gesaess_min","tg_adduktoren"], mob:true, mk:"dyn", sw:5, how:"Auf einem Bein stehen, bei Bedarf leicht an einer Wand abstützen. Das freie Knie so hoch wie möglich vor den Körper heben, den Fuß dann weit nach außen öffnen, das Bein nach hinten strecken und von dort zurück zur Ausgangsposition führen - ein großer, langsamer Kreis, der vom Hüftgelenk aus kommt. Rumpf und Standbein bleiben ruhig, nur die Hüfte des freien Beins bewegt sich durch den vollen Bewegungsradius. 2 × 5 Kreise je Richtung und Seite."},
 {id:"mob_knee2chest", n:"Knie zur Brust", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_rueck_strecker"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Rückenlage, beide Knie zur Brust ziehen und umfassen. Lendenwirbelsäule flach an den Boden bringen. Ruhig weiteratmen – die tiefe Rückenmuskulatur löst erst nach etwa 20 Sekunden. 2 × 40 Sekunden."},
 {id:"mob_twist", n:"Liegende Drehung", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_bauch_schraeg","tg_rueck_strecker"], s:["tg_gesaess_haupt"], mob:true, mk:"stat", how:"Rückenlage, Arme seitlich ausgebreitet. Ein angewinkeltes Bein über die Körpermitte zur Gegenseite ablegen, beide Schultern bleiben am Boden. Kopf zur Gegenrichtung drehen. 2 × 45 Sekunden je Seite."},
 {id:"mob_wrist_flex", n:"Unterarmbeuger dehnen", t:"sec", pat:"mob", e:"Körpergewicht", p:["tg_unterarm_beug"], s:["tg_bizeps"], mob:true, mk:"stat", how:"Arm gestreckt nach vorn, Handfläche nach oben, Finger mit der anderen Hand nach unten ziehen. Ellbogen durchgestreckt lassen, sonst entzieht sich der Muskel. 2 × 30 Sekunden je Seite."},
@@ -749,6 +751,15 @@ RANK_LADDER.x_hspu={m:[0.1,0.2,0.3,0.4,0.5,1.8,3,5.7,8.3,11,14.3,17.7,21,24.7,28
 RANK_LADDER.x_row_inv={m:[0.1,0.2,0.3,0.4,0.5,4.8,9,12.3,15.7,19,23.3,27.7,32,36.7,41.3,46,48.9,51.8,54.7],w:[0.1,0.2,0.3,0.4,0.5,3.3,6,8.3,10.7,13,15.7,18.3,21,24,27,30,31.9,33.8,35.7],bw:false};LADDER_EX.row_inv="x_row_inv"; // inverted-row
 RANK_LADDER.x_squat_pistol={m:[0.1,0.2,0.3,0.4,0.5,2.8,5,7.7,10.3,13,16.3,19.7,23,26.7,30.3,34,36.2,38.3,40.5],w:[0.1,0.2,0.3,0.4,0.5,1.3,2,4.3,6.7,9,11.3,13.7,16,18.7,21.3,24,25.5,27,28.6],bw:false};LADDER_EX.squat_pistol="x_squat_pistol"; // pistol-squat
 RANK_LADDER.x_abwheel={m:[0.1,0.2,0.3,0.4,0.5,4.3,8,12.3,16.7,21,26.3,31.7,37,43,49,55,58.5,62,65.5],w:[0.1,0.2,0.3,0.4,0.5,2.8,5,8,11,14,18,22,26,30.3,34.7,39,41.5,43.9,46.4],bw:false};LADDER_EX.abwheel="x_abwheel"; // ab-wheel-rollout
+// --- 29.09.2026: weitere eigene Leitern (bisher nur sf-Faktor), Quelle strengthlevel.com, 80 kg M / 60 kg F ---
+RANK_LADDER.x_pushup_dec={m:[0.6,1,1.6,2.5,4,9.5,15,19.3,23.7,28,33.3,38.7,44,49.7,55.3,61,64.9,68.7,72.6],w:[0.1,0.2,0.3,0.4,0.5,3.8,7,10.3,13.7,17,21,25,29,33.7,38.3,43,45.7,48.4,51.2],bw:false};LADDER_EX.pushup_dec="x_pushup_dec"; // decline-push-up
+RANK_LADDER.x_pushup_arch={m:[0.1,0.2,0.3,0.4,0.5,3.8,7,10,13,16,19.7,23.3,27,30.7,34.3,38,40.4,42.8,45.2],w:[0.1,0.2,0.3,0.4,0.5,2.3,4,6.7,9.3,12,16,20,24,28,32,36,38.3,40.6,42.8],bw:false};LADDER_EX.pushup_arch="x_pushup_arch"; // archer-push-ups
+RANK_LADDER.x_kneeraise={m:[0.1,0.2,0.3,0.4,0.5,4.8,9,12.7,16.3,20,24.7,29.3,34,38.7,43.3,48,51,54.1,57.1],w:[0.1,0.2,0.3,0.4,0.5,3.8,7,10.3,13.7,17,20.7,24.3,28,32.3,36.7,41,43.6,46.2,48.8],bw:false};LADDER_EX.kneeraise="x_kneeraise"; // hanging-knee-raise
+RANK_LADDER.x_gluteBridge={m:[0.1,0.2,0.3,0.4,0.5,6.8,13,21.7,30.3,39,49.3,59.7,70,82,94,106,112.7,119.4,126.1],w:[0.1,0.2,0.3,0.4,0.5,5.8,11,18.7,26.3,34,43.3,52.7,62,72.7,83.3,94,100,105.9,111.9],bw:false};LADDER_EX.gluteBridge="x_gluteBridge"; // glute-bridge
+RANK_LADDER.x_sissy={m:[0.1,0.2,0.3,0.4,0.5,4.3,8,12.3,16.7,21,26.3,31.7,37,43,49,55,58.5,62,65.5],w:[0.1,0.2,0.3,0.4,0.5,2.8,5,8.7,12.3,16,20.3,24.7,29,33.7,38.3,43,45.7,48.4,51.2],bw:false};LADDER_EX.sissy="x_sissy"; // sissy-squat
+RANK_LADDER.x_calf_bw={m:[1.1,1.7,2.7,4.4,7,18,29,39.3,49.7,60,72.7,85.3,98,112,126,140,148.9,157.7,166.6],w:[0.1,0.2,0.3,0.4,0.5,8.8,17,26,35,44,55.3,66.7,78,90.3,102.7,115,122.3,129.6,136.8],bw:false};LADDER_EX.calf_bw="x_calf_bw"; // bodyweight-calf-raise
+RANK_LADDER.x_sideplank={m:[1.1,1.7,2.7,4.4,7,16,25,31.7,38.3,45,53.3,61.7,70,78.3,86.7,95,101,107,113],w:[3.3,4.5,6,8.1,11,18.5,26,32,38,44,51,58,65,72,79,86,91.4,96.9,102.3],bw:false};LADDER_EX.sideplank="x_sideplank"; // side-plank (Sek.)
+RANK_LADDER.x_deadlift_sl={m:[0.047,0.068,0.097,0.139,0.2,0.306,0.412,0.512,0.613,0.713,0.842,0.971,1.1,1.25,1.4,1.55,1.648,1.746,1.845],w:[0.074,0.093,0.117,0.146,0.183,0.267,0.35,0.422,0.494,0.567,0.661,0.756,0.85,0.956,1.061,1.167,1.241,1.314,1.388]};LADDER_EX.deadlift_sl="x_deadlift_sl"; // single-leg-romanian-deadlift (Gesamtlast)
 var BW_REF={m:80,w:60};    // Referenzgewicht je Geschlecht, an dem die Ladder-Werte oben gelten
 var BW_EXP={m:0.78,w:0.58};// Potenzgesetz-Exponent (aus Strength-Level-Tabellen gerechnet)
 var BW_CLAMP={m:[50,140],w:[50,100]}; // Kappung, ausserhalb dieser Spanne gibt es keine Daten
@@ -809,3 +820,78 @@ var FINE={"abdominal_part_of_pectoralis_major":{"la":"M. pectoralis major, pars 
    ============================================================================ */
 var FIGVB="0 0 361.15625 541.8666666666667";
 var FIGW=361.15625, FIGH=541.8666666666667;
+
+/* ============================================================================
+   VORLAGEN-EINHEITEN (ROUTINE_TPL)
+   Fertig zusammengestellte Einheiten zum Uebernehmen. Eine Vorlage wird NIE selbst
+   bearbeitet oder gestartet: "Aus Vorlage erstellen" (Training-Tab) kopiert sie in den
+   Einheiten-Editor, erst beim Speichern entsteht daraus eine ganz normale eigene Einheit
+   (state.routines) mit neuer id. Aenderungen an einer Vorlage wirken sich deshalb nie auf
+   schon uebernommene Einheiten aus.
+   - cat:   Bereich (siehe ROUTINE_TPL_CATS) - weitere Bereiche wie "kraft" einfach ergaenzen.
+   - items: exakt das Format von routine.items (ex, sets, reps, kg; Ausdauer: min).
+            reps = Wiederholungen bzw. Sekunden bei t:"sec" - gilt wie in der Anleitung der
+            Uebung "je Seite"/"je Richtung" (siehe mobSides() in 02-berechnung.js).
+   - rest:  Satzpause der Einheit in Sekunden (wie routine.rest).
+   Englische Namen/Beschreibungen stehen in UI_EN (11-sprache.js).
+   ============================================================================ */
+var ROUTINE_TPL_CATS=[
+  {id:"mob",name:"Mobilität"}
+];
+var ROUTINE_TPL=[
+  {id:"tpl_mob_warmup",cat:"mob",name:"Kurzes Ganzkörper-Warm-up",rest:0,
+   desc:"Nur dynamische Übungen, von Kopf bis Fuß – vor dem Training oder morgens zum Wachwerden.",
+   items:[
+    {ex:"mob_armcircles",sets:1,reps:10,kg:null},
+    {ex:"mob_catcow",sets:1,reps:8,kg:null},
+    {ex:"mob_wgs",sets:1,reps:3,kg:null},
+    {ex:"mob_legswing",sets:1,reps:8,kg:null},
+    {ex:"mob_inchworm",sets:1,reps:5,kg:null},
+    {ex:"mob_ankle_rock",sets:1,reps:10,kg:null}
+   ]},
+  {id:"tpl_mob_beine",cat:"mob",name:"Mobilität für die Beine",rest:15,
+   desc:"Hüftbeuger, Oberschenkel vorn und hinten, Waden und Sprunggelenk – erst locker schwingen, dann halten.",
+   items:[
+    {ex:"mob_legswing",sets:1,reps:10,kg:null},
+    {ex:"mob_ankle_rock",sets:1,reps:12,kg:null},
+    {ex:"mob_hipflex",sets:2,reps:30,kg:null},
+    {ex:"mob_quad",sets:1,reps:30,kg:null},
+    {ex:"mob_halfsplit",sets:2,reps:30,kg:null},
+    {ex:"mob_calf_straight",sets:1,reps:30,kg:null},
+    {ex:"mob_deepsquat",sets:2,reps:45,kg:null}
+   ]},
+  {id:"tpl_mob_huefte",cat:"mob",name:"Hüfte öffnen",rest:15,
+   desc:"Innen- und Außenrotation, Adduktoren und Gesäß – gut nach langem Sitzen oder vor Kniebeugen.",
+   items:[
+    {ex:"mob_9090",sets:2,reps:8,kg:null},
+    {ex:"mob_frog_rock",sets:2,reps:10,kg:null},
+    {ex:"mob_cossack",sets:1,reps:6,kg:null},
+    {ex:"mob_lizard",sets:1,reps:30,kg:null},
+    {ex:"mob_pigeon",sets:2,reps:40,kg:null},
+    {ex:"mob_butterfly",sets:2,reps:45,kg:null}
+   ]},
+  {id:"tpl_mob_oberkoerper",cat:"mob",name:"Mobilität für den Oberkörper",rest:15,
+   desc:"Schultern, Brust, Lat und Handgelenke – dynamisch öffnen, dann gezielt dehnen.",
+   items:[
+    {ex:"mob_armcircles",sets:1,reps:10,kg:null},
+    {ex:"mob_passthrough",sets:2,reps:10,kg:null},
+    {ex:"mob_wallslide",sets:2,reps:10,kg:null},
+    {ex:"mob_openbook",sets:1,reps:8,kg:null},
+    {ex:"mob_chest",sets:1,reps:30,kg:null},
+    {ex:"mob_lat",sets:1,reps:30,kg:null},
+    {ex:"mob_sleeper",sets:1,reps:30,kg:null},
+    {ex:"mob_wristcircle",sets:1,reps:10,kg:null}
+   ]},
+  {id:"tpl_mob_ruecken",cat:"mob",name:"Mobilität für Rücken und Wirbelsäule",rest:15,
+   desc:"Beugen, Strecken und Drehen der ganzen Wirbelsäule – sanft, auch an Ruhetagen.",
+   items:[
+    {ex:"mob_pelvictilt",sets:1,reps:12,kg:null},
+    {ex:"mob_catcow",sets:2,reps:8,kg:null},
+    {ex:"mob_threadneedle",sets:1,reps:8,kg:null},
+    {ex:"mob_openbook",sets:1,reps:8,kg:null},
+    {ex:"mob_sphinx",sets:2,reps:30,kg:null},
+    {ex:"mob_twist",sets:1,reps:40,kg:null},
+    {ex:"mob_knee2chest",sets:1,reps:40,kg:null},
+    {ex:"mob_child",sets:1,reps:60,kg:null}
+   ]}
+];
