@@ -133,6 +133,51 @@ body.tr-idle-fixed{overflow:auto}
 .rc-add-row .rc-add-ic{width:36px;height:36px;margin:0;flex:none;background:var(--surface-2)}
 .rc-add-row:active{background:var(--surface-2)}
 .rc-tools{display:flex;justify-content:flex-end;margin-top:-4px}
+/* Vorlagen: Zeile in der Einheiten-Liste + Auswahl-Blatt (sheetTemplates, 10-routinen.js) */
+.rc-tpl-row{margin-top:calc(-1 * var(--s1))}
+.rc-tpl-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rc-tpl-txt small{font-weight:400;font-size:12.5px;color:var(--ink-3)}
+.tpl-list{display:flex;flex-direction:column;gap:var(--s2)}
+.tpl-item{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;margin:0;padding:10px 10px 14px;
+  text-align:left;font:inherit;color:inherit;cursor:pointer;border:0}
+.tpl-item:active{background:var(--surface-2)}
+/* Grosses Vorschaubild oben ueber die ganze Kartenbreite, Text darunter. */
+.tpl-item .tpl-fig{width:100%;height:250px;position:relative;padding:0;border-radius:var(--r-md)}
+.tpl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:0 4px}
+.tpl-txt b{font-family:var(--f-cond);font-weight:600;font-size:18px;line-height:1.2}
+.tpl-desc{font-size:12.5px;line-height:1.4;color:var(--ink-3)}
+.tpl-meta{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tpl-mus{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:2px 0}
+.tpl-mus em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.tpl-mus .ed-m{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.tpl-mus .ed-m i{width:8px;height:8px;border-radius:50%;flex:none}
+.tpl-more{font-size:12px;color:var(--ink-3)}
+.tpl-slide{position:absolute;inset:10px 8px 22px;display:flex;justify-content:center;gap:4%;opacity:0;transition:opacity .45s ease}
+.tpl-slide.on{opacity:1}
+.tpl-slide svg{flex:0 1 auto;max-width:48%;height:100%;isolation:isolate}
+.tpl-slide:not(.tpl-slide-all) svg{max-width:100%;width:auto}
+.tpl-dots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:5px}
+.tpl-dots i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);opacity:.35}
+.tpl-dots i.on{opacity:1;background:var(--accent)}
+.tpl-dots i.vid{border-radius:1px}
+/* Animation im Kartenbild: nur zum Ansehen (Antippen oeffnet die Vorschau, kein Drehen). Unten
+   ueber den Rand hinaus gezogen, damit Bedienhinweis und Knoepfe des Betrachters abgeschnitten
+   sind - die Karte ist selbst der Knopf. */
+.tpl-item .tpl-fig{overflow:hidden}
+.tpl-slide .exanim{position:absolute;inset:-10px -8px -80px;margin:0;pointer-events:none}
+.tpl-slide .exanim-box{height:100%;margin:0;border-radius:var(--r-md)}
+.tpl-slide .exanim-cap{display:none}
+.tpl-slide.has-anim svg{display:none}
+.tpl-item .tpl-dots{z-index:2}
+.tpl-now{font-size:13.5px;color:var(--accent);font-weight:600;min-height:1.3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (prefers-reduced-motion: reduce){.tpl-slide{transition:none}}
+.tpl-pv-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink-2);margin-top:6px;font-variant-numeric:tabular-nums}
+.tpl-step{width:100%;font:inherit;color:inherit;text-align:left;background:none;border:0;border-bottom:1px solid var(--rule);cursor:pointer;gap:10px}
+.tpl-steps .tpl-step:last-child{border-bottom:0}
+.tpl-no{flex:none;width:22px;text-align:center;font-family:var(--f-cond);font-weight:600;font-size:14px;color:var(--ink-3)}
+.tpl-stepfig{flex:none;width:34px;height:56px;border-radius:var(--r-sm);background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tpl-stepfig svg{width:100%;height:100%;display:block}
+.tpl-muslist .row{padding:9px 16px}
 .rc-item.sorting{box-shadow:var(--card-sh),inset 0 0 0 1.5px var(--rule-2)}
 .free-card{display:flex;flex-direction:column;gap:var(--s3)}
 .free-txt b{display:block;font-family:var(--f-cond);font-weight:600;font-size:17.5px}
@@ -336,3 +381,33 @@ input[type=search].disc-search{font-family:var(--f-body);font-size:16px;padding-
 .nextgoal .ng-sub{font-size:13.5px;color:var(--ink-2);line-height:1.35}
 .nextgoal .pbar{margin-top:6px}
 .nextgoal:active{transform:scale(.99)}
+
+/* ---------- Erholung (Koerper-Tab, Umschalter "Trainingsvolumen | Erholung") ---------- */
+.bodymode{margin-bottom:12px}
+.reclegend{margin-top:12px}
+.reclegend .rlbar{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--rec0),var(--rec1) 50%,var(--rec2) 97%,var(--rec3) 97%)}
+.reclegend .rlmarks{display:flex;justify-content:space-between;margin-top:5px;font-size:10.5px;color:var(--ink-3);font-weight:500}
+.bodymode button[aria-selected="true"]{background:var(--ink);color:var(--surface);box-shadow:none}
+.recsum{padding:14px 16px}
+.recsum-row{display:flex;gap:10px}
+.recsum .rs{flex:1;min-width:0;border-radius:var(--r-sm);padding:10px 12px;background:var(--surface-2)}
+.recsum .rs b{display:block;font-family:var(--f-cond);font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.recsum .rs span{font-size:12px;color:var(--ink-3)}
+.recsum .rs.ok b{color:var(--good)} .recsum .rs.busy b{color:var(--warn)}
+.recsum-next{font-size:13px;color:var(--ink-2);margin:12px 2px 0}
+.recrow2{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--rule);
+  padding:12px 16px;color:inherit;font:inherit;cursor:pointer}
+.recrow2:last-child{border-bottom:0}
+.recrow2:active{background:var(--surface-2)}
+.recrow2 .rr-main{flex:1;min-width:0}
+.recrow2 .rr-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.recrow2 .rr-top b{font-weight:600;font-size:14.5px}
+.recrow2 .rr-top em{font-style:normal;font-size:13px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.recrow2 .recbar{margin:7px 0 5px}
+.recrow2 .rr-sub{font-size:12px;color:var(--ink-3)}
+.recready{display:flex;flex-wrap:wrap;gap:8px}
+.recready .rchip{border:0;font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:99px;cursor:pointer;
+  background:color-mix(in srgb,var(--rec3) 18%,var(--surface));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rec3) 45%,transparent)}
+.recready .rchip.idle{background:var(--surface-2);color:var(--ink-3);box-shadow:inset 0 0 0 1px var(--rule)}
+.recready .rgrp{width:100%;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-top:4px}
+.recready .rgrp:first-child{margin-top:0}

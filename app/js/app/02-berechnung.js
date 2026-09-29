@@ -406,8 +406,11 @@ function muscleScore(v,m){
   var c=corr(m);
   if(v<c.mev)return v/c.mev*70;
   if(v<c.mav)return 70+30*(v-c.mev)/(c.mav-c.mev);
-  if(v<=c.mrv)return 100;
-  return Math.max(70,100-(v-c.mrv)*5);
+  // Vorher sank die Zahl uebers Limit hinaus wieder (bis auf 70). Dafuer gibt es aber
+  // keine belastbare Evidenz - das Limit (MRV) heisst nur "zusaetzliches Volumen bringt
+  // wahrscheinlich keinen weiteren Wachstumsreiz mehr, weil die Erholung nicht mehr
+  // mithaelt", nicht "du baust dadurch messbar weniger Muskeln auf". Bleibt jetzt bei 100.
+  return 100;
 }
 function windowDays(asOf){
   var st=(state.profile&&state.profile.startedAt)||asOf;

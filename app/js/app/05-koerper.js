@@ -223,9 +223,10 @@ function renderToday(){
   exRows(order,tb);
   if(!nWo&&!order.length){
     if(viewingToday&&!workout){
+      // "Training starten" steht schon prominent oben im Formwert-Hinweis (renderHeroNext) -
+      // hier nur noch der Weg, den es dort nicht gibt: einen Satz nachträglich eintragen.
       tb.appendChild(estate("Heute noch kein Training","Starte eine deiner Einheiten oder trainiere frei – jeder Satz landet automatisch hier.",
-        [["Training starten",function(){selectTab("tab-training");window.scrollTo(0,0);},true],
-         ["Satz nachtragen",function(){sheetAddSet(null);},false]]));
+        [["Satz nachtragen",function(){sheetAddSet(null);},false]]));
     } else if(viewingToday){
       tb.appendChild(el("p","estate-quiet","Dein Training läuft – abgehakte Sätze erscheinen hier."));
     } else {
@@ -406,22 +407,27 @@ function updateVolLegend(ms){
   if(selFine&&FINE[selFine])ids=[FINE[selFine].g];
   else if(selSet)selSet.forEach(function(k){var g=FINE[k]&&FINE[k].g;if(g&&ids.indexOf(g)<0)ids.push(g);});
   if(!ids.length)return;
-  var pos=[],reiz=[];
+  var pos=[],score=[];
   ids.forEach(function(id){
     var m=muscleById(id);if(!m)return;
     pos.push(clamp(volLegendPos(ms[id]||0,m),0,100));
-    reiz.push(reizOf(ms[id]||0,m));
+    score.push(muscleScore(ms[id]||0,m));
   });
   if(!pos.length)return;
   var single=pos.length===1,text,mark;
+  // Der Pin sitzt auf volLegendPos() - der Stelle auf dem festen Balken (0/Minimum/Optimum/
+  // Limit/ueber Limit), damit er zur tatsaechlichen Balkenfarbe an dieser Stelle passt. Die
+  // Zahl daneben zeigt aber bewusst eine andere Skala: muscleScore(), auf der 100 % genau am
+  // persoenlichen Optimum erreicht ist (so wie ueberall sonst in der App) - nicht erst am
+  // rechten Balkenrand, der auch noch den "ueber Limit"-Bereich zeigen muss.
   if(single){
     var m1=muscleById(ids[0]),v1=Math.round((ms[ids[0]]||0)*10)/10;
-    mark=pos[0];text=reizPct(v1,m1)+" % · "+v1+" Sätze";
+    mark=pos[0];text=Math.round(score[0])+" % · "+v1+" Sätze";
   }else{
     var sum=0;pos.forEach(function(p){sum+=p;});
     mark=sum/pos.length;
-    var rs=0;reiz.forEach(function(r){rs+=r;});
-    text="Ø "+Math.round(rs/reiz.length*100)+" % · "+pos.length+" Gruppen";
+    var ss=0;score.forEach(function(sc){ss+=sc;});
+    text="Ø "+Math.round(ss/score.length)+" % · "+pos.length+" Gruppen";
   }
   var i=el("i");i.style.left=clamp(mark,0,100)+"%";pins.appendChild(i);
   var s=el("span",null,text);
@@ -438,9 +444,16 @@ function placeCallout(ms){
     var f=FINE[selFine],m=muscleById(f.g);
     // Hand, Fuß, Hals, tiefe Wade usw. sind im 3D-Modell antippbar, gehören aber zu keiner
     // gezählten Muskelgruppe. Ohne diese Abfrage brach zoneOf() ab und die Anzeige blieb stehen.
-    if(!m){co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em>Wird im Training nicht eigens gezählt</em>';return;}
+    // Alltagsname zuerst und groß (fett) - lateinischer Fachbegriff nur noch als kleiner
+    // Zusatz daneben, fuer alle, die genauer nachlesen wollen, aber nicht die erste Auskunft.
+    if(!m){co.innerHTML='<b>'+f.de+'</b><span>'+f.la+'</span><em>Wird im Training nicht eigens gezählt</em>';return;}
     var v=Math.round((ms[f.g]||0)*10)/10,z=zoneOf(v,m),em=emphasisSets(selFine,TODAY);
-    co.innerHTML='<b>'+f.la+'</b><span>'+f.de+'</span><em class="z'+z+'">'+reizPct(v,m)+' % Reiz · '+v+' Sätze · '+zoneLabel(z)+(em!=null?' · '+em+' mit Betonung hier':'')+'</em>';
+    // muscleScore(): 100 % ist genau das persoenliche Optimum (MAV) - dieselbe Skala wie
+    // bei den Listen weiter unten. Der Pin auf dem Balken oben sitzt bewusst weiterhin auf
+    // volLegendPos() (der Balken muss auch den Bereich ueber dem Limit noch zeigen koennen),
+    // daher zeigen Pin-Position und diese Zahl nicht dieselbe Skala - aber die Zahl hier und
+    // die Prozentzahlen in den Listen darunter schon.
+    co.innerHTML='<b>'+f.de+'</b><span>'+f.la+'</span><em class="z'+z+'">'+Math.round(muscleScore(v,m))+' % · '+v+' Sätze · '+zoneLabel(z)+(em!=null?' · '+em+' mit Betonung hier':'')+'</em>';
   } else {
     var ids=[];selSet.forEach(function(k){var g=FINE[k].g;if(ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
     if(!ids.length){co.innerHTML='<b>'+selLabel+'</b><em>Wird im Training nicht eigens gezählt</em>';return;}
@@ -665,6 +678,25 @@ function selGroups(){
   var ss=effSet();
   if(!ss)return [];
   var out=[];ss.forEach(function(k){var g=FINE[k]&&FINE[k].g;if(g&&out.indexOf(g)<0)out.push(g);});return out;}
+// Laesst am rechten (und, sobald man weitergescrollt hat, linken) Rand einer wischbaren
+// Chip-Reihe einen kurzen Farbverlauf stehen - ohne diesen Hinweis war nicht zu erkennen,
+// dass rechts noch weitere Regionen folgen, die Reihe wirkte wie vollstaendig sichtbar.
+function ensureChipFade(bar){
+  if(bar._fadeWrap)return bar._fadeUpd;
+  var wrap=el("div","chipbar-wrap");
+  bar.parentNode.insertBefore(wrap,bar);wrap.appendChild(bar);
+  var fl=el("i","chipbar-fade l"),fr=el("i","chipbar-fade r");
+  wrap.appendChild(fl);wrap.appendChild(fr);
+  function upd(){
+    var max=bar.scrollWidth-bar.clientWidth;
+    wrap.classList.toggle("fl",bar.scrollLeft>4);
+    wrap.classList.toggle("fr",max>4&&bar.scrollLeft<max-4);
+  }
+  bar.addEventListener("scroll",upd,{passive:true});
+  addEventListener("resize",upd);
+  bar._fadeWrap=wrap;bar._fadeUpd=upd;
+  return upd;
+}
 function renderRegionChips(){
   var bar=$("regionchips");if(!bar)return;bar.innerHTML="";
   var all=el("button","fchip","Alle");all.setAttribute("aria-pressed",String(!selSet&&!selFine));
@@ -673,6 +705,7 @@ function renderRegionChips(){
     var b=el("button","fchip",rg.name);b.setAttribute("aria-pressed",String(selLabel===rg.name&&!selFine));
     b.onclick=function(){selReset();selectRegion(rg);renderBodySel();};bar.appendChild(b);
   });
+  var upd=ensureChipFade(bar);requestAnimationFrame(upd);
 }
 /* Erklaert am konkreten Muskel, was ein weiterer Satz noch bringt. Genau das ist die
    Frage, die eine Satzzahl allein nicht beantwortet. */
@@ -727,6 +760,7 @@ function muscleDetail(fk,ms,compact){
   return wrap;
 }
 function renderBody(ms){
+  renderBodyMode();
   fw3dSyncColors(ms);
   renderRegionChips();
   placeCallout(ms);
@@ -830,3 +864,135 @@ var CARDIO_REGION={name:"Cardio",cardio:true,
 // Koerperteil, sondern eine Art zu trainieren. Gefiltert wird ueber ex.mob und die gewaehlte
 // Art (statisch/dynamisch), nicht ueber Muskeln - deshalb bleibt die Liste hier leer.
 var MOB_REGION={name:"Mobilität",mobility:true,ids:[]};
+
+/* ================= Erholung =================
+   Umschalter oben im Koerper-Tab: "Trainingsvolumen" (Saetze der letzten 7 Tage, wie bisher)
+   oder "Erholung". Im Erholungsmodus faerbt sich die Figur nach dem Stand seit der letzten
+   Belastung (recoveryOf, 06-entdecken.js): rot = frisch belastet, gelb = halb erholt, gruen =
+   bereit. Darunter ein eigener Bereich: wie viele Gruppen bereit sind, welche noch
+   regenerieren (mit Restzeit) und welche frei sind. */
+var bodyMode="vol";
+function recColorOf(rv){
+  var css=getComputedStyle(document.documentElement);
+  function cv(n,fb){return css.getPropertyValue(n).trim()||fb;}
+  var R0=cv("--rec0","#D9483B"),R1=cv("--rec1","#F2B84B"),R2=cv("--rec2","#D8D35A"),R3=cv("--rec3","#4FD17F");
+  if(!rv||rv.pct>=100)return R3;
+  var t=rv.pct/100;
+  return t<0.5?_fwMixHex(R0,R1,t/0.5):_fwMixHex(R1,R2,(t-0.5)/0.5);
+}
+/* Farbfunktion fuer eine Einfaerbung der Figur. Im Erholungsmodus wird recoveryOf je Gruppe
+   nur einmal gerechnet - die Figur hat ueber 200 Meshes, jede Rechnung durchsucht 21 Tage. */
+function bodyColorFn(){
+  if(bodyMode!=="rec")return function(v,m){return volColor(v,m);};
+  var memo={};
+  return function(v,m){
+    if(!m)return recColorOf(null);
+    if(!(m.id in memo))memo[m.id]=recColorOf(recoveryOf(m));
+    return memo[m.id];
+  };
+}
+/* Umschalter, Erholungs-Legende und Erholungs-Bereich legt der Code selbst an, falls sie in
+   index.html fehlen. Grund: parallel arbeitende Sitzungen haben index.html schon mehrfach mit
+   einem aelteren Stand ueberschrieben - dann war die Erholungsansicht weg, obwohl der Code noch
+   da war. So haengt die Ansicht nur noch an dieser Datei. */
+function ensureRecDom(){
+  var sec=$("p-koerper");if(!sec)return;
+  var card=sec.querySelector(".card");if(!card)return;
+  if(!$("bodymode")){
+    var bm=el("div","segbtn bodymode");bm.id="bodymode";bm.setAttribute("role","tablist");
+    bm.innerHTML='<button type="button" data-m="vol" aria-selected="true">Trainingsvolumen</button><button type="button" data-m="rec" aria-selected="false">Erholung</button>';
+    card.insertBefore(bm,card.firstChild);
+  }
+  if(!$("reclegend")){
+    var rl=el("div","reclegend");rl.id="reclegend";rl.hidden=true;
+    rl.innerHTML='<div class="vol-cap"><b>Erholung</b><span>seit der letzten Belastung</span></div>'+
+      '<div class="rlbar"></div><div class="rlmarks"><span>frisch belastet</span><span>halb erholt</span><span>bereit</span></div>';
+    var vl=card.querySelector(".vollegend"),md=$("mdetail");
+    if(vl&&vl.parentNode===card)card.insertBefore(rl,vl.nextSibling);else if(md&&md.parentNode===card)card.insertBefore(rl,md);else card.appendChild(rl);
+  }
+  if(!$("recpanel")){
+    var rp=el("div");rp.id="recpanel";rp.hidden=true;
+    rp.innerHTML='<div class="card recsum" id="recsum"></div>'+
+      '<h2 class="sec"><span class="sec-t">Noch in Erholung</span> <span id="recbusyhead"></span></h2>'+
+      '<div class="card flush" id="recbusy"></div>'+
+      '<h2 class="sec"><span class="sec-t">Bereit</span> <span id="recreadyhead"></span></h2>'+
+      '<div class="card recready" id="recready"></div>';
+    card.parentNode.insertBefore(rp,card.nextSibling);
+  }
+}
+function renderBodyMode(){
+  ensureRecDom();
+  var bar=$("bodymode");if(!bar)return;
+  var rec=bodyMode==="rec";
+  Array.prototype.forEach.call(bar.querySelectorAll("button"),function(b){
+    b.setAttribute("aria-selected",String(b.getAttribute("data-m")===bodyMode));
+    b.onclick=function(){
+      var m=b.getAttribute("data-m");if(m===bodyMode)return;
+      bodyMode=m;renderBodySel();
+    };
+  });
+  var vl=document.querySelector("#p-koerper .vollegend"),rl=$("reclegend"),rp=$("recpanel");
+  if(vl)vl.hidden=rec;if(rl)rl.hidden=!rec;if(rp)rp.hidden=!rec;
+  if(rec)renderRecPanel();
+}
+function recHours(h){
+  h=Math.max(1,Math.round(h));
+  if(h<24)return h+" Std.";
+  var d=Math.floor(h/24),r=h%24;
+  return d+" T."+(r?" "+r+" Std.":"");
+}
+function recSelectGroup(m){
+  selReset();
+  selFine=null;selSet=fineIdsOfGroups([m.id]);selLabel=m.name;selMuscle=m.id;selTapKey=null;
+  renderBodySel();
+  var b=$("body3d");if(b)try{b.scrollIntoView({behavior:"smooth",block:"center"});}catch(e){}
+}
+function renderRecPanel(){
+  var sum=$("recsum"),busy=$("recbusy"),ready=$("recready");
+  if(!sum||!busy||!ready)return;
+  var list=MUSCLES.map(function(m){return {m:m,rv:recoveryOf(m)};});
+  var inRec=list.filter(function(x){return x.rv&&x.rv.pct<100;})
+                .sort(function(a,b){return b.rv.left-a.rv.left;});
+  var fresh=list.filter(function(x){return x.rv&&x.rv.pct>=100;})
+                .sort(function(a,b){return a.rv.h-b.rv.h;});
+  var idle=list.filter(function(x){return !x.rv;});
+  // Zusammenfassung
+  sum.innerHTML="";
+  var row=el("div","recsum-row");sum.appendChild(row);
+  var a=el("div","rs ok");a.appendChild(el("b",null,String(fresh.length+idle.length)));a.appendChild(el("span",null,"Gruppen bereit"));
+  var b2=el("div","rs busy");b2.appendChild(el("b",null,String(inRec.length)));b2.appendChild(el("span",null,"noch in Erholung"));
+  row.appendChild(a);row.appendChild(b2);
+  if(inRec.length){
+    var soon=inRec.slice().sort(function(x,y){return x.rv.left-y.rv.left;})[0];
+    var p=el("p","recsum-next");
+    p.innerHTML="Als Nächstes bereit: <b>"+esc(soon.m.name)+"</b> in "+recHours(soon.rv.left);
+    sum.appendChild(p);
+  }
+  // Noch in Erholung
+  $("recbusyhead").textContent=inRec.length?"antippen zeigt den Muskel":"";
+  busy.innerHTML="";
+  if(!inRec.length){
+    busy.appendChild(el("p","estate-quiet","Alles erholt – du kannst jede Muskelgruppe trainieren."));
+  }
+  inRec.forEach(function(x){
+    var col=recColorOf(x.rv),row=el("button","recrow2");row.type="button";
+    var mn=el("div","rr-main"),top=el("div","rr-top");
+    top.appendChild(el("b",null,x.m.name));
+    var em=el("em",null,"noch "+recHours(x.rv.left));em.style.color=col;top.appendChild(em);
+    mn.appendChild(top);
+    var bar=el("div","recbar"),fi=el("i");fi.style.width=Math.round(x.rv.pct)+"%";fi.style.background=col;bar.appendChild(fi);mn.appendChild(bar);
+    mn.appendChild(el("div","rr-sub",Math.round(x.rv.pct)+" % erholt · zuletzt "+humanSince(x.rv.h)+" belastet"));
+    row.appendChild(mn);
+    row.onclick=function(){recSelectGroup(x.m);};
+    busy.appendChild(row);
+  });
+  // Bereit
+  $("recreadyhead").textContent=(fresh.length+idle.length)+" Gruppen";
+  ready.innerHTML="";
+  function chips(arr,cls){arr.forEach(function(x){
+    var c=el("button","rchip"+(cls?" "+cls:""),x.m.name);c.type="button";
+    c.title=x.rv?"zuletzt "+humanSince(x.rv.h)+" belastet":"seit mindestens drei Wochen nicht belastet";
+    c.onclick=function(){recSelectGroup(x.m);};ready.appendChild(c);});}
+  if(fresh.length){ready.appendChild(el("div","rgrp","Erholt"));chips(fresh,"");}
+  if(idle.length){ready.appendChild(el("div","rgrp","Länger nicht trainiert"));chips(idle,"idle");}
+}

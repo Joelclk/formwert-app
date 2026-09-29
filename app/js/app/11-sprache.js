@@ -294,7 +294,7 @@ function applyLangData(){
     "✓ erledigt":"✓ done","✓ fertig":"✓ done","Kategorien":"Categories","Alle zurücksetzen":"Reset all","Eigene Übung":"Custom exercise","Angepasst":"Edited",
     "Zusatzgewicht":"Weighted","Wiederholungen":"Reps","Halten":"Hold","Dehnen":"Stretch","Mobilisieren":"Mobilise","Keine passende Übung":"No matching exercise",
     "Probier einen kürzeren Suchbegriff oder nimm einen Filter heraus.":"Try a shorter search term or remove a filter.",
-    "Trainingsvolumen":"Training volume","Sätze je Muskel · letzte 7 Tage":"Sets per muscle · last 7 days","im Zielbereich":"in target range","hoch":"high",
+    "Trainingsvolumen":"Training volume","Sätze je Muskel · letzte 7 Tage":"Sets per muscle · last 7 days","im Zielbereich":"in target range","hoch":"high","zu viel":"too much","Erholung":"Recovery","seit der letzten Belastung":"since last trained","frisch belastet":"just trained","halb erholt":"half recovered","bereit":"ready","Noch in Erholung":"Still recovering","Bereit":"Ready","Gruppen bereit":"groups ready","noch in Erholung":"still recovering","Erholt":"Recovered","Länger nicht trainiert":"Not trained lately","antippen zeigt den Muskel":"tap to show muscle",
     "Wie wird gezählt?":"How is it counted?","Formwert":"Form score","Kraft":"Strength","Ausdauer im Detail":"Endurance in detail","Verlauf · 90 Tage":"History · 90 days",
     "Muskeln im Körper-Tab ansehen":"View muscles in Body tab","Ohne Vorlage":"Without template","Freies Training":"Free workout",
     "Leer starten, Übungen fügst du unterwegs hinzu.":"Start empty and add exercises as you go.",
@@ -461,3 +461,44 @@ function T(k){
   if(!d)return k;
   return (LANG==="en"&&d.en!=null)?d.en:d.de;
 }
+/* Nachtrag Uebersetzung: Vorlagen-Einheiten (ROUTINE_TPL in data.js, sheetTemplates in
+   10-routinen.js). Namen/Beschreibungen der Vorlagen stehen hier als Klartext - tplText()
+   holt den Namen beim Uebernehmen daraus, damit auch das Eingabefeld im Editor stimmt. */
+(function(){
+  var add={"Aus Vorlage erstellen":"Create from template","Fertige Einheiten, z. B. Mobilität":"Ready-made sessions, e.g. mobility",
+    "Die Vorlage wird als eigene Einheit kopiert – Übungen, Sätze und Zeiten passt du danach frei an.":
+      "The template is copied as your own session – adjust exercises, sets and times freely afterwards.",
+    "Kurzes Ganzkörper-Warm-up":"Short full-body warm-up",
+    "Nur dynamische Übungen, von Kopf bis Fuß – vor dem Training oder morgens zum Wachwerden.":
+      "Dynamic moves only, head to toe – before training or to wake up in the morning.",
+    "Mobilität für die Beine":"Leg mobility",
+    "Hüftbeuger, Oberschenkel vorn und hinten, Waden und Sprunggelenk – erst locker schwingen, dann halten.":
+      "Hip flexors, front and back of the thighs, calves and ankles – swing loosely first, then hold.",
+    "Hüfte öffnen":"Hip opener",
+    "Innen- und Außenrotation, Adduktoren und Gesäß – gut nach langem Sitzen oder vor Kniebeugen.":
+      "Internal and external rotation, adductors and glutes – good after long sitting or before squats.",
+    "Mobilität für den Oberkörper":"Upper-body mobility",
+    "Schultern, Brust, Lat und Handgelenke – dynamisch öffnen, dann gezielt dehnen.":
+      "Shoulders, chest, lats and wrists – open up dynamically, then stretch specifically.",
+    "Mobilität für Rücken und Wirbelsäule":"Back and spine mobility",
+    "Beugen, Strecken und Drehen der ganzen Wirbelsäule – sanft, auch an Ruhetagen.":
+      "Flexing, extending and rotating the whole spine – gentle, fine on rest days too."};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.push([/\bca\. (\d+)[\u00a0 ]min/g,"approx. $1\u00a0min"]);
+/* Nachtrag Uebersetzung: Vorschau der Vorlagen (sheetTplPreview, 10-routinen.js). */
+(function(){
+  var add={"Antippen zeigt die Vorschau. Übernommen wird eine Kopie – Übungen, Sätze und Zeiten passt du danach frei an.":
+      "Tap for a preview. A copy is added – adjust exercises, sets and times freely afterwards.",
+    "Dehnt:":"Stretches:","Bewegt:":"Mobilises:","Trainiert:":"Trains:",
+    "Was wird gedehnt?":"What gets stretched?","Was wird bewegt?":"What gets mobilised?","Welche Muskeln?":"Which muscles?",
+    "Ablauf":"Sequence","Als eigene Einheit übernehmen":"Add as my own session","Andere Vorlage wählen":"Choose another template",
+    "ohne Pause":"no rest","Ganze Einheit":"Whole session","Weniger anzeigen":"Show less","Schwerpunkt":"Focus","deutlich":"clearly","mitbeansprucht":"also worked"};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.push([/(\d+) s Pause zwischen Sätzen/g,"$1 s rest between sets"]);
+UI_RX.push([/(\d+) × ([\d–]+) (s|Wdh\.)( je Richtung und Seite| je Richtung| je Seite)?/g,function(m,a,b,u,s){
+  var S={" je Richtung und Seite":" per direction and side"," je Richtung":" per direction"," je Seite":" per side"}[s||""]||"";
+  return a+" × "+b+" "+(u==="s"?"s":"reps")+S;}]);
+UI_RX.push([/Alle (\d+) Muskeln anzeigen/g,"Show all $1 muscles"]);
+UI_RX.push([/ · Bewegung$/g," · Movement"]);

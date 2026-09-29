@@ -243,7 +243,12 @@ function renderErfolge(){
     var c=el("div");c.innerHTML='<b class="num">'+p[0]+'</b><span>'+p[1]+'</span>';st.appendChild(c);});
   top.appendChild(st);box.appendChild(top);
   var row=el("div","erf-row");
-  if(got.length)got.slice(0,5).forEach(function(x){var it=msMedalEl(x,40);it.appendChild(el("span",null,x.m.name));row.appendChild(it);});
+  if(got.length)got.slice(0,5).forEach(function(x){var it=msMedalEl(x,40);it.appendChild(el("span",null,x.m.name));
+    it.classList.add("tap");it.setAttribute("role","button");it.tabIndex=0;
+    it.setAttribute("aria-label",x.m.name+" – Details ansehen");
+    it.onclick=function(){vtOpen();vtDetail(x.m.id);};
+    it.onkeydown=function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();it.onclick();}};
+    row.appendChild(it);});
   else row.appendChild(el("p","note","Noch keine Medaille – die erste gibt es schon ab 10 Trainingstagen oder 5 Dips am Stück."));
   box.appendChild(row);
   // Naechste erreichbare Medaille (die, der du prozentual am naechsten bist)

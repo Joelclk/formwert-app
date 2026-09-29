@@ -1,5 +1,5 @@
-Version 458
-Stand: 2026-09-28
-Aenderung: Rueckbeuge im Stand: hintere Schulter als Hauptmuskel (Rueckmeldung Joel)
+Version 479+ (Artifact-Version 1790674799-42e2)
+Stand: 2026-09-29
+Aenderung: Abgleich mit Live-Artifact - u. a. Erholungsansicht im Koerper-Tab, neue Farbskala Trainingsvolumen, 8 neue Varianten-Rangleitern, Vorlagen fuer Einheiten, Schliessen-Knopf in Sheets
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand (Version 456). formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand vom 29.09.2026 ca. 11:45. formwert_app.html und quelltext/ sind veraltet.

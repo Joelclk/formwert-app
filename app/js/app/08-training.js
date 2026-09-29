@@ -1370,8 +1370,10 @@ function exPctColorStep(v){return exPctColor(v);}
    (auf dem hellen Gelb der unteren Stufen waere sie nicht lesbar). */
 // ---- Fuellstand-Skala fuer das Wochenvolumen -------------------------------
 // Statt drei harter Zonen (zu wenig / Optimum / zu viel) wird der Farbwert stufenlos
-// zwischen den Korridor-Marken interpoliert: ruhiges Grau bei null, ueber Petrol zum
-// Gruen im Korridor, darueber dunkles Rotbraun.
+// zwischen den Korridor-Marken interpoliert. Wichtigste Aussage ist "zu wenig": ohne Saetze
+// Orange, knapp unter dem Minimum Gelb, ab dem Minimum Gruen (gedeckt -> hell am Optimum ->
+// Mint am Limit), darueber ein ruhiges Violett (zu viel ist nachrangig).
+// Palette fest (--m3d0..4), weil der 3D-Hintergrund in beiden Designs dunkel ist.
 var _volStops=null,_volStopsKey=null;
 function volStops(){
   var key=(document.documentElement.getAttribute("data-theme")||"")+"|"+
@@ -1379,8 +1381,9 @@ function volStops(){
   if(_volStops&&_volStopsKey===key)return _volStops;
   var css=getComputedStyle(document.documentElement);
   function cv(n,fb){var s=css.getPropertyValue(n).trim();return s||fb;}
-  _volStops=[cv("--vol0","#B4BAC1"),cv("--vol1","#3E8C9B"),cv("--vol2","#2F8355"),
-             cv("--vol3","#1C5F3C"),cv("--vol4","#7A3121")];
+  // Index: 0 nichts, 1 Minimum, 2 Optimum, 3 Limit, 4 ueber Limit, 5 knapp unter Minimum.
+  _volStops=[cv("--m3d0","#E8722C"),cv("--m3d1","#3E9E63"),cv("--m3d2","#4FD17F"),
+             cv("--m3d3","#8FE3A5"),cv("--m3d4","#9B7BE0"),cv("--m3dk","#F2D15A")];
   _volStopsKey=key;
   return _volStops;
 }
@@ -1424,8 +1427,11 @@ function volColorRaw(v,m){
   // Interpoliert wird in Reiz-, nicht in Satzabstaenden - sonst zeigt die Farbe einen
   // Unterschied an, den es in dieser Groesse gar nicht gibt.
   var q=Math.sqrt(v),q0=Math.sqrt(c.mev),q1=Math.sqrt(c.mav),q2=Math.sqrt(c.mrv);
-  if(v<c.mev)return _fwMixHex(S[0],S[1],q/Math.max(.001,q0));
-  if(v<c.mav)return _fwMixHex(S[1],S[2],(q-q0)/Math.max(.001,q1-q0));
+  // Unter dem Minimum warme Warnfarben (Orange -> Gelb), erst ab dem Minimum Gruen - der
+  // Sprung ist gewollt: "zu wenig" soll auf der Figur sofort auffallen.
+  if(v<c.mev)return _fwMixHex(S[0],S[5],q/Math.max(.001,q0));
+  // Wie der Legendenbalken: ohne Sprung am Minimum, Gelb -> Gruen bis zum Optimum.
+  if(v<c.mav)return _fwMixHex(S[5],S[2],(q-q0)/Math.max(.001,q1-q0));
   if(v<=c.mrv)return _fwMixHex(S[2],S[3],(q-q1)/Math.max(.001,q2-q1));
   return _fwMixRgbHex(S[3],S[4],(q-q2)/Math.max(.001,Math.sqrt(c.mrv*1.30)-q2));
 }
@@ -1448,8 +1454,8 @@ function volColorScore(score,over){
   var S=volStops();
   if(over)return S[4];
   var t=clamp(score,0,100)/100;
-  if(t<0.70)return _fwMixHex(S[0],S[1],t/0.70);
-  return _fwMixHex(S[1],S[3],(t-0.70)/0.30);
+  if(t<0.70)return _fwMixHex(S[0],S[5],t/0.70);
+  return _fwMixHex(S[5],S[2],(t-0.70)/0.30);
 }
 function exPctColorInk(v){
   var h=_fwRgbToHsl.apply(null,_fwHexToRgb(exPctColor(v)));
