@@ -131,6 +131,7 @@ var _uiBusy=false;
     [/Muskelabdeckung Ø Sätze je Muskel gegen MEV\/MAV \((\d+) T\)/g,"Muscle coverage avg sets per muscle vs MEV/MAV ($1 d)"],
     [/Ausdauer        WHO-Minuten \+ VO2max-Perzentil/g,"Endurance       WHO minutes + VO2max percentile"],
     [/Mobilität       Einheiten (\d+) T ÷ (\d+)/g,"Mobility        sessions $1 d ÷ $2"],
+    [/1 Einheit = (\d+) min am Tag, darüber zählt\n(\s+)jede Minute halb, max\. (\d+) pro Tag/g,"1 session = $1 min a day, beyond that\n$2each minute counts half, max. $3 per day"],
     [/Epley \(1–3 Wdh\)/g,"Epley (1–3 reps)"],
     [/weich gemischt, aus dem besten Satz/g,"smoothly blended, from the best set"],
     [/\nFigur: /g,"\nFigure: "],
@@ -493,7 +494,7 @@ UI_RX.push([/\bca\. (\d+)[\u00a0 ]min/g,"approx. $1\u00a0min"]);
     "Dehnt:":"Stretches:","Bewegt:":"Mobilises:","Trainiert:":"Trains:",
     "Was wird gedehnt?":"What gets stretched?","Was wird bewegt?":"What gets mobilised?","Welche Muskeln?":"Which muscles?",
     "Ablauf":"Sequence","Als eigene Einheit übernehmen":"Add as my own session","Andere Vorlage wählen":"Choose another template",
-    "ohne Pause":"no rest","Ganze Einheit":"Whole session","Weniger anzeigen":"Show less","Schwerpunkt":"Focus","deutlich":"clearly","mitbeansprucht":"also worked"};
+    "ohne Pause":"no rest","✓ volle Einheit":"✓ full session","Ganze Einheit":"Whole session","Weniger anzeigen":"Show less","Schwerpunkt":"Focus","deutlich":"clearly","mitbeansprucht":"also worked"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
 UI_RX.push([/(\d+) s Pause zwischen Sätzen/g,"$1 s rest between sets"]);
@@ -502,3 +503,6 @@ UI_RX.push([/(\d+) × ([\d–]+) (s|Wdh\.)( je Richtung und Seite| je Richtung|
   return a+" × "+b+" "+(u==="s"?"s":"reps")+S;}]);
 UI_RX.push([/Alle (\d+) Muskeln anzeigen/g,"Show all $1 muscles"]);
 UI_RX.push([/ · Bewegung$/g," · Movement"]);
+/* Nachtrag Uebersetzung: Mobilität über 10 min zählt anteilig weiter (mobUnitsFromMin, 02-berechnung.js). */
+UI_RX.push([/^✓ ([\d,]+) Einheiten · Tageshöchstwert$/g,"✓ $1 sessions · daily maximum"]);
+UI_RX.push([/^✓ ([\d,]+) Einheiten$/g,"✓ $1 sessions"]);

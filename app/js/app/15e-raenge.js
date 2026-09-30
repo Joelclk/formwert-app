@@ -203,7 +203,13 @@ function exRankValueLabel(ex,r){
     if(ex.wt==="body"){var vv=Math.round(v*2)/2;return vv<=0?"Körpergewicht":"+"+fmtNum(vv)+" kg";}
     return fmtNum(Math.round(v*2)/2)+" kg"+(ex.wt==="side"?" pro Seite":"");
   }
-  if(ex.t==="sec")return Math.round(v)+" s";
+  if(ex.t==="sec"){
+    // Lange Haltezeiten (z. B. Wandsitzen bis 60 min) lesbar als Minuten statt "3480 s".
+    var sec=Math.round(v);
+    if(sec>=600)return Math.round(sec/60)+" min";
+    if(sec>=120)return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0")+" min";
+    return sec+" s";
+  }
   return Math.round(v)+" Wdh.";
 }
 /* Erklaerender Zusatz im Fuss der Rangleiter, wenn Rohwerte angezeigt werden. */

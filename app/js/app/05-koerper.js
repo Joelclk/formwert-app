@@ -266,8 +266,8 @@ function renderToday(){
     var mb0=secCard("mob","Mobilität",mtxt,MOB_IC);
     if(md.units>0)mb0.parentNode.classList.add("on");
     var pr=el("div","mobprog"),pb=el("div","minibar"),pbi=el("i");
-    pbi.style.width=Math.round(md.units*100)+"%";pbi.style.background="var(--good)";pb.appendChild(pbi);
-    pr.appendChild(pb);pr.appendChild(el("span",null,mfull?"✓ volle Einheit":Math.round(md.units*100)+" % einer Einheit · noch "+Math.max(1,Math.ceil(MOB_UNIT_MIN-md.min))+" min"));
+    pbi.style.width=Math.round(Math.min(md.units,1)*100)+"%";pbi.style.background="var(--good)";pb.appendChild(pbi);
+    pr.appendChild(pb);pr.appendChild(el("span",null,mfull?(md.units>=MOB_DAY_MAX?"✓ "+fmtMobUnits(md.units)+" Einheiten · Tageshöchstwert":md.units>1.04?"✓ "+fmtMobUnits(md.units)+" Einheiten":"✓ volle Einheit"):Math.round(md.units*100)+" % einer Einheit · noch "+Math.max(1,Math.ceil(MOB_UNIT_MIN-md.min))+" min"));
     mb0.appendChild(pr);
     exRows(mobOrder,mb0);
     if(viewingToday){var mob2=el("button","btn ghost small mobmore","+ Mobilität eintragen");mob2.type="button";mob2.onclick=function(){sheetMob();};mb0.appendChild(mob2);}

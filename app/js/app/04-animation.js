@@ -11,12 +11,16 @@
    Viewer und Modell liegen gzip-komprimiert vor und werden erst beim Oeffnen entpackt. */
 /* FW_ANIM_V: ausgelagert nach assets/anim-viewer.js */
 /* FW_ANIM_G: ausgelagert nach assets/anim-modell.js */
+/* Langhantel-Bankdrücken (bench) liegt seit 30.09.2026 auf der Bank mit Stange (Clip bench_lh), Kurzhantel-Bankdrücken
+   (bench_db) auf der Bank mit zwei Kurzhanteln (bench_kh). Maschinendrücken und Liegestütze behalten den allgemeinen
+   Drückclip "bench" - Bank und Hanteln wären dort falsch. Schrägbankdrücken (bench_inc, bench_inc_db) liegt seit
+   30.09.2026 auf der Schrägbank (incline_lh, incline_kh); Liegestütze mit erhöhten Füßen behalten "incline". */
 var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer",tri_push:"pushdown",
   tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"lateral",
   frontraise:"frontraise",ohp:"press",ohp_db:"press",push_press:"press",arnold:"press",
-  pike_pushup:"press",hspu:"press",bench:"bench",bench_db:"bench",machine_press:"bench",
-  machine_press_lying:"bench",pushup:"bench",pushup_arch:"bench",bench_dec:"bench",bench_inc:"incline",
-  bench_inc_db:"incline",pushup_dec:"incline",fly_db:"fly",cable_fly:"fly",fly_machine:"fly",
+  pike_pushup:"press",hspu:"press",bench:"bench_lh",bench_db:"bench_kh",machine_press:"bench",
+  machine_press_lying:"bench",pushup:"bench",pushup_arch:"bench",bench_dec:"bench",bench_inc:"incline_lh",
+  bench_inc_db:"incline_kh",pushup_dec:"incline",fly_db:"fly",cable_fly:"fly",fly_machine:"fly",
   reversefly:"reversefly",bandpullapart:"reversefly",facepull:"facepull",row_bb:"row",row_db:"row",
   row_pendlay:"row",row_tbar:"row",row_cable:"row",row_machine:"row",row_inv:"row",row_band:"row",
   latpull:"latpull",latpull_close:"latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
@@ -30,14 +34,16 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   /* Hüftkreisen im Stand: Ganzkörper-Modell, weil Becken und Rumpf mitgehen */
   mob_hip:"hipcircle",
   calf_stand:"calfraise",calf_bw:"calfraise",
-  // Bein und Hüfte: eigenes Modell (assets/anim-modell-bein.js), siehe FW_ANIM_MODELL.
-  mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing"};
+  /* Mobilität im Ganzkörper-Modell (seit Datei 153 auch Bein und Hüfte; das getrennte Beinmodell zeigte nur ein
+     Bein mit waagerecht schwebendem Becken). Kreise und Pendel laufen 8 s. */
+  mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing",mob_catcow:"catcow",
+  mob_shouldercar:"shouldercar",mob_armcircles:"armcircle"};
 /* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
    werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
-var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1};
+var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1,bench_lh:1,bench_kh:1,incline_lh:1,incline_kh:1};
 /* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
    die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
-var FW_ANIM_MODELL={hipcar:"bein",legcircle:"bein",gate:"bein",legswing:"bein"};
+var FW_ANIM_MODELL={};   // alle Clips im Ganzkörper-Modell; "bein" (anim-modell-bein.js) wird nicht mehr genutzt
 var FW_ANIM_MODELLE={
   // text:null = Bildunterschrift je Clip über FW_ANIM_CAP_BEINE
   arm:{asset:"anim-modell",daten:function(){return FW_ANIM_G;},text:null},

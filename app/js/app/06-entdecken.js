@@ -341,7 +341,26 @@ function discExCard(ex,onPick,onDelete){
     var thumb=el("div","disc-thumb");thumb.appendChild(sv);
     thumbs.appendChild(thumb);
   });
-  card.appendChild(thumbs);
+  var clip=FW_ANIM_CLIP[ex.id];
+  if(clip&&!ex.custom){
+    /* Übungen mit 3D-Bewegungsablauf zeigen zuerst ein Standbild der Bewegung (assets/posen/),
+       zur Seite gewischt die beanspruchten Muskeln. Wer eine Übung sucht, erkennt sie an der
+       Bewegung schneller als an eingefärbten Muskeln. */
+    var slide=el("div","disc-slide"),pose=el("div","disc-pose"),im=el("img");
+    im.src="assets/posen/"+clip+".webp";im.alt=ex.n+", Bewegung";im.loading="lazy";im.decoding="async";
+    im.onerror=function(){pose.remove();dots.remove();slide.classList.add("einzeln");};
+    pose.appendChild(im);slide.appendChild(pose);slide.appendChild(thumbs);
+    var dots=el("div","disc-dots");dots.setAttribute("aria-hidden","true");dots.innerHTML="<i class=\"on\"></i><i></i>";
+    slide.addEventListener("scroll",function(){
+      var s=slide.scrollLeft>slide.clientWidth/2;
+      dots.firstChild.classList.toggle("on",!s);dots.lastChild.classList.toggle("on",s);
+      // Die Figuren liegen außerhalb des sichtbaren Bereichs, der Beobachter füllt sie erst
+      // beim Hereinwischen - dann gleich beim ersten Wischen anstoßen statt am Ende.
+      if(slide.scrollLeft>4)Array.prototype.forEach.call(thumbs.querySelectorAll("svg[data-ex]"),fillExFig);
+    },{passive:true});
+    var sw=el("div","disc-slidewrap");sw.appendChild(slide);sw.appendChild(dots);
+    card.appendChild(sw);
+  }else card.appendChild(thumbs);
   var txt=el("div","disc-extxt");
   txt.appendChild(el("b",null,ex.n));
   txt.appendChild(el("span","disc-muscle",exPrimaryRegionLabel(ex)||exTypeLabel(ex)));

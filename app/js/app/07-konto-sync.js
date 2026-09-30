@@ -164,7 +164,7 @@ function renderFormula(c){
    "Konstanz        Trainingstage "+c.win+" T ÷ "+Math.round(p.goals.days*c.win/7)+"\n"+
    "Muskelabdeckung Ø Sätze je Muskel gegen MEV/MAV (7 T)\n"+
    "Ausdauer        WHO-Minuten + VO2max-Perzentil\n"+
-   "Mobilität       Einheiten "+c.win+" T ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, höchstens 1 pro Tag\n\n"+
+   "Mobilität       Einheiten "+c.win+" T ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, darüber zählt\n                jede Minute halb, max. "+MOB_DAY_MAX+" pro Tag\n\n"+
    "1RM   Epley (1–3 Wdh) · Brzycki (4–6) · Wathen (7–15, bei Klimmzug/\n      Dips bis 40 Wdh.), weich gemischt, aus dem besten Satz\n\n"+
    "Figur: react-native-body-highlighter (MIT)\n\n"+"jetzt  "+Math.round(c.kraft)+" / "+Math.round(c.konst)+" / "+Math.round(c.deckung)+" / "+Math.round(c.ausdauer)+" / "+Math.round(c.mob)+"   →   "+c.fitness;
 }
