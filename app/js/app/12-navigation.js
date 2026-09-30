@@ -6,7 +6,10 @@
 "use strict";
 
 /* ================= Navigation ================= */
-var TABS=[["tab-heute","p-heute","Heute"],["tab-entdecken","p-entdecken","Entdecken"],["tab-training","p-training","Training"],["tab-koerper","p-koerper","Körper"],["tab-werte","p-werte","Werte"]];
+/* Untere Leiste: Heute · Körper · [Training, runder Start-Knopf in der Mitte] · Ränge · Du.
+   Entdecken hat keinen eigenen Platz mehr unten, sondern sitzt als Lupe in der Kopfzeile
+   (gleiche id, damit alle bisherigen selectTab("tab-entdecken")-Aufrufe weiter funktionieren). */
+var TABS=[["tab-heute","p-heute","Heute"],["tab-entdecken","p-entdecken","Übungen"],["tab-training","p-training","Training"],["tab-koerper","p-koerper","Körper"],["tab-raenge","p-raenge","Ränge"],["tab-werte","p-werte","Du"]];
 function selectTab(id){
   tab=id;
   // Sichtbarkeit zuerst umschalten: die Körper-Figur misst ihre Brust-Clip-Rechtecke per
@@ -15,6 +18,7 @@ function selectTab(id){
   woLive();
   $("fab").hidden=(id!=="tab-heute")||(heuteDate!==TODAY);
   var nx=$("btn-newex");if(nx)nx.hidden=(id!=="tab-entdecken");
+  try{fwMiniUpdate();}catch(e){}
   if(id==="tab-heute"&&heuteDirty){heuteDirty=false;renderAll();}
   else if(id!=="tab-heute"&&secDirty[id.replace("tab-","")])renderSection(id);
   // Ein laufendes Training tickt/ändert sich per Definition ständig (auch durch asynchrone
@@ -89,7 +93,7 @@ function shiftHeuteDate(delta){
 })();
 
 /* ================= Gesamt ================= */
-var lastC=null, secDirty={koerper:true,werte:true,training:true,entdecken:true};
+var lastC=null, secDirty={koerper:true,werte:true,training:true,entdecken:true,raenge:true};
 function renderHero(c,pk){
   $("todaydate").textContent=deDate(heuteDate);
   $("fitval").textContent=c.fitness;renderRing(c,pk.fitness);
@@ -162,7 +166,8 @@ function renderSection(id){
   if(heuteDirty&&id!=="tab-training")c=lastC=compute(TODAY);
   if(!c)return;
   if(id==="tab-koerper"){renderBody(c.ms);renderMuscleList(c.ms);renderBodyListMode();secDirty.koerper=false;}
-  else if(id==="tab-werte"){renderSkills(c,pk);try{renderErfolge();}catch(e){}renderStrength(c);renderCardio(c);renderFormula(c);renderSpark();renderHistory();renderSettings();secDirty.werte=false;}
+  else if(id==="tab-raenge"){try{renderRaenge();}catch(e){}try{renderErfolge();}catch(e){}secDirty.raenge=false;}
+  else if(id==="tab-werte"){renderSkills(c,pk);renderStrength(c);renderCardio(c);renderFormula(c);renderSpark();renderHistory();renderSettings();secDirty.werte=false;}
   else if(id==="tab-training"){renderRoutines();renderSession();secDirty.training=false;}
 }
 function renderAll(){
@@ -178,7 +183,8 @@ function renderAll(){
   // "entdecken" hängt an keinen Tageswerten – dessen dirty-Status hier NICHT mit überschreiben,
   // sonst geht das anfängliche entdecken:true beim ersten renderAll() sofort wieder verloren und
   // der Katalog bliebe beim ersten Öffnen leer.
-  secDirty.koerper=true;secDirty.werte=true;secDirty.training=true;
+  secDirty.koerper=true;secDirty.werte=true;secDirty.training=true;secDirty.raenge=true;
+  try{renderHeuteKarte();}catch(e){}
   if(tab!=="tab-heute")renderSection(tab);
   saveLocalSoon();
 }
@@ -186,7 +192,7 @@ function renderAll(){
 var heuteDirty=false;
 function renderLight(){
   renderSession();renderBanner();saveLocalSoon();
-  heuteDirty=true;secDirty.koerper=true;secDirty.werte=true;
+  heuteDirty=true;secDirty.koerper=true;secDirty.werte=true;secDirty.raenge=true;
 }
 
 /* ================= Persistenz ================= */

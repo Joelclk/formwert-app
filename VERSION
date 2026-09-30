@@ -1,5 +1,5 @@
-Version 479+ (Artifact-Version 1790674799-42e2)
-Stand: 2026-09-29
-Aenderung: Abgleich mit Live-Artifact - u. a. Erholungsansicht im Koerper-Tab, neue Farbskala Trainingsvolumen, 8 neue Varianten-Rangleitern, Vorlagen fuer Einheiten, Schliessen-Knopf in Sheets
+Version 490 (Artifact-Version 1790806861-6c51)
+Stand: 2026-10-01
+Aenderung: Neues Design v1 - schwebende Leiste Heute/Koerper/Start/Raenge/Du, Heute-Karte, Raenge-Tab mit Rangkarten, Mini-Player fuer laufendes Training, Knoepfe zum Eindruecken, Formwert-Leiste, Koerper-Ansicht "Rang", Dunkel als Standard
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand vom 29.09.2026 ca. 11:45. formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

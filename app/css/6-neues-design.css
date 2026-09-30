@@ -1,0 +1,184 @@
+/* ==========================================================
+   6-neues-design.css - Neues Design (Oktober 2026). Letzte Schicht, überschreibt 1-5.
+   Leitsatz: ruhige, edle Basis – der Körper und die Ränge leuchten.
+   Inhalt:
+   - Grundwerte (Navigation schwebt, daher mehr Platz unten)
+   - Schwebende Navigation mit Start-Knopf in der Mitte
+   - Knöpfe zum Eindrücken
+   - Kopfzeile (Sync nur bei Problemen, Übungssuche)
+   - Heute-Karte
+   - Formwert-Leiste (schräge Striche)
+   - Ränge-Tab: Gesamtstärke und Rangkarten
+   - Schwebende Leiste für ein laufendes Training
+   - Erscheinungsbild-Schalter
+   Farben nur aus den Variablen in 1-basis.css; die Rangfarbe kommt je Karte als --rkc.
+   ========================================================== */
+
+/* ---------- Grundwerte ---------- */
+:root{--nav-h:84px;--nav-bar:64px;--nav-gap:12px;--glow:color-mix(in srgb,var(--accent) 55%,transparent)}
+@keyframes fwShine{0%{transform:translateX(-170%) skewX(-20deg)}55%,100%{transform:translateX(330%) skewX(-20deg)}}
+@keyframes fwRise{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes fwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+@keyframes fwBreathe{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ---------- Schwebende Navigation ---------- */
+nav.bottom{left:50%;right:auto;bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap));transform:translateX(-50%);
+  width:min(calc(100% - 24px),520px);height:var(--nav-bar);padding:0 6px;border:0;border-radius:var(--r-pill);
+  background:color-mix(in srgb,var(--surface) 84%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(22px);backdrop-filter:saturate(1.5) blur(22px);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 9%,transparent),0 18px 40px -14px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:space-around}
+nav.bottom button{flex:1;max-width:none;min-height:56px;padding:6px 0 4px;gap:2px;font-size:10.5px;font-weight:600;letter-spacing:.01em;
+  color:var(--ink-3);position:relative;border-radius:var(--r-pill)}
+nav.bottom button svg{width:24px;height:24px;padding:0;background:none!important;border-radius:0}
+nav.bottom button[aria-selected="true"]{color:var(--accent)}
+nav.bottom button[aria-selected="true"] svg{color:var(--accent)}
+nav.bottom button:not(.nav-start)::after{content:"";position:absolute;bottom:3px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;
+  background:var(--accent);transform:scale(0);transition:transform var(--t-mid) var(--ease)}
+nav.bottom button[aria-selected="true"]:not(.nav-start)::after{transform:scale(1)}
+nav.bottom button:not(.nav-start) span{transition:opacity var(--t-fast) ease}
+/* Start-Knopf: rund, hebt sich über die Leiste, drückt sich beim Tippen ein. */
+nav.bottom .nav-start{flex:0 0 76px;color:var(--ink-2)}
+nav.bottom .nav-start span{margin-top:1px}
+.nav-start-k{display:grid;place-items:center;width:60px;height:60px;margin-top:-30px;border-radius:50%;color:var(--accent-ink);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 82%,#fff) 0%,var(--accent) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 14px 28px -10px var(--glow),0 0 0 5px var(--ground);
+  transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.nav-start-k svg{width:26px!important;height:26px!important;margin-left:3px;color:var(--accent-ink)!important}
+nav.bottom .nav-start:active .nav-start-k{transform:translateY(3px) scale(.97);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow),0 0 0 5px var(--ground)}
+nav.bottom .nav-start[aria-selected="true"]{color:var(--accent)}
+nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 0 22px -2px var(--glow),0 0 0 5px var(--ground)}
+.fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px)}
+.toast{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 12px)}
+.sessbar{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
+
+/* ---------- Knöpfe zum Eindrücken ----------
+   Hauptknöpfe haben eine dunklere Unterkante wie eine echte Taste. Beim Tippen sinkt der Knopf
+   um die Kantenhöhe ein – das Gefühl, wirklich etwas gedrückt zu haben. */
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff) 0%,var(--accent) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 4px 0 color-mix(in srgb,var(--accent) 52%,#000),0 12px 26px -12px var(--glow);
+  margin-bottom:4px;font-weight:700;letter-spacing:.005em}
+.btn.primary:hover{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff) 0%,color-mix(in srgb,var(--accent) 94%,#fff) 100%)}
+.btn.primary:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 color-mix(in srgb,var(--accent) 52%,#000),0 4px 10px -8px var(--glow)}
+.btn.primary.small{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 0 color-mix(in srgb,var(--accent) 52%,#000);margin-bottom:3px}
+.btn.primary.small:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 52%,#000)}
+.btn.ghost:active,.btn:active{transform:translateY(1px) scale(.99)}
+.card.tap,button.card{transition:transform var(--t-mid) var(--ease),box-shadow var(--t-mid) ease}
+.card.tap:active,button.card:active{transform:scale(.985)}
+
+/* ---------- Kopfzeile ---------- */
+/* Der Sync-Status ist nur interessant, wenn etwas nicht stimmt: sonst genügt der Punkt. */
+.sync:not(:has(.dot.off)){padding:0;width:30px;height:30px;justify-content:center;background:transparent;box-shadow:none}
+.sync:not(:has(.dot.off)) #synctxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.appbar-search{color:var(--ink-2)}
+.appbar-search[aria-selected="true"]{color:var(--accent)}
+.appbar-search svg{width:22px;height:22px}
+
+/* ---------- Heute-Karte ---------- */
+.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:18px 18px 16px;border-radius:26px;
+  background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 26%,var(--surface)) 0%,var(--surface) 62%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow);animation:fwRise .5s var(--ease) both}
+.heute-karte.calm,.heute-karte.done{background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--good) 18%,var(--surface)) 0%,var(--surface) 62%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
+.hk-top{display:flex;gap:10px;align-items:flex-start}
+.hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hk-eye{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
+.heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
+.heute-karte.live .hk-eye{display:inline-flex;align-items:center;gap:7px}
+.heute-karte.live .hk-eye::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
+.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:27px;line-height:1.05;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
+.hk-sub{font-size:13.5px;color:var(--ink-2)}
+.hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
+.hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
+.hk-fig{flex:none;width:66px;height:124px;margin:-4px -2px -8px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+.hk-fig svg{width:100%;height:100%}
+.fw-go{margin-top:16px;min-height:56px;font-size:17px;gap:10px}
+.fw-go svg{width:20px;height:20px}
+/* Die Heute-Karte übernimmt den "nächsten Schritt" und das laufende Training. */
+#fitnext{display:none!important}
+#wo-banner{display:none!important}
+
+/* ---------- Formwert-Leiste ---------- */
+.fw-ticks{display:flex;gap:3px;align-items:center;margin:8px 0 6px}
+.fw-ticks i{display:block;flex:0 0 5px;height:14px;border-radius:2px;transform:skewX(-18deg);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.fw-ticks i.on{background:var(--tc,var(--accent))}
+.fw-ticks i.lead{box-shadow:0 0 10px var(--tc,var(--accent));animation:fwBreathe 2.4s ease-in-out infinite}
+
+/* ---------- Ränge-Tab ---------- */
+#p-raenge{padding-top:2px}
+.rg-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;width:100%;margin:4px 0 0;padding:18px;border:0;border-radius:26px;
+  text-align:left;color:var(--ink);font:inherit;cursor:pointer;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--rkc) 34%,var(--surface)) 0%,var(--surface) 64%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--rkc) 50%,transparent),0 24px 46px -28px var(--rkc);animation:fwRise .5s var(--ease) both}
+.rg-hero.empty{background:var(--surface);box-shadow:var(--card-sh)}
+.rg-hero:active{transform:scale(.985)}
+.rg-hero-b{flex:none;width:96px;height:96px;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--rkc) 60%,transparent))}
+.rg-hero-b svg{width:96px;height:96px;overflow:visible}
+.rg-hero-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rg-eye{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.rg-hero-t b{font-family:var(--f-cond);font-weight:700;font-size:28px;line-height:1.05}
+.rg-title{font-size:14px;color:var(--ink-2)}
+.rg-next{font-size:12.5px;color:var(--ink-3)}
+.rg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rg-card{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px 12px;border:0;border-radius:20px;
+  font:inherit;color:var(--ink);cursor:pointer;text-align:center;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--rkc) 28%,var(--surface)) 0%,var(--surface) 60%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--rkc) 42%,transparent),0 16px 30px -22px var(--rkc);
+  animation:fwRise .5s var(--ease) both;animation-delay:var(--d,0s);transition:transform var(--t-mid) var(--ease)}
+.rg-card:active{transform:scale(.97)}
+.rg-shine{position:absolute;inset:0 auto 0 0;width:42%;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.13),rgba(255,255,255,0));animation:fwShine 3.8s ease-in-out infinite;animation-delay:var(--d,0s)}
+.rg-tier{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--rkc) 72%,var(--ink))}
+.rg-badge{width:76px;height:76px;filter:drop-shadow(0 6px 12px color-mix(in srgb,var(--rkc) 40%,transparent))}
+.rg-badge svg{width:76px;height:76px;overflow:visible}
+.rg-ex{font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1.15;min-height:2.3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rg-pills{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.rg-p{font-size:12px;font-weight:600;padding:3px 8px;border-radius:8px;background:var(--surface-2)}
+.rg-p2{background:color-mix(in srgb,var(--rkc) 20%,var(--surface-2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rkc) 55%,transparent)}
+.rg-bar{width:100%;height:4px;margin-top:4px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.rg-bar i{display:block;height:100%;border-radius:inherit;background:var(--rkc)}
+.rg-open{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px 14px;border-radius:18px;background:var(--surface);
+  box-shadow:inset 0 0 0 1.5px var(--rule);font-size:13.5px;line-height:1.4;color:var(--ink-3)}
+.rg-lock{flex:none;display:grid;place-items:center;color:var(--ink-3)}
+.rg-lock svg{width:22px;height:22px}
+
+/* ---------- Schwebende Leiste: laufendes Training ---------- */
+.wo-mini{position:fixed;z-index:49;left:50%;transform:translateX(-50%);width:min(calc(100% - 40px),500px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 10px);
+  display:flex;align-items:center;gap:10px;min-height:54px;padding:6px 7px 6px 16px;border:0;border-radius:var(--r-pill);
+  font:inherit;color:var(--ink);text-align:left;cursor:pointer;background:var(--surface-2);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),0 14px 32px -12px rgba(0,0,0,.6);animation:fwRise .35s var(--ease) both}
+.wo-mini:active{transform:translateX(-50%) scale(.98)}
+.wm-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
+.wm-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.wm-tx b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-tx span{font-size:11.5px;color:var(--ink-3)}
+.wm-time{font-family:var(--f-mono);font-size:15px;font-weight:600}
+.wm-go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink)}
+.wm-go svg{width:18px;height:18px;margin-left:2px}
+body.has-mini .wrap{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 104px)}
+body.has-mini .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 72px)}
+
+/* ---------- Erscheinungsbild-Schalter ---------- */
+.fw-theme-row{flex-wrap:wrap}
+.fw-seg{display:inline-flex;gap:3px;padding:3px;border-radius:var(--r-pill);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.fw-seg button{border:0;background:none;min-height:36px;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer}
+.fw-seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-strong)}
+
+@media (prefers-reduced-motion:reduce){.rg-shine,.fw-ticks i.lead,.wm-dot,.heute-karte.live .hk-eye::before{animation:none}}
+
+/* ---------- Schnell-Eintragen (+) ----------
+   Der kupferne Start-Knopf in der Leiste ist die Hauptaktion. Das Plus zum Nachtragen von
+   Mobilität, Ausdauer usw. tritt daneben zurück, statt mit ihm um Aufmerksamkeit zu konkurrieren. */
+.fab{width:50px;height:50px;right:16px;background:var(--surface-2);color:var(--accent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent),0 12px 26px -10px rgba(0,0,0,.6)}
+.fab svg{width:24px;height:24px}
+
+/* ---------- Körper: Legende der Ansicht "Rang" ---------- */
+.rklegend{margin-top:12px}
+.rkl-row{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+.rkl{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.rkl i{width:10px;height:10px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 15%,transparent)}
+.rkl.none i{background:var(--rule-2)}
