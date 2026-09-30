@@ -1,5 +1,5 @@
-Version 491 (Artifact-Version 1790807508-9624)
+Version 492 (Artifact-Version 1790807575-4d5f)
 Stand: 2026-10-01
-Aenderung: Neues Design v1.1 - Aktions-Sheet (+) mit Startflaeche, Einheiten-Kacheln und Schnell-Eintragen; Start-Knopf mittig; Rang-Ansicht im Koerper als eigener Knopf unter der Figur
+Aenderung: Training-Tab - freies Training, Neue Einheit und Aus Vorlage ganz oben, Einheiten darunter
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

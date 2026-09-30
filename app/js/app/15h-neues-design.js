@@ -370,6 +370,30 @@ function sheetActions(){
   });
 }
 
+/* ================= Training-Tab: Starten zuerst =================
+   Wer den Tab öffnet, will meistens loslegen. Deshalb stehen ganz oben das freie Training und
+   daneben "Neue Einheit" / "Aus Vorlage", erst darunter die Liste der eigenen Einheiten.
+   Umgestellt wird im DOM statt in index.html, damit ein älterer index.html-Stand aus einer
+   parallelen Sitzung die Reihenfolge nicht wieder zurückdreht. */
+(function(){
+  var orig=renderRoutines;
+  renderRoutines=function(){
+    orig();
+    var sw=$("start-wrap"),list=$("routine-list");if(!sw||!list)return;
+    var free=sw.querySelector(".free-card");
+    if(free&&sw.firstElementChild!==free){
+      var h=free.previousElementSibling;if(h&&h.classList.contains("sec"))h.remove();
+      var intro=sw.querySelector(".tr-intro");if(intro)intro.remove();
+      sw.insertBefore(free,sw.firstChild);
+    }
+    var top=$("rc-top");
+    if(!top){top=el("div","rc-top");top.id="rc-top";sw.insertBefore(top,free?free.nextSibling:sw.firstChild);}
+    top.innerHTML="";
+    Array.prototype.slice.call(list.querySelectorAll(".rc-add-row")).forEach(function(b){top.appendChild(b);});
+    top.hidden=!top.children.length;
+  };
+})();
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
