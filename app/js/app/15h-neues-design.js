@@ -370,6 +370,43 @@ function sheetActions(){
   });
 }
 
+/* ================= Farbe je Einheit =================
+   Jede Einheit bekommt eine eigene Farbe, damit man sie überall wiedererkennt: Karte im
+   Training-Tab, Wochenkalender auf "Heute". Die Farbe folgt dem Schwerpunkt der Einheit
+   (Brust/Trizeps blau, Rücken violett, Schultern/Arme gold, Beine/Rumpf grün); ist sie schon an
+   eine frühere Einheit vergeben, nimmt die nächste die erste freie - zwei Einheiten sollen sich
+   nie eine Farbe teilen. Kupfer bleibt den Aktionen vorbehalten. */
+var FW_UNIT_PAL=["--blue","--green","--violet","--gold","--red","--yellow"];
+var FW_UNIT_PREF={"Brust":"--blue","Trizeps":"--blue","Rücken":"--violet","Rückenstrecker":"--violet","Nacken":"--violet","Hals":"--violet",
+  "Schultern":"--gold","Bizeps":"--gold","Unterarme":"--gold","Quadrizeps":"--green","Beinbeuger":"--green","Waden":"--green",
+  "Adduktoren":"--green","Gesäß":"--green","Rumpf":"--green"};
+function fwUnitColors(){
+  var out={},used={};
+  routineIds().forEach(function(id){
+    var r=state.routines[id];if(!r)return;
+    var top=fwRegionsOf(r.items)[0],c=FW_UNIT_PREF[top];
+    if(!c||used[c])c=FW_UNIT_PAL.filter(function(x){return !used[x];})[0]||FW_UNIT_PAL[Object.keys(out).length%FW_UNIT_PAL.length];
+    used[c]=1;out[id]="var("+c+")";
+  });
+  return out;
+}
+(function(){
+  // Wochenkalender: ein Trainingstag trägt die Farbe der Einheit, die an dem Tag gemacht wurde.
+  var orig=renderWeek;
+  renderWeek=function(){
+    orig();
+    var box=$("weekstrip");if(!box||!state.routines)return;
+    var cols=fwUnitColors(),byName={};
+    Object.keys(state.routines).forEach(function(id){var r=state.routines[id];if(r&&cols[id])byName[r.name]=cols[id];});
+    var off=(parseIso(heuteDate).getDay()+6)%7;
+    Array.prototype.forEach.call(box.querySelectorAll(".wd"),function(w,i){
+      var dd=state.days[shiftDays(heuteDate,i-off)];if(!dd)return;
+      var c=null;(dd.workouts||[]).some(function(wo){c=wo&&byName[wo.name];return !!c;});
+      if(c){w.classList.add("wd-unit");w.style.setProperty("--uc",c);}
+    });
+  };
+})();
+
 /* ================= Einheiten-Karten zum Durchwischen =================
    Vorher ein kleines Figürchen und eine Textzeile mit Übungsnamen. Jetzt oben in jeder Karte
    ein Streifen zum Wischen: erst der Überblick (ganzer Körper vorn und hinten, welche Muskeln
@@ -384,10 +421,13 @@ function fwItemLabel(ex,it){
 }
 function fwRichRoutineCards(list){
   if(rcSort)return;
-  var ids=routineIds(),cards=list.querySelectorAll(".rc-item"),draws=[];
+  var ids=routineIds(),cards=list.querySelectorAll(".rc-item"),draws=[],cols=fwUnitColors(),next=fwNextRoutine();
   Array.prototype.forEach.call(cards,function(card,i){
     var r=state.routines[ids[i]];if(!r)return;
-    card.classList.add("rc-rich");
+    card.classList.add("rc-rich");card.style.setProperty("--uc",cols[ids[i]]||"var(--accent)");
+    if(ids[i]===next&&ids.length>1)card.classList.add("rc-next");
+    // Nummer = Platz in deiner Reihenfolge, in der Farbe der Einheit.
+    var tx0=card.querySelector(".rc-txt");if(tx0){var num=el("span","rc-num",String(i+1));num.setAttribute("aria-hidden","true");card.insertBefore(num,tx0);}
     var old=card.querySelector(".rc-fig");if(old)old.remove();
     var fo=routineFocus(r.items);
     var wrap=el("div","rs-wrap"),strip=el("div","rs-strip"),dots=el("div","rs-dots");dots.setAttribute("aria-hidden","true");
@@ -397,7 +437,7 @@ function fwRichRoutineCards(list){
     if(fo.max>0)["front","back"].forEach(function(v){var sv=fwSvgFig(v);figs.appendChild(sv);draws.push({sv:sv,v:v,sets:fo.sets});});
     ov.appendChild(figs);
     var ot=el("div","rs-ov-tx");ot.appendChild(el("span","rs-eye","Das trainierst du"));
-    var chips=el("div","rs-chips");fwRegionsOf(r.items).forEach(function(c){chips.appendChild(el("span","hk-chip",c));});ot.appendChild(chips);
+    var chips=el("div","rs-chips");fwRegionsOf(r.items).forEach(function(c){chips.appendChild(el("span","rs-chip",c));});ot.appendChild(chips);
     if(r.items.length)ot.appendChild(el("span","rs-hint","Wischen für alle "+r.items.length+" Übungen"));
     ov.appendChild(ot);strip.appendChild(ov);dots.appendChild(el("i","on"));
     // Übungen
@@ -421,6 +461,7 @@ function fwRichRoutineCards(list){
       Array.prototype.forEach.call(strip.querySelectorAll("svg[data-ex]:not([data-filled])"),function(sv){try{fillExFig(sv);}catch(e){}});
     },{passive:true});
     wrap.appendChild(strip);if(dots.children.length>1)wrap.appendChild(dots);
+    if(card.classList.contains("rc-next"))wrap.appendChild(el("span","rs-next","Als Nächstes"));
     card.insertBefore(wrap,card.firstChild);
   });
   if(draws.length)requestAnimationFrame(function(){draws.forEach(function(o){try{drawMini(o.sv,o.v,o.sets);}catch(e){}});});
@@ -443,6 +484,9 @@ function fwExFigs(pic,ex){
     orig();
     var sw=$("start-wrap"),list=$("routine-list");if(!sw||!list)return;
     try{fwRichRoutineCards(list);}catch(e){}
+    // Klare Grenze zwischen "Starten" oben und der Liste: große Überschrift mit Zahl.
+    var cnt=$("routine-count");if(cnt){var n=routineIds().length;cnt.textContent=n?String(n):"";cnt.className="rc-count";
+      var hh=cnt.closest("h2");if(hh)hh.classList.add("rc-head");}
     var free=sw.querySelector(".free-card");
     if(free&&sw.firstElementChild!==free){
       var h=free.previousElementSibling;if(h&&h.classList.contains("sec"))h.remove();

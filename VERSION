@@ -1,5 +1,5 @@
-Version 494 (Artifact-Version 1790808316-15e6)
+Version 495 (Artifact-Version 1790809339-3807)
 Stand: 2026-10-01
-Aenderung: Leuchten der Muskelfiguren in den Einheiten-Karten konstant statt pulsierend
+Aenderung: Einheiten mit eigener Farbe und Nummer, grosse Ueberschrift mit Zahl, "Als Naechstes"-Markierung, Wochenkalender in Einheitenfarbe
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
