@@ -30,14 +30,16 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   /* Hüftkreisen im Stand: Ganzkörper-Modell, weil Becken und Rumpf mitgehen */
   mob_hip:"hipcircle",
   calf_stand:"calfraise",calf_bw:"calfraise",
-  // Bein und Hüfte: eigenes Modell (assets/anim-modell-bein.js), siehe FW_ANIM_MODELL.
-  mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing"};
+  /* Mobilität im Ganzkörper-Modell (seit Datei 153 auch Bein und Hüfte; das getrennte Beinmodell zeigte nur ein
+     Bein mit waagerecht schwebendem Becken). Kreise und Pendel laufen 8 s. */
+  mob_hipcar_knee:"hipcar",mob_legraise_circ:"legcircle",mob_gate:"gate",mob_legswing:"legswing",mob_catcow:"catcow",
+  mob_shouldercar:"shouldercar",mob_armcircles:"armcircle"};
 /* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
    werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
-var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1};
+var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1};
 /* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
    die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
-var FW_ANIM_MODELL={hipcar:"bein",legcircle:"bein",gate:"bein",legswing:"bein"};
+var FW_ANIM_MODELL={};   // alle Clips im Ganzkörper-Modell; "bein" (anim-modell-bein.js) wird nicht mehr genutzt
 var FW_ANIM_MODELLE={
   // text:null = Bildunterschrift je Clip über FW_ANIM_CAP_BEINE
   arm:{asset:"anim-modell",daten:function(){return FW_ANIM_G;},text:null},
