@@ -373,7 +373,7 @@ function sheetActions(){
 /* ================= Einheiten-Karten zum Durchwischen =================
    Vorher ein kleines Figürchen und eine Textzeile mit Übungsnamen. Jetzt oben in jeder Karte
    ein Streifen zum Wischen: erst der Überblick (ganzer Körper vorn und hinten, welche Muskeln
-   die Einheit trifft, sanft pulsierend), dann jede Übung einzeln mit Bewegungsbild oder
+   die Einheit trifft, mit festem Leuchten), dann jede Übung einzeln mit Bewegungsbild oder
    Muskelfigur und Sätzen. So sieht man vor dem Start, was drankommt. */
 function fwSvgFig(view){var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");sv.setAttribute("data-v",view);return sv;}
 function fwItemLabel(ex,it){
