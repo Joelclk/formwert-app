@@ -1,5 +1,5 @@
-Version 497 (Artifact-Version 1790810031-d4a0)
+Version 498 (Artifact-Version 1790810514-b666)
 Stand: 2026-10-01
-Aenderung: Wie Design-Vorschau - Leiste (Masse, Start-Knopf, Koerper-Symbol), Wochenleiste oben auf Heute, Kopfzeile mit Datum-Ueberzeile, Serie und Konto-Knopf
+Aenderung: Heute wie Vorschau - Heute-Karte mit Muskeln, Dauer und Erholung, Karten Formwert und Woche, Knoepfe ohne Schatten
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

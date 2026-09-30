@@ -63,6 +63,34 @@ function fwTicks(p,n,col){
   };
 })();
 
+/* Geschätzte Dauer einer Einheit: je Satz Arbeitszeit plus Pause. Arbeitszeit 1 min je Satz,
+   bei einseitigen Übungen (links und rechts nacheinander) 2 min. Die Pause ist die eingestellte
+   Satzpause der Übung, sonst die der Einheit, sonst die aus den Einstellungen - dieselbe
+   Reihenfolge wie beim Starten (startWorkout). Nach dem allerletzten Satz keine Pause mehr. */
+function fwRoutineMinutes(r){
+  var sec=0,lastRest=0;
+  (r.items||[]).forEach(function(it){
+    var ex=exById(it.ex);if(!ex)return;
+    if(ex.t==="cardio"){sec+=((it.min!=null&&it.min>0)?it.min:20)*60;lastRest=0;return;}
+    var n=it.sets||0,rest=(it.rest!=null&&it.rest>=0)?it.rest:routineRest(r),work=ex.uni?120:60;
+    sec+=n*(work+rest);if(n)lastRest=rest;
+  });
+  sec-=lastRest;
+  return Math.max(1,Math.round(sec/60));
+}
+/* Erholung der Muskelgruppen, die die Einheit trifft: je Region der langsamste Muskel zählt.
+   Alles erholt -> grüner Haken "Brust erholt", sonst Uhr mit Restzeit "Rücken in 18 Std.". */
+function fwRecoveryChips(items){
+  var fo=routineFocus(items),out=[];
+  fwRegionsOf(items).forEach(function(name){
+    var rg=REGIONS.filter(function(x){return x.name===name;})[0];if(!rg)return;
+    var left=0;
+    (rg.ids||[]).forEach(function(id){if(!(fo.sets[id]>0))return;var m=muscleById(id),rv=m&&recoveryOf(m);if(rv&&rv.left>left)left=rv.left;});
+    out.push(left>0.5?{ok:false,t:name+" in "+recHours(left)}:{ok:true,t:name+" erholt"});
+  });
+  return out;
+}
+
 /* ================= Heute-Karte =================
    Ganz oben auf "Heute": genau eine Sache, die jetzt dran ist, mit einem großen Knopf.
    Reihenfolge der Fälle wie bei renderHeroNext(): laufendes Training > Training > Mobilität > fertig.
@@ -96,12 +124,15 @@ function renderHeuteKarte(){
     btn=["Weitermachen",function(){selectTab("tab-training");window.scrollTo(0,0);}];
   }else if(!trained){
     var rid=fwNextRoutine(),r=rid?state.routines[rid]:null;
-    eye=w.train<goal?"Heute dran · "+w.train+" von "+goal+" Tagen":"Wochenziel erreicht";
+    eye=w.train<goal?"Heute dran":"Wochenziel erreicht";
     if(r){
-      title=r.name;
+      // Wie in der Vorschau: oben der Name der Einheit, groß die Muskeln, die sie trifft.
+      eye+=" · "+r.name;
+      var regs=fwRegionsOf(r.items);
+      title=regs.length?regs.join(", "):r.name;
       var nSets=r.items.reduce(function(a,i){return a+(i.sets||0);},0);
-      sub=r.items.length+" Übungen · "+nSets+" Sätze";
-      chips=fwRegionsOf(r.items);
+      sub=r.items.length+" Übungen · "+nSets+" Sätze · ca. "+fwRoutineMinutes(r)+" min";
+      chips=fwRecoveryChips(r.items);
       var fo=routineFocus(r.items);
       if(fo.max>0){fig=document.createElementNS("http://www.w3.org/2000/svg","svg");fig.setAttribute("viewBox","0 0 800 1500");fig._sets=fo.sets;}
       btn=["Training starten",function(){startSession(rid);}];
@@ -121,7 +152,10 @@ function renderHeuteKarte(){
   tx.appendChild(el("span","hk-eye",eye));
   tx.appendChild(el("h2","hk-title",title));
   if(sub){var sp=el("span","hk-sub",sub);if(workout){var t=el("b","num hk-time",fmtDur(woElapsed()));t.id="hk-time";sp.appendChild(document.createTextNode(" · "));sp.appendChild(t);}tx.appendChild(sp);}
-  if(chips.length){var cw=el("div","hk-chips");chips.forEach(function(c){cw.appendChild(el("span","hk-chip",c));});tx.appendChild(cw);}
+  if(chips.length){var cw=el("div","hk-chips");chips.forEach(function(c){
+    if(typeof c==="string"){cw.appendChild(el("span","hk-chip",c));return;}
+    var ch=el("span","hk-rec"+(c.ok?" ok":" wait"));ch.innerHTML=c.ok?svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6):svgIcon("M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",2.2);
+    ch.appendChild(document.createTextNode(c.t));cw.appendChild(ch);});tx.appendChild(cw);}
   top.appendChild(tx);
   if(fig){var fw=el("div","hk-fig");fw.setAttribute("aria-hidden","true");fw.appendChild(fig);top.appendChild(fw);}
   box.appendChild(top);
@@ -132,6 +166,50 @@ function renderHeuteKarte(){
   }
   if(fig)requestAnimationFrame(function(){try{drawMini(fig,"front",fig._sets);}catch(e){}});
 }
+
+/* ================= Heute: zwei kleine Karten unter der Heute-Karte =================
+   Wie in der Vorschau: links der Formwert (Zahl, Trend, Formwert-Leiste, Punkte bis zur
+   nächsten Stufe), rechts die Woche als Ring. Darunter die bestehende "Nächstes Ziel"-Karte.
+   Die große Formwert-Karte mit Ring und Teilwerten und der Wochenkalender-Block entfallen auf
+   "Heute" - die Teilwerte stehen ausführlich in "Du", die Woche steht oben als Leiste. */
+var FW_LEVELS=[30,50,70,85,100];
+function fwHeuteCards(){
+  var sec=$("p-heute");if(!sec||!state.profile)return;
+  var box=$("fw-hcards");
+  if(!box){box=el("div","fw-hcards");box.id="fw-hcards";var hk=$("heute-karte");sec.insertBefore(box,hk?hk.nextSibling:sec.firstChild);}
+  box.innerHTML="";
+  var c=heuteDate===TODAY&&lastC?lastC:compute(heuteDate),v=Math.round(c.fitness||0);
+  var prev=0;try{prev=Math.round(compute(shiftDays(heuteDate,-14)).fitness||0);}catch(e){}
+  var df=v-prev;
+  // Formwert
+  var a=el("button","fw-hc fw-hc-fit");a.type="button";a.setAttribute("aria-label","Dein Formwert "+v+" von 100, Details in Du");
+  a.appendChild(el("span","fw-hc-eye","Dein Formwert"));
+  var row=el("div","fw-hc-val");row.appendChild(el("b","num",String(v)));
+  if(df)row.appendChild(el("span","fw-hc-tr "+(df>0?"up":"down"),(df>0?"▲ ":"▼ ")+Math.abs(df)));
+  a.appendChild(row);a.appendChild(fwTicks(v/100,18));
+  var nx=FW_LEVELS.filter(function(x){return x>v;})[0];
+  a.appendChild(el("span","fw-hc-sub",nx?(nx-v)+(nx-v===1?" Punkt":" Punkte")+" bis "+nx:"Topform erreicht"));
+  a.onclick=function(){selectTab("tab-werte");window.scrollTo(0,0);};
+  box.appendChild(a);
+  // Woche
+  var w=weekStats(heuteDate),g=state.profile.goals||{},gd=g.days||0,p=gd?clamp(w.train/gd,0,1):0;
+  var b=el("div","fw-hc fw-hc-week");
+  b.appendChild(el("span","fw-hc-eye","Diese Woche"));
+  var wr=el("div","fw-hc-wrow"),ring=el("div","fw-ring");ring.style.setProperty("--p",Math.round(p*100)+"%");
+  ring.appendChild(el("b",null,w.train+"/"+gd));wr.appendChild(ring);
+  wr.appendChild(el("span",null,"Trainings­tage geschafft"));b.appendChild(wr);
+  var extra=[];if(g.mob)extra.push("Mobilität "+fmtMobUnits(w.mob)+"/"+g.mob);if(g.cardio)extra.push("Ausdauer "+Math.round(w.cardio)+"/"+g.cardio+" min");
+  if(extra.length)b.appendChild(el("span","fw-hc-sub",extra.join(" · ")));
+  box.appendChild(b);
+  // "Nächstes Ziel" direkt darunter
+  var ng=$("nextgoal");if(ng&&ng.previousElementSibling!==box)box.parentNode.insertBefore(ng,box.nextSibling);
+}
+(function(){
+  var orig=renderHeuteKarte;
+  renderHeuteKarte=function(){orig();try{fwHeuteCards();}catch(e){}};
+  var og=renderNextGoal;
+  renderNextGoal=function(){og();var ng=$("nextgoal"),box=$("fw-hcards");if(ng&&box&&ng.previousElementSibling!==box)box.parentNode.insertBefore(ng,box.nextSibling);};
+})();
 
 /* ================= Schwebende Leiste: laufendes Training =================
    Wie ein Musik-Miniplayer: solange ein Training läuft, ist es von jedem Tab aus einen Tipp
@@ -593,6 +671,6 @@ function fwAppbar(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();

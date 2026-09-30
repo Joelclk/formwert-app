@@ -60,13 +60,14 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 /* ---------- Knöpfe zum Eindrücken ----------
    Hauptknöpfe haben eine dunklere Unterkante wie eine echte Taste. Beim Tippen sinkt der Knopf
    um die Kantenhöhe ein – das Gefühl, wirklich etwas gedrückt zu haben. */
+/* Hauptknöpfe: kupferner Verlauf, ohne dunkle Unterkante und ohne Schatten darunter (wirkte
+   wie ein Fleck). Beim Tippen gibt der Knopf leicht nach. */
 .btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff) 0%,var(--accent) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 4px 0 color-mix(in srgb,var(--accent) 52%,#000),0 12px 26px -12px var(--glow);
-  margin-bottom:4px;font-weight:700;letter-spacing:.005em}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32);font-weight:700;letter-spacing:.005em;transition:transform var(--t-fast) var(--ease),filter var(--t-fast) ease}
 .btn.primary:hover{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff) 0%,color-mix(in srgb,var(--accent) 94%,#fff) 100%)}
-.btn.primary:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 color-mix(in srgb,var(--accent) 52%,#000),0 4px 10px -8px var(--glow)}
-.btn.primary.small{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 0 color-mix(in srgb,var(--accent) 52%,#000);margin-bottom:3px}
-.btn.primary.small:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 52%,#000)}
+.btn.primary:active{transform:scale(.98);filter:brightness(.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.btn.primary.small{box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.primary.small:active{transform:scale(.97)}
 .btn.ghost:active,.btn:active{transform:translateY(1px) scale(.99)}
 .card.tap,button.card{transition:transform var(--t-mid) var(--ease),box-shadow var(--t-mid) ease}
 .card.tap:active,button.card:active{transform:scale(.985)}
@@ -98,7 +99,7 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
 .hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
-.hk-fig{flex:none;width:66px;height:124px;margin:-4px -2px -8px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+.hk-fig{flex:none;width:84px;height:156px;margin:-6px -4px -10px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
 .hk-fig svg{width:100%;height:100%}
 .fw-go{margin-top:16px;min-height:56px;font-size:17px;gap:10px}
 .fw-go svg{width:20px;height:20px}
@@ -193,9 +194,9 @@ body.has-mini .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 
 .fw-act .fa-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;margin:2px 0 4px;padding:18px 16px 18px 18px;border:0;border-radius:24px;
   font:inherit;text-align:left;cursor:pointer;color:var(--accent-ink);
   background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 78%,#fff) 0%,var(--accent) 55%,color-mix(in srgb,var(--accent) 80%,#000) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 18px 36px -16px var(--glow);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
   transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease);animation:fwRise .4s var(--ease) both}
-.fw-act .fa-hero:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow)}
+.fw-act .fa-hero:active{transform:scale(.98)}
 .fa-hero-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .fa-hero-tx .fa-eye{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
 .fa-hero-tx b{font-family:var(--f-cond);font-weight:700;font-size:25px;line-height:1.05}
@@ -332,3 +333,28 @@ body:not([data-tab="tab-training"]):not([data-tab="tab-entdecken"]) .appbar-sear
 .fw-me:active{transform:scale(.94)}
 .fw-me-i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:13px}
 .fw-me-i svg{width:20px;height:20px}
+
+/* ---------- Heute wie in der Vorschau ---------- */
+#p-heute #hero,#p-heute .weekcard,#p-heute h2.sec:has(+ .weekcard){display:none!important}
+.hk-rec{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px 4px 8px;border-radius:var(--r-pill)}
+.hk-rec svg{width:14px;height:14px}
+.hk-rec.ok{background:var(--good-soft);color:var(--good)}
+.hk-rec.wait{background:var(--warn-soft);color:var(--warn)}
+.fw-hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
+.fw-hc{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:14px 14px 12px;border:0;border-radius:22px;background:var(--surface);
+  box-shadow:var(--card-sh);font:inherit;color:var(--ink);text-align:left}
+button.fw-hc{cursor:pointer;transition:transform var(--t-fast) var(--ease)}
+button.fw-hc:active{transform:scale(.98)}
+.fw-hc-eye{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.fw-hc-val{display:flex;align-items:baseline;gap:6px}
+.fw-hc-val b{font-family:var(--f-cond);font-weight:600;font-size:44px;line-height:.95;letter-spacing:-.03em}
+.fw-hc-tr{font-size:13px;font-weight:700}
+.fw-hc-tr.up{color:var(--good)}.fw-hc-tr.down{color:var(--warn)}
+.fw-hc .fw-ticks{margin:6px 0 2px}
+.fw-hc .fw-ticks i{flex-basis:4px;height:12px}
+.fw-hc-sub{font-size:12px;color:var(--ink-3)}
+.fw-hc-wrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+.fw-hc-wrow span{font-size:13px;line-height:1.3;color:var(--ink-2)}
+.fw-ring{flex:none;display:grid;place-items:center;width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--accent) 0 var(--p),var(--rule) var(--p) 100%)}
+.fw-ring b{font-family:var(--f-cond);font-weight:700;font-size:18px}
