@@ -39,16 +39,19 @@ nav.bottom button[aria-selected="true"]:not(.nav-start)::after{transform:scale(1
 nav.bottom button:not(.nav-start) span{transition:opacity var(--t-fast) ease}
 /* Start-Knopf: rund, hebt sich über die Leiste, drückt sich beim Tippen ein. */
 nav.bottom .nav-start{flex:0 0 76px;color:var(--ink-2)}
-nav.bottom .nav-start span{margin-top:1px}
-.nav-start-k{display:grid;place-items:center;width:60px;height:60px;margin-top:-30px;border-radius:50%;color:var(--accent-ink);
+nav.bottom .nav-start span{margin-top:2px}
+.nav-start-k{display:grid;place-items:center;width:60px;height:60px;margin-top:-36px;border-radius:50%;color:var(--accent-ink);
   background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 82%,#fff) 0%,var(--accent) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 14px 28px -10px var(--glow),0 0 0 5px var(--ground);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 14px 28px -10px var(--glow);
   transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
-.nav-start-k svg{width:26px!important;height:26px!important;margin-left:3px;color:var(--accent-ink)!important}
+/* Das Dreieck ist im Pfad schon nach rechts versetzt (Schwerpunkt ≈ Mitte) - kein zusätzlicher Versatz,
+   sonst sitzt es sichtbar rechts. Der Knopf ragt nur so weit hoch, dass die Beschriftung auf
+   derselben Linie steht wie Heute, Körper, Ränge und Du. */
+.nav-start-k svg{width:26px!important;height:26px!important;margin:0!important;color:var(--accent-ink)!important;display:block}
 nav.bottom .nav-start:active .nav-start-k{transform:translateY(3px) scale(.97);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow),0 0 0 5px var(--ground)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow)}
 nav.bottom .nav-start[aria-selected="true"]{color:var(--accent)}
-nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 0 22px -2px var(--glow),0 0 0 5px var(--ground)}
+nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 0 22px -2px var(--glow)}
 .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px)}
 .toast{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 12px)}
 .sessbar{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
@@ -182,3 +185,58 @@ body.has-mini .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 
 .rkl{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2)}
 .rkl i{width:10px;height:10px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 15%,transparent)}
 .rkl.none i{background:var(--rule-2)}
+
+/* ---------- Aktions-Sheet (+): Start, Einheiten, Schnell eintragen ---------- */
+.fw-act .fa-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;margin:2px 0 4px;padding:18px 16px 18px 18px;border:0;border-radius:24px;
+  font:inherit;text-align:left;cursor:pointer;color:var(--accent-ink);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 78%,#fff) 0%,var(--accent) 55%,color-mix(in srgb,var(--accent) 80%,#000) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 18px 36px -16px var(--glow);
+  transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease);animation:fwRise .4s var(--ease) both}
+.fw-act .fa-hero:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow)}
+.fa-hero-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fa-hero-tx .fa-eye{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.fa-hero-tx b{font-family:var(--f-cond);font-weight:700;font-size:25px;line-height:1.05}
+.fa-hero-tx span:last-child{font-size:13px;opacity:.8}
+.fa-hero-go{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:color-mix(in srgb,var(--accent-ink) 88%,transparent);color:var(--accent)}
+.fa-hero-go svg{width:24px;height:24px;display:block}
+.fa-hero.live .fa-eye::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:currentColor;vertical-align:1px;animation:fwPulse 1.4s ease-in-out infinite}
+.fa-shine{position:absolute;inset:0 auto 0 0;width:40%;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));animation:fwShine 4.2s ease-in-out infinite}
+.fa-h{display:flex;align-items:baseline;justify-content:space-between;margin:20px 2px 10px}
+.fa-h b{font-family:var(--f-cond);font-weight:700;font-size:17px;color:var(--ink)}
+.fa-h span{font-size:12.5px;color:var(--ink-3)}
+.fa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fa-rt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:150px;padding:12px 12px 12px 14px;border:0;border-radius:20px;
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);overflow:hidden;
+  background:linear-gradient(160deg,var(--surface-2) 0%,var(--surface) 100%);box-shadow:0 0 0 1px var(--rule);
+  animation:fwRise .4s var(--ease) both;animation-delay:var(--d,0s);transition:transform var(--t-fast) var(--ease)}
+.fa-rt:active{transform:scale(.97)}
+.fa-rt.next{background:radial-gradient(120% 90% at 90% 10%,color-mix(in srgb,var(--accent) 22%,var(--surface-2)) 0%,var(--surface) 70%);
+  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--accent) 60%,transparent),0 14px 28px -18px var(--glow)}
+.fa-badge{position:absolute;top:10px;left:12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);background:var(--accent);color:var(--accent-ink)}
+.fa-fig{position:absolute;right:4px;top:6px;width:48px;height:92px;opacity:.95}
+.fa-rt.next .fa-fig{top:14px}
+.fa-fig svg{width:100%;height:100%}
+.fa-rt-tx{margin-top:auto;display:flex;flex-direction:column;gap:2px;padding-right:40px;min-width:0}
+.fa-rt-tx b{font-family:var(--f-cond);font-weight:700;font-size:17px;line-height:1.1;overflow-wrap:anywhere}
+.fa-rt-tx span{font-size:12px;color:var(--ink-3)}
+.fa-rt-go{position:absolute;right:10px;bottom:10px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--surface-2);color:var(--accent);box-shadow:0 0 0 1px var(--rule)}
+.fa-rt.next .fa-rt-go{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.fa-rt-go svg{width:16px;height:16px;display:block}
+.fa-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:6px}
+.fa-q{display:flex;align-items:center;gap:10px;min-height:64px;padding:10px 12px;border:0;border-radius:18px;font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  background:var(--surface-2);box-shadow:0 0 0 1px var(--rule);transition:transform var(--t-fast) var(--ease)}
+.fa-q:active{transform:scale(.97)}
+.fa-q-ic{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:13px;color:var(--qc);background:color-mix(in srgb,var(--qc) 16%,transparent)}
+.fa-q-ic svg{width:21px;height:21px}
+.fa-q-tx{min-width:0;display:flex;flex-direction:column;gap:1px}
+.fa-q-tx b{font-size:14.5px;font-weight:600}
+.fa-q-tx span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){.fa-shine,.fa-hero.live .fa-eye::before{animation:none}}
+
+/* ---------- Körper: eigener Knopf für die Rang-Ansicht ---------- */
+.rkmode-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin:14px 0 4px;padding:8px 14px;border:0;border-radius:var(--r-pill);
+  font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink-2);background:transparent;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 45%,var(--rule));transition:background var(--t-fast) ease,color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.rkmode-btn svg{width:18px;height:18px;color:var(--gold)}
+.rkmode-btn:active{transform:scale(.98)}
+.rkmode-btn[aria-pressed="true"]{color:var(--ink);background:color-mix(in srgb,var(--gold) 18%,var(--surface-2));box-shadow:inset 0 0 0 1.5px var(--gold),0 0 18px -6px var(--gold)}

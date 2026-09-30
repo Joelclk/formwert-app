@@ -1,5 +1,5 @@
-Version 490 (Artifact-Version 1790806861-6c51)
+Version 491 (Artifact-Version 1790807508-9624)
 Stand: 2026-10-01
-Aenderung: Neues Design v1 - schwebende Leiste Heute/Koerper/Start/Raenge/Du, Heute-Karte, Raenge-Tab mit Rangkarten, Mini-Player fuer laufendes Training, Knoepfe zum Eindruecken, Formwert-Leiste, Koerper-Ansicht "Rang", Dunkel als Standard
+Aenderung: Neues Design v1.1 - Aktions-Sheet (+) mit Startflaeche, Einheiten-Kacheln und Schnell-Eintragen; Start-Knopf mittig; Rang-Ansicht im Koerper als eigener Knopf unter der Figur
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

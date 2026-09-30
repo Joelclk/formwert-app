@@ -236,7 +236,7 @@ function renderRaenge(){
 }
 
 /* ================= Körper-Tab: Ansicht "Rang" =================
-   Dritter Schalter neben Trainingsvolumen und Erholung: jeder Muskel leuchtet in der Farbe
+   Eigener Knopf unter dem Umschalter Trainingsvolumen/Erholung: jeder Muskel leuchtet in der Farbe
    des besten Rangs, den eine Übung mit ihm als Hauptmuskel erreicht hat. Nebenmuskeln zählen
    nicht – sonst stünde der Trizeps nach gutem Bankdrücken schon auf Gold, ohne je gezielt
    trainiert worden zu sein. Muskeln ohne Rang bleiben grau. */
@@ -259,21 +259,25 @@ function fwMuscleRanks(){
     var rk=fwMuscleRanks(),none=getComputedStyle(document.documentElement).getPropertyValue("--rule-2").trim()||"#3c3834";
     return function(v,m){var r=m&&rk[m.id];return r?r.t.m:none;};
   };
-  var origMode=renderBodyMode,modeChosen=false;
+  var origMode=renderBodyMode,lastBase="vol";
   renderBodyMode=function(){
-    // Beim ersten Öffnen zeigt der Körper die Ränge – das ist der Blick, der motiviert. Wer
-    // noch keinen Rang hat, sähe nur Grau; dann bleibt es beim Trainingsvolumen.
-    if(!modeChosen){modeChosen=true;
-      if(bodyMode==="vol"&&fwRankedExercises().length){bodyMode="rank";setTimeout(function(){try{renderBodySel();}catch(e){}},0);}}
     ensureRecDom();
     var bar=$("bodymode");
-    if(bar&&!bar.querySelector('[data-m="rank"]')){
-      var b=el("button",null,"Rang");b.type="button";b.setAttribute("data-m","rank");b.setAttribute("aria-selected","false");
-      bar.insertBefore(b,bar.firstChild);
-      // Drei Knöpfe nebeneinander: das lange "Trainingsvolumen" passt auf schmalen Handys nicht mehr.
-      var vb=bar.querySelector('[data-m="vol"]');if(vb)vb.textContent="Volumen";
+    // "Rang" ist bewusst kein dritter Reiter neben Volumen und Erholung, sondern ein eigener
+    // Knopf unter der Figur: Volumen und Erholung sind die Alltagsansichten, der Rang ist ein Extra-Blick.
+    var rb=$("rkmode");
+    if(bar&&!rb){
+      rb=el("button","rkmode-btn");rb.id="rkmode";rb.type="button";
+      rb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l7.5 3v6.1c0 4.4-3.1 7.7-7.5 9.3-4.4-1.6-7.5-4.9-7.5-9.3V5.8z"/><path d="M12 7.6l1.4 2.8 3.1.4-2.3 2.1.6 3-2.8-1.5-2.8 1.5.6-3-2.3-2.1 3.1-.4z"/></svg>';
+      rb.appendChild(el("span",null,"Ränge auf dem Körper"));
+      rb.onclick=function(){bodyMode=bodyMode==="rank"?lastBase:"rank";renderBodySel();};
+      // Unter der Figur und ihrer Legende: der Rang kommt als Letztes, nicht vor den Alltagsansichten.
+      var md=$("mdetail");if(md&&md.parentNode)md.parentNode.insertBefore(rb,md);else bar.parentNode.appendChild(rb);
     }
+    if(bodyMode!=="rank")lastBase=bodyMode;
+    if(rb)rb.setAttribute("aria-pressed",String(bodyMode==="rank"));
     origMode();
+    if(bar&&bodyMode==="rank")Array.prototype.forEach.call(bar.querySelectorAll("button"),function(x){x.setAttribute("aria-selected","false");});
     var rank=bodyMode==="rank",vl=document.querySelector("#p-koerper .vollegend"),lg=$("rklegend");
     if(!lg&&vl){
       lg=el("div","rklegend");lg.id="rklegend";
@@ -288,6 +292,84 @@ function fwMuscleRanks(){
   };
 })();
 
+/* ================= Aktions-Sheet (+) =================
+   Vorher eine lange Textliste, in der Training starten, Einheiten und Nachtragen gleich aussahen.
+   Jetzt drei Ebenen: oben EINE große Startfläche, darunter die Einheiten als Kacheln mit ihrer
+   Muskelfigur (die nächste in der Reihenfolge ist markiert), unten vier kleine Kacheln zum
+   Nachtragen. So sieht man auf einen Blick, was die Hauptsache ist. */
+var FW_PLAY='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';
+var FW_QICONS={
+  set:"M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11",
+  cardio:"M3 12h4l2.5-6 4 12 2.5-6H21",
+  mob:"M12 4.6a1.8 1.8 0 1 0 0 .01M5 9.5l7 1.5 7-1.5M12 11v4.5M12 15.5l-4 5M12 15.5l4 5",
+  note:"M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"
+};
+function sheetActions(){
+  openSheet(function(b){
+    sheetTitle(b,"Was steht an?");
+    b.classList.add("fw-act");
+    var d=day(TODAY),close=function(fn,delay){return function(){closeSheet();if(delay)setTimeout(fn,180);else fn();};};
+    // 1) Hauptfläche
+    var hero=el("button","fa-hero");hero.type="button";
+    var hi=el("span","fa-hero-go");hi.innerHTML=FW_PLAY;
+    var ht=el("span","fa-hero-tx");
+    if(workout){
+      hero.classList.add("live");
+      ht.appendChild(el("span","fa-eye","Training läuft"));
+      ht.appendChild(el("b",null,"Zurück zu "+workout.name));
+      var t=el("span","num",fmtDur(woElapsed()));ht.appendChild(t);
+      hero.onclick=close(function(){selectTab("tab-training");window.scrollTo(0,0);});
+    }else{
+      ht.appendChild(el("span","fa-eye","Frei trainieren"));
+      ht.appendChild(el("b",null,"Training starten"));
+      ht.appendChild(el("span",null,"Leer starten – Übungen fügst du unterwegs hinzu"));
+      hero.onclick=close(function(){startWorkout(null);});
+    }
+    hero.appendChild(ht);hero.appendChild(hi);hero.appendChild(el("i","fa-shine"));
+    b.appendChild(hero);
+    // 2) Einheiten als Kacheln
+    var ids=workout?[]:routineIds();
+    if(ids.length){
+      var next=fwNextRoutine();
+      var h=el("div","fa-h");h.appendChild(el("b",null,"Deine Einheiten"));h.appendChild(el("span",null,ids.length+(ids.length===1?" Einheit":" Einheiten")));b.appendChild(h);
+      var g=el("div","fa-grid");
+      ids.forEach(function(id,i){
+        var r=state.routines[id];if(!r)return;
+        var c=el("button","fa-rt"+(id===next?" next":""));c.type="button";c.style.setProperty("--d",(i*0.04).toFixed(2)+"s");
+        if(id===next)c.appendChild(el("span","fa-badge","Als Nächstes"));
+        var fo=routineFocus(r.items),fw=el("span","fa-fig");fw.setAttribute("aria-hidden","true");
+        if(fo.max>0){var fig=document.createElementNS("http://www.w3.org/2000/svg","svg");fig.setAttribute("viewBox","0 0 800 1500");fw.appendChild(fig);
+          (function(f,sets){requestAnimationFrame(function(){try{drawMini(f,"front",sets);}catch(e){}});})(fig,fo.sets);}
+        c.appendChild(fw);
+        var nSets=r.items.reduce(function(a,it){return a+(it.sets||0);},0);
+        var tx=el("span","fa-rt-tx");tx.appendChild(el("b",null,r.name));
+        tx.appendChild(el("span",null,r.items.length+" Übungen"+(nSets?" · "+nSets+" Sätze":"")));c.appendChild(tx);
+        var go=el("span","fa-rt-go");go.innerHTML=FW_PLAY;c.appendChild(go);
+        c.setAttribute("aria-label",r.name+" starten");
+        c.onclick=close(function(){startWorkout(id);});
+        g.appendChild(c);
+      });
+      b.appendChild(g);
+    }
+    // 3) Nachtragen
+    var h2=el("div","fa-h");h2.appendChild(el("b",null,"Schnell eintragen"));b.appendChild(h2);
+    var q=el("div","fa-quick");
+    var mobDone=false;try{mobDone=mobDay(d).units>=1;}catch(e){}
+    var cmin=(d.cardio||[]).reduce(function(a,c){return a+(c.min||0);},0);
+    [["set","Satz","nachtragen",function(){sheetAddSet(null);},"--accent"],
+     ["cardio","Ausdauer",cmin?cmin+" min heute":"Laufen, Rad, Rudern",sheetCardio,"--yellow"],
+     ["mob","Mobilität",mobDone?"heute erledigt ✓":MOB_UNIT_MIN+" min = 1 Einheit",sheetMob,"--good"],
+     ["note","Notiz",d.note?"bearbeiten":"Wie lief der Tag?",function(){sheetNote();},"--violet"]
+    ].forEach(function(o){
+      var k=el("button","fa-q");k.type="button";k.style.setProperty("--qc","var("+o[4]+")");
+      var ic=el("span","fa-q-ic");ic.innerHTML=svgIcon(FW_QICONS[o[0]],2);k.appendChild(ic);
+      var tx=el("span","fa-q-tx");tx.appendChild(el("b",null,o[1]));tx.appendChild(el("span",null,o[2]));k.appendChild(tx);
+      k.onclick=close(o[3],true);q.appendChild(k);
+    });
+    b.appendChild(q);
+  });
+}
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
@@ -297,6 +379,6 @@ function fwMuscleRanks(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
