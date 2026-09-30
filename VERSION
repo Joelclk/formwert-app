@@ -1,5 +1,5 @@
-Version 495 (Artifact-Version 1790809339-3807)
+Version 496 (Artifact-Version 1790809597-630f)
 Stand: 2026-10-01
-Aenderung: Einheiten mit eigener Farbe und Nummer, grosse Ueberschrift mit Zahl, "Als Naechstes"-Markierung, Wochenkalender in Einheitenfarbe
+Aenderung: Start-Knopf in der Leiste wie in der Design-Vorschau (groesser, Ring, ohne Beschriftung)
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
