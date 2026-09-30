@@ -1,5 +1,5 @@
-Version 496 (Artifact-Version 1790809597-630f)
+Version 497 (Artifact-Version 1790810031-d4a0)
 Stand: 2026-10-01
-Aenderung: Start-Knopf in der Leiste wie in der Design-Vorschau (groesser, Ring, ohne Beschriftung)
+Aenderung: Wie Design-Vorschau - Leiste (Masse, Start-Knopf, Koerper-Symbol), Wochenleiste oben auf Heute, Kopfzeile mit Datum-Ueberzeile, Serie und Konto-Knopf
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

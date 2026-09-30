@@ -137,6 +137,7 @@ function renderHeuteKarte(){
    Wie ein Musik-Miniplayer: solange ein Training läuft, ist es von jedem Tab aus einen Tipp
    entfernt. Auf dem Trainings-Tab selbst und auf "Heute" (dort zeigt es die Heute-Karte) nicht. */
 function fwMiniUpdate(){
+  try{document.body.setAttribute("data-tab",tab);}catch(e){}
   var m=$("wo-mini");if(!m)return;
   var show=!!workout&&tab!=="tab-training"&&tab!=="tab-heute";
   m.hidden=!show;document.body.classList.toggle("has-mini",show);
@@ -395,6 +396,7 @@ function fwUnitColors(){
   var orig=renderWeek;
   renderWeek=function(){
     orig();
+    try{fwWeekTop();}catch(e){}
     var box=$("weekstrip");if(!box||!state.routines)return;
     var cols=fwUnitColors(),byName={};
     Object.keys(state.routines).forEach(function(id){var r=state.routines[id];if(r&&cols[id])byName[r.name]=cols[id];});
@@ -406,6 +408,39 @@ function fwUnitColors(){
     });
   };
 })();
+
+/* ================= Wochenleiste oben auf "Heute" =================
+   Wie in der Design-Vorschau: gleich unter dem Titel die sieben Tage der Woche. Erledigt = Haken
+   (in der Farbe der Einheit, falls bekannt), Ruhetag = "Ruhe", heute = kupferner Ring mit Datum,
+   kommende Tage leer. Antippen springt zu dem Tag, wie im Wochenkalender weiter unten. */
+function fwWeekTop(){
+  var sec=$("p-heute");if(!sec||!state.profile)return;
+  var box=$("fw-weektop");
+  if(!box){box=el("div","fw-weektop");box.id="fw-weektop";box.setAttribute("role","group");box.setAttribute("aria-label","Diese Woche");
+    var hk=$("heute-karte");sec.insertBefore(box,hk||sec.firstChild);}
+  box.innerHTML="";
+  var cols=state.routines?fwUnitColors():{},byName={};
+  Object.keys(state.routines||{}).forEach(function(id){var r=state.routines[id];if(r&&cols[id])byName[r.name]=cols[id];});
+  var off=(parseIso(heuteDate).getDay()+6)%7;
+  for(var i=0;i<7;i++){
+    var d=shiftDays(heuteDate,i-off),dd=state.days[d],fut=d>TODAY;
+    var trained=isTrainDay(dd)||!!(dd&&(dd.workouts||[]).length);
+    var b=el("button","wt-d"+(d===TODAY?" today":"")+(d===heuteDate?" viewing":""));b.type="button";
+    b.appendChild(el("span","wt-l",WD[parseIso(d).getDay()]));
+    var c=el("span","wt-c");
+    if(trained){
+      c.classList.add("done");var uc=null;(dd.workouts||[]).some(function(wo){uc=wo&&byName[wo.name];return !!uc;});
+      if(uc){c.classList.add("unit");c.style.setProperty("--uc",uc);}
+      c.innerHTML=svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6);
+    }else if(dd&&dd.rest){c.classList.add("rest");c.textContent="Ruhe";}
+    else if(d===TODAY||d===heuteDate){c.textContent=String(parseIso(d).getDate());}
+    b.appendChild(c);
+    b.setAttribute("aria-label",deDate(d)+(trained?": trainiert":dd&&dd.rest?": Ruhetag":""));
+    if(fut)b.disabled=true;
+    else (function(dk){b.onclick=function(){gotoHeuteDate(dk);};})(d);
+    box.appendChild(b);
+  }
+}
 
 /* ================= Einheiten-Karten zum Durchwischen =================
    Vorher ein kleines Figürchen und eine Textzeile mit Übungsnamen. Jetzt oben in jeder Karte
@@ -501,6 +536,54 @@ function fwExFigs(pic,ex){
   };
 })();
 
+/* ================= Kopfzeile: Serie und Konto =================
+   Wie in der Design-Vorschau: über dem Titel das Datum als kleine Überzeile, rechts die Serie
+   (Wochen in Folge mit erreichtem Wochenziel, dieselbe Zählung wie die Serien-Medaille) und
+   ein runder Konto-Knopf, dessen Ring Farbe und Fortschritt der Gesamtstärke zeigt. Der Knopf
+   öffnet die Einstellungen - das Zahnrad entfällt dafür. */
+function fwStreakNow(){
+  var goal=(state.profile&&state.profile.goals&&state.profile.goals.days)||0;if(!(goal>0))return 0;
+  var wk={},first=null;
+  Object.keys(state.days).forEach(function(d){if(d>TODAY||!isTrainDay(state.days[d]))return;var k=weekStartOf(d);wk[k]=(wk[k]||0)+1;if(!first||d<first)first=d;});
+  if(!first)return 0;
+  var cur=weekStartOf(TODAY),w=weekStartOf(first),s=0,joker=-99,idx=0;
+  while(w<=cur){
+    if((wk[w]||0)>=goal)s++;
+    else if(w===cur){/* laufende Woche zählt erst, wenn das Ziel erreicht ist */}
+    else if(s>0&&idx-joker>=8)joker=idx;   // eine verpasste Woche pro 8 wird verziehen, wie bei der Medaille
+    else s=0;
+    w=shiftDays(w,7);idx++;
+  }
+  return s;
+}
+function fwAppbar(){
+  var bar=document.querySelector(".appbar");if(!bar)return;
+  var gear=$("btn-settings"),st=$("fw-streak"),me=$("fw-me");
+  if(!st){st=el("span","fw-streak");st.id="fw-streak";bar.insertBefore(st,gear||null);}
+  if(!me){me=el("button","fw-me");me.id="fw-me";me.type="button";me.setAttribute("aria-label","Konto und Einstellungen");
+    me.onclick=function(){try{openSettingsPage();}catch(e){selectTab("tab-werte");}};bar.insertBefore(me,gear||null);}
+  var n=0;try{n=fwStreakNow();}catch(e){}
+  st.innerHTML=svgIcon("M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.3 2.4-5.3 3.6-7.9.4 1.9 1.5 3 2.6 3.5-.2-3 1-5.8 3.3-7.4-.2 3.3 3.5 5.6 3.5 10.6 0 4.3-2.6 7.4-6.5 7.4z",1.9);
+  st.classList.toggle("off",!n);
+  st.appendChild(el("b",null,n+(n===1?" Woche":" Wochen")));
+  st.setAttribute("aria-label","Serie: "+n+(n===1?" Woche":" Wochen")+" in Folge");
+  var ov=null;try{ov=overallRank();}catch(e){}
+  me.style.setProperty("--rkc",ov?fwRankColor(ov):"var(--rule-2)");
+  me.style.setProperty("--p",ov?Math.round(ov.pct*100)+"%":"0%");
+  var nm=state.profile&&state.profile.name,ini=nm?nm.trim().split(/\s+/).map(function(w){return w[0];}).join("").slice(0,2).toUpperCase():"";
+  me.innerHTML="";var inner=el("span","fw-me-i");
+  if(ini)inner.textContent=ini;else inner.innerHTML=svgIcon("M12 12.3a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.5 20.5c1.4-3.6 4.2-5.3 7.5-5.3s6.1 1.7 7.5 5.3",1.9);
+  me.appendChild(inner);
+}
+(function(){
+  var orig=renderHero;
+  renderHero=function(c,pk){
+    orig(c,pk);
+    try{var dt=parseIso(heuteDate);$("todaydate").textContent=dt.toLocaleDateString(LANG==="en"?"en-US":"de-DE",{weekday:"long",day:"numeric",month:"long"});}catch(e){}
+    try{fwAppbar();}catch(e){}
+  };
+})();
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
@@ -510,6 +593,6 @@ function fwExFigs(pic,ex){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
