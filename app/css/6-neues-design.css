@@ -358,3 +358,50 @@ button.fw-hc:active{transform:scale(.98)}
 .fw-ring{flex:none;display:grid;place-items:center;width:60px;height:60px;border-radius:50%;
   background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--accent) 0 var(--p),var(--rule) var(--p) 100%)}
 .fw-ring b{font-family:var(--f-cond);font-weight:700;font-size:18px}
+
+/* ---------- Laufendes Training wie in der Vorschau ---------- */
+/* Reserve-Spalte entfällt: Kopf "Reserve" und die Knöpfe ausblenden, Spalten neu verteilen. */
+.wo-rir,.wo-table .wo-row.head span:nth-last-child(2){display:none!important}
+.wo-row{grid-template-columns:30px 1fr 1.1fr 48px}
+.wo-table.has-kg .wo-row{grid-template-columns:30px 0.9fr 1.1fr 1fr 48px}
+.wo-table.uni-load .wo-row{grid-template-columns:24px 0.9fr 0.8fr 0.7fr 0.7fr 46px}
+.wo-table.uni-plain .wo-row{grid-template-columns:24px 1fr 0.85fr 0.85fr 46px}
+.wo-head.fw{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:10px 12px 6px}
+.fw-wo-min{width:44px;height:44px;border-radius:50%;background:var(--surface-2)!important;color:var(--ink)}
+.fw-wo-center{display:flex;flex-direction:column;align-items:center;min-width:0}
+.fw-wo-center .wo-name{width:100%;max-width:200px;padding:0;border:0;background:none;text-align:center;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);min-height:0}
+.fw-wo-center .wo-timer b{font-family:var(--f-mono);font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.fw-wo-right{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.fw-fertig{min-height:40px!important;padding:6px 16px!important;border-radius:var(--r-pill);background:var(--surface-2);color:var(--good);font-weight:700;border:0}
+.fw-wo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 12px 8px}
+.fw-ws{display:flex;flex-direction:column;gap:1px;padding:9px 12px;border-radius:16px;background:var(--surface-2)}
+.fw-ws span{font-size:11px;color:var(--ink-3)}
+.fw-ws b{font-family:var(--f-mono);font-size:17px;font-weight:600;white-space:nowrap}
+.wo-pagehead{align-items:center;gap:10px}
+.fw-wo-thumb{flex:none;width:58px;height:64px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden}
+.fw-wo-thumb img{width:100%;height:100%;object-fit:contain}
+.fw-wo-crest{flex:none;width:40px;height:40px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+.fw-wo-crest svg{width:40px;height:40px;overflow:visible}
+.fw-wo-hint{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:2px 0 4px;padding:9px 12px;border:0;border-radius:14px;font:inherit;cursor:pointer;
+  background:color-mix(in srgb,var(--rkc) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rkc) 40%,transparent);color:var(--ink)}
+.fw-wo-hint-l{display:flex;align-items:center;gap:6px;min-width:0;color:color-mix(in srgb,var(--rkc) 75%,var(--ink))}
+.fw-wo-hint-l svg{width:16px;height:16px;flex:none}
+.fw-wo-hint-l b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-wo-hint-r{flex:none;font-size:12px;color:var(--ink-3)}
+.wo-row{padding:4px 6px;border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+.wo-row.head{background:none;padding:0 6px}
+.wo-row.done{background:color-mix(in srgb,var(--good) 8%,transparent)}
+.wo-row.cur{background:color-mix(in srgb,var(--accent) 8%,transparent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.fw-wo-go{position:fixed;z-index:48;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),520px);min-height:58px;border-radius:var(--r-pill);
+  bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 26px);font-size:17px;gap:10px;display:flex;align-items:center;justify-content:center}
+.fw-wo-go svg{width:20px;height:20px}
+.fw-wo-go:active{transform:translateX(-50%) scale(.98)}
+body.fw-go-on.wo-live #session-wrap>.card.flush{margin-bottom:80px}
+.fw-wo-go[hidden]{display:none!important}
+/* Kopf je Übung: Bild | Name + Angaben | Wappen in einer Zeile (die Werkzeuge stehen darunter). */
+.wo-pagehead{display:flex;flex-wrap:nowrap;align-items:center;gap:12px}
+.wo-pagehead .main{display:block;flex:1;min-width:0}
+.wo-pagehead .main b{padding-right:0}
+.wo-pagehead .main span{margin-top:3px}
+.fw-wo-tools{display:flex;justify-content:flex-end;gap:2px;margin:-4px -6px 0}
+.fw-wo-tools .iconbtn{min-width:38px;min-height:38px;padding:8px;color:var(--ink-3)}

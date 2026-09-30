@@ -1,5 +1,5 @@
-Version 498 (Artifact-Version 1790810514-b666)
+Version 499 (Artifact-Version 1790810937-8a09)
 Stand: 2026-10-01
-Aenderung: Heute wie Vorschau - Heute-Karte mit Muskeln, Dauer und Erholung, Karten Formwert und Woche, Knoepfe ohne Schatten
+Aenderung: Laufendes Training wie Vorschau - Kopf mit Uhr und Fertig, Kacheln Volumen/Saetze/Uebung, Bild und Wappen je Uebung, Rang-Hinweis, grosser Abhaken-Knopf; Reserve-Spalte entfernt
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

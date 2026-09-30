@@ -662,6 +662,91 @@ function fwAppbar(){
   };
 })();
 
+/* ================= Laufendes Training wie in der Vorschau =================
+   Kopf: links Einklappen, in der Mitte Name und große Uhr, rechts "Fertig". Darunter drei
+   Kacheln (Volumen, Sätze, Übung). Je Übung ein Bewegungsbild, das Rangwappen und - wenn der
+   nächste Rang greifbar ist - eine Zeile "30 kg × 8 = Platin I". Unten ein großer Knopf, der den
+   Satz abhakt, der gerade dran ist. Die Reserve-Spalte entfällt (per CSS ausgeblendet; alte
+   Sätze mit Reserve bleiben unverändert gespeichert). Umgebaut wird nach dem Aufbau im DOM,
+   damit die ganze Satzlogik in 09-uebungsdetail.js unangetastet bleibt. */
+var FW_BOLT="M13 2.8L5.5 13.5h6l-1 7.7 8-11h-6z";
+function fwWoDecorate(){
+  var box=$("session-body");if(!box||!workout)return;
+  var head=box.querySelector(".wo-head");
+  if(head&&!head.classList.contains("fw")){
+    head.classList.add("fw");
+    var nm=head.querySelector(".wo-name"),tm=$("wo-timer-wrap"),rp=$("wo-rest-pill"),pb=head.querySelector(".iconbtn"),endB=head.querySelector(".btn");
+    var mn=el("button","iconbtn fw-wo-min");mn.type="button";mn.setAttribute("aria-label","Training einklappen");mn.innerHTML=svgIcon("M5 9l7 7 7-7",2.2);
+    mn.onclick=function(){selectTab("tab-heute");window.scrollTo(0,0);};
+    var ctr=el("div","fw-wo-center");if(nm)ctr.appendChild(nm);if(tm)ctr.appendChild(tm);if(rp)ctr.appendChild(rp);
+    var right=el("div","fw-wo-right");if(pb)right.appendChild(pb);
+    Array.prototype.slice.call(head.children).forEach(function(c){if(c!==endB&&!c.classList.contains("wo-prog"))right.appendChild(c);});
+    if(endB){endB.textContent="Fertig";endB.className="btn small fw-fertig";right.appendChild(endB);}
+    head.innerHTML="";head.appendChild(mn);head.appendChild(ctr);head.appendChild(right);
+    var st=el("div","fw-wo-stats");
+    [["fw-ws-vol","Volumen"],["fw-ws-sets","Sätze"],["fw-ws-ex","Übung"]].forEach(function(o){var t=el("div","fw-ws");t.appendChild(el("span",null,o[1]));var b=el("b","num","–");b.id=o[0];t.appendChild(b);st.appendChild(t);});
+    head.parentNode.insertBefore(st,head.nextSibling);
+  }
+  Array.prototype.forEach.call(box.querySelectorAll(".wo-page[data-i]"),function(pg){
+    if(pg.dataset.fw)return;pg.dataset.fw="1";
+    var we=workout.exercises[+pg.getAttribute("data-i")],ex=we&&exById(we.ex);if(!ex||!we.sets)return;
+    var ph=pg.querySelector(".wo-pagehead");if(!ph)return;
+    var clip=typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[ex.id];
+    if(clip&&!ex.custom){var th=el("div","fw-wo-thumb"),im=el("img");im.src="assets/posen/"+clip+".webp";im.alt="";im.decoding="async";im.onerror=function(){th.remove();};th.appendChild(im);ph.insertBefore(th,ph.firstChild);}
+    // Die kleinen Werkzeug-Knöpfe (Info, Reihenfolge, Pause, Tauschen, Löschen) in eine eigene
+    // Zeile darunter, damit Bild, Name und Wappen oben nebeneinander Platz haben.
+    var tools=el("div","fw-wo-tools");
+    Array.prototype.slice.call(ph.children).forEach(function(c){if(c.classList.contains("iconbtn"))tools.appendChild(c);});
+    if(tools.children.length)ph.parentNode.insertBefore(tools,ph.nextSibling);
+    var rk=null;try{rk=exRank(ex);}catch(e){}
+    if(rk){var cr=el("span","fw-wo-crest");cr.innerHTML=rankBadge(rk,40);cr.setAttribute("aria-hidden","true");var mainEl=ph.querySelector(".main");ph.insertBefore(cr,mainEl?mainEl.nextSibling:null);
+      var h=null;try{h=rankNextHint(ex,rk);}catch(e){}
+      if(h&&h.txt){var hi=el("button","fw-wo-hint");hi.type="button";hi.style.setProperty("--rkc",fwRankColor(h.rank));
+        var l=el("span","fw-wo-hint-l");l.innerHTML=svgIcon(FW_BOLT,2);l.appendChild(el("b",null,h.txt+" = "+h.rank.name));hi.appendChild(l);
+        hi.appendChild(el("span","fw-wo-hint-r",rk.name+" → "+h.rank.name));
+        hi.onclick=function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)),ex);};
+        (tools.parentNode?tools:ph).parentNode.insertBefore(hi,(tools.parentNode?tools:ph).nextSibling);}
+    }
+  });
+  var go=$("fw-wo-go");
+  if(!go){go=el("button","btn primary fw-wo-go");go.id="fw-wo-go";go.type="button";document.body.appendChild(go);
+    go.onclick=function(){
+      var p=$("wo-pager");if(!p||!workout)return;
+      var we=workout.exercises[woPage];if(!we||!we.sets)return;
+      var cur=-1;for(var k=0;k<we.sets.length;k++){if(!we.sets[k].done){cur=k;break;}}
+      if(cur>=0){var ck=p.querySelector('.wo-page[data-i="'+woPage+'"] .wo-row[data-s="'+cur+'"] .wo-check');if(ck)ck.click();}
+      else{woPage=Math.min(woPage+1,workout.exercises.length);woGoto(woPage,true);woDots();woFillFigs();}
+    };}
+  fwWoStats();
+}
+function fwWoStats(){
+  var go=$("fw-wo-go");
+  var live=!!workout&&tab==="tab-training"&&document.body.classList.contains("wo-live");
+  if(go)go.hidden=true;document.body.classList.remove("fw-go-on");
+  if(!workout)return;
+  var vol=0,done=0,tot=0;
+  workout.exercises.forEach(function(we){if(!we.sets)return;var ex=exById(we.ex);we.sets.forEach(function(st){tot++;if(!st.done)return;done++;
+    if(ex&&ex.t==="load"){var r=ex.uni&&st.repsL!=null&&st.repsR!=null?(+st.repsL||0)+(+st.repsR||0):(+st.reps||0);vol+=(+st.kg||0)*r;}});});
+  var a=$("fw-ws-vol"),b=$("fw-ws-sets"),c=$("fw-ws-ex"),n=workout.exercises.length;
+  if(a)a.textContent=fmtNum(Math.round(vol))+" kg";if(b)b.textContent=done+"/"+tot;
+  if(c)c.textContent=n?Math.min(woPage+1,n)+"/"+n:"–";
+  if(!go||!live)return;
+  var we=workout.exercises[woPage];if(!we||!we.sets)return;
+  var cur=-1;for(var k=0;k<we.sets.length;k++){if(!we.sets[k].done){cur=k;break;}}
+  go.innerHTML="";
+  if(cur>=0){go.innerHTML=svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6);go.appendChild(document.createTextNode("Satz "+(cur+1)+" abschließen"));}
+  else if(woPage<n-1){go.appendChild(document.createTextNode("Nächste Übung"));go.insertAdjacentHTML("beforeend",svgIcon("M9 5l7 7-7 7",2.4));}
+  else return;
+  go.hidden=false;document.body.classList.add("fw-go-on");
+}
+(function(){
+  var oR=renderSessionInner;renderSessionInner=function(){oR();try{fwWoDecorate();}catch(e){}};
+  var oU=woUpdate;woUpdate=function(){oU();try{fwWoStats();}catch(e){}};
+  var oD=woDots;woDots=function(){oD();try{fwWoStats();}catch(e){}};
+  var oS=selectTab;selectTab=function(id){oS(id);try{fwWoStats();}catch(e){}};
+  var oF=renderSession;renderSession=function(){oF();try{fwWoStats();}catch(e){}};
+})();
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
@@ -671,6 +756,6 @@ function fwAppbar(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
