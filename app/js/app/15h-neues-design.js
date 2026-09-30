@@ -370,6 +370,68 @@ function sheetActions(){
   });
 }
 
+/* ================= Einheiten-Karten zum Durchwischen =================
+   Vorher ein kleines Figürchen und eine Textzeile mit Übungsnamen. Jetzt oben in jeder Karte
+   ein Streifen zum Wischen: erst der Überblick (ganzer Körper vorn und hinten, welche Muskeln
+   die Einheit trifft, sanft pulsierend), dann jede Übung einzeln mit Bewegungsbild oder
+   Muskelfigur und Sätzen. So sieht man vor dem Start, was drankommt. */
+function fwSvgFig(view){var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");sv.setAttribute("data-v",view);return sv;}
+function fwItemLabel(ex,it){
+  var p=[];if(it.sets)p.push(it.sets+" Sätze");
+  if(ex.t==="sec"){if(it.reps)p.push(it.reps+" s");}
+  else{if(it.reps)p.push(it.reps+" Wdh.");if(ex.t==="load"&&it.kg)p.push(fmtNum(it.kg)+" kg");}
+  return p.join(" · ");
+}
+function fwRichRoutineCards(list){
+  if(rcSort)return;
+  var ids=routineIds(),cards=list.querySelectorAll(".rc-item"),draws=[];
+  Array.prototype.forEach.call(cards,function(card,i){
+    var r=state.routines[ids[i]];if(!r)return;
+    card.classList.add("rc-rich");
+    var old=card.querySelector(".rc-fig");if(old)old.remove();
+    var fo=routineFocus(r.items);
+    var wrap=el("div","rs-wrap"),strip=el("div","rs-strip"),dots=el("div","rs-dots");dots.setAttribute("aria-hidden","true");
+    // Überblick
+    var ov=el("div","rs-slide rs-ov");
+    var figs=el("div","rs-ov-figs");figs.setAttribute("aria-hidden","true");
+    if(fo.max>0)["front","back"].forEach(function(v){var sv=fwSvgFig(v);figs.appendChild(sv);draws.push({sv:sv,v:v,sets:fo.sets});});
+    ov.appendChild(figs);
+    var ot=el("div","rs-ov-tx");ot.appendChild(el("span","rs-eye","Das trainierst du"));
+    var chips=el("div","rs-chips");fwRegionsOf(r.items).forEach(function(c){chips.appendChild(el("span","hk-chip",c));});ot.appendChild(chips);
+    if(r.items.length)ot.appendChild(el("span","rs-hint","Wischen für alle "+r.items.length+" Übungen"));
+    ov.appendChild(ot);strip.appendChild(ov);dots.appendChild(el("i","on"));
+    // Übungen
+    r.items.forEach(function(it,k){
+      var ex=exById(it.ex);if(!ex)return;
+      var sl=el("div","rs-slide rs-ex"),pic=el("div","rs-pic");pic.setAttribute("aria-hidden","true");
+      var clip=typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[ex.id];
+      if(clip&&!ex.custom){var im=el("img");im.src="assets/posen/"+clip+".webp";im.alt="";im.loading="lazy";im.decoding="async";pic.appendChild(im);pic.classList.add("pose");
+        im.onerror=function(){im.remove();pic.classList.remove("pose");fwExFigs(pic,ex);};}
+      else fwExFigs(pic,ex);
+      sl.appendChild(pic);
+      var tx=el("div","rs-ex-tx");tx.appendChild(el("span","rs-n",(k+1)+" / "+r.items.length));
+      tx.appendChild(el("b",null,ex.n));var lb=fwItemLabel(ex,it);if(lb)tx.appendChild(el("span","num rs-sets",lb));
+      var reg=exPrimaryRegionLabel(ex);if(reg)tx.appendChild(el("span","rs-reg",reg));
+      sl.appendChild(tx);strip.appendChild(sl);dots.appendChild(el("i"));
+    });
+    strip.addEventListener("scroll",function(){
+      var n=Math.round(strip.scrollLeft/Math.max(1,strip.clientWidth));
+      Array.prototype.forEach.call(dots.children,function(d,j){d.classList.toggle("on",j===n);});
+      // Muskelfiguren der Übungen erst beim Hereinwischen zeichnen – spart den Aufbau aller auf einmal.
+      Array.prototype.forEach.call(strip.querySelectorAll("svg[data-ex]:not([data-filled])"),function(sv){try{fillExFig(sv);}catch(e){}});
+    },{passive:true});
+    wrap.appendChild(strip);if(dots.children.length>1)wrap.appendChild(dots);
+    card.insertBefore(wrap,card.firstChild);
+  });
+  if(draws.length)requestAnimationFrame(function(){draws.forEach(function(o){try{drawMini(o.sv,o.v,o.sets);}catch(e){}});});
+}
+function fwExFigs(pic,ex){
+  ["front","back"].forEach(function(v){
+    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",v);pic.appendChild(sv);
+  });
+}
+
 /* ================= Training-Tab: Starten zuerst =================
    Wer den Tab öffnet, will meistens loslegen. Deshalb stehen ganz oben das freie Training und
    daneben "Neue Einheit" / "Aus Vorlage", erst darunter die Liste der eigenen Einheiten.
@@ -380,6 +442,7 @@ function sheetActions(){
   renderRoutines=function(){
     orig();
     var sw=$("start-wrap"),list=$("routine-list");if(!sw||!list)return;
+    try{fwRichRoutineCards(list);}catch(e){}
     var free=sw.querySelector(".free-card");
     if(free&&sw.firstElementChild!==free){
       var h=free.previousElementSibling;if(h&&h.classList.contains("sec"))h.remove();
@@ -403,6 +466,6 @@ function sheetActions(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
