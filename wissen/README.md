@@ -9,6 +9,7 @@ Videos noch einmal ansehen zu müssen.
 - `videos.md` – jedes Video in einer Zeile: Quelle, Thema, Kern, Bewertung, Stand.
 - `erkenntnisse.md` – das Gelernte nach Themen gebündelt, mit konkreten Schritten für uns.
 - `kontingent-2026-10-01.md` – Auswertung, wohin das Claude-Kontingent geht.
+- `design-werkzeuge.md` – Agenten/Skills/Plugins für Design und UX-Review, bewertet (01.10.2026).
 
 ## Ablauf für neue Videos
 
