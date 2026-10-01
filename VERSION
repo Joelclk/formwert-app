@@ -1,5 +1,5 @@
-Version 515 (Artifact-Version 1790851778-f99b)
+Version 518 (Artifact-Version 1790854804-d26e)
 Stand: 2026-10-01
-Aenderung: 3D-Figur laesst sich mit zwei Fingern nur noch senkrecht verschieben (seitlich gesperrt)
+Aenderung: 3D-Betrachter: Gesten von Hand (Drehen sofort, zwei Finger nur senkrecht mit Schwung und Anschlag), Zeichnen nur bei Aenderung, Umdrehen-Knopf von jedem Winkel
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
