@@ -1,5 +1,5 @@
-Version 513 (Artifact-Version 1790851151-4a6b)
+Version 514 (Artifact-Version 1790851594-85e5)
 Stand: 2026-10-01
-Aenderung: Entwurf 2 live - Heute mit drei Ringen (Training, Ausdauer, Mobilitaet) und Formwert-Zeile; Koerper als Buehne mit Volumen/Erholung/Rang, Umdrehen und Zoom (3D-Betrachter: fw3d-view, fw3d-zoom), Glas-Schild mit Muskelbild, Regionskarten zum Wischen
+Aenderung: Heute scrollt wieder, "Heute dran" ohne Kasten, Mobilitaets-Symbol neu; Koerper - Umschalter ueber der Buehne, Hoch/Runter-Knoepfe und Zwei-Finger-Verschieben (3D-Betrachter fw3d-pan)
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
