@@ -155,13 +155,10 @@ function renderHeuteKarte(){
   if(chips.length){var cw=el("div","hk-chips");chips.forEach(function(c){
     if(typeof c==="string"){cw.appendChild(el("span","hk-chip",c));return;}
     var ch=el("span","hk-rec"+(c.ok?" ok":" wait"));ch.innerHTML=c.ok?svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6):svgIcon("M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",2.2);
-    ch.appendChild(document.createTextNode(c.t));cw.appendChild(ch);});}
+    ch.appendChild(document.createTextNode(c.t));cw.appendChild(ch);});tx.appendChild(cw);}
   top.appendChild(tx);
   if(fig){var fw=el("div","hk-fig");fw.setAttribute("aria-hidden","true");fw.appendChild(fig);top.appendChild(fw);}
   box.appendChild(top);
-  // Schildchen über die ganze Kartenbreite unter Text und Figur: so passen zwei gleich breite
-  // nebeneinander, ohne dass die Figur kleiner werden muss.
-  if(cw)box.appendChild(cw);
   if(btn){
     var b=el("button","btn primary block fw-go");b.type="button";
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';
