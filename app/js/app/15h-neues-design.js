@@ -461,6 +461,11 @@ function fwMuscleRanks(){
     }
     if(vl&&rank)vl.hidden=true;
     if(lg)lg.hidden=!rank;
+    // Kurzinfo zur Auswahl ("Brust · 0 Sätze …") liegt als Schild auf der Figur statt als eigener
+    // Kasten darüber - so bekommt die Figur den Platz.
+    var co=$("callout"),b3=$("body3d");if(co&&b3&&co.parentNode!==b3)b3.appendChild(co);
+    // Ohne Auswahl zeigt der Detailkasten nur den Tipp, der schon unten in der Figur steht - dann weg damit.
+    var md=$("mdetail");if(md)md.classList.toggle("fw-empty",!selFine&&!(selSet&&selSet.length));
   };
 })();
 

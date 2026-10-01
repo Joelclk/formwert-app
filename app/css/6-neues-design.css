@@ -506,3 +506,31 @@ body[data-tab="tab-heute"] .wrap{height:100dvh;overflow:hidden;box-sizing:border
    Alles, was er bot, hat jetzt einen festen Platz: Training starten über den runden Knopf in der
    Leiste, Satz / Ausdauer / Mobilität nachtragen im Training-Tab. */
 #fab{display:none!important}
+
+/* ---------- Körper ---------- */
+/* Die Figur ist die Hauptsache: Karte ohne Rahmen, Figur so hoch wie möglich. */
+#p-koerper>.card:first-child{background:none;box-shadow:none;padding:0}
+#p-koerper .body3d{border-radius:26px;margin:4px 0 12px;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent),0 24px 48px -28px rgba(0,0,0,.9)}
+#p-koerper .body3d iframe{height:clamp(420px,calc(100dvh - 330px),640px)}
+#p-koerper .bodymode{margin-bottom:10px}
+#p-koerper #regionchips{margin-bottom:8px}
+/* Auswahl-Schild oben links auf der Figur; ohne Auswahl unsichtbar (der Hinweis steht unten in der Figur). */
+#p-koerper .body3d #callout{position:absolute;z-index:3;top:12px;left:12px;right:auto;max-width:calc(100% - 24px);margin:0;padding:10px 14px;border-radius:16px;
+  background:rgba(20,19,17,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08);color:#f3efe8}
+#p-koerper .body3d #callout:has(.co-hint),#p-koerper .body3d #callout:empty{display:none}
+#p-koerper .body3d #callout b{font-family:var(--f-cond);font-size:18px}
+#p-koerper .body3d #callout span{color:rgba(243,239,232,.7)}
+/* Rang-Ansicht schaltet der Knopf "Ränge" oben rechts - der zweite Knopf unter der Figur entfällt. */
+#rkmode{display:none!important}
+/* Regionen als Kacheln im Zweierraster: große Prozentzahl, Name, Balken, Kurzinfo, Figur oben rechts. */
+#mlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none!important;box-shadow:none!important;padding:0!important;overflow:visible}
+#mlist>.row{grid-column:1/-1;border-radius:16px;background:var(--surface);box-shadow:var(--card-sh);border:0!important}
+#mlist>.row.tap:not(.sub):not(.mrow){grid-column:auto;position:relative;display:flex;flex-direction:column;align-items:stretch;gap:4px;min-height:132px;padding:14px 14px 12px;border-radius:20px}
+#mlist>.row.tap:not(.sub):not(.mrow) .rfig{position:absolute;top:10px;right:10px;width:42px;flex:none}
+#mlist>.row.tap:not(.sub):not(.mrow) .hval{order:-1;font-family:var(--f-cond);font-size:30px;font-weight:700;line-height:1;text-align:left}
+#mlist>.row.tap:not(.sub):not(.mrow) .hval em{font-size:14px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main{display:flex;flex-direction:column;gap:2px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main b{font-family:var(--f-cond);font-size:16px;padding-right:44px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main span{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#mlist>.row.tap:not(.sub):not(.mrow) .chev{display:none}
+#p-koerper #mdetail.fw-empty{display:none}
