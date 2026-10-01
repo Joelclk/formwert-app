@@ -1,5 +1,5 @@
-Version 514 (Artifact-Version 1790851594-85e5)
+Version 515 (Artifact-Version 1790851778-f99b)
 Stand: 2026-10-01
-Aenderung: Heute scrollt wieder, "Heute dran" ohne Kasten, Mobilitaets-Symbol neu; Koerper - Umschalter ueber der Buehne, Hoch/Runter-Knoepfe und Zwei-Finger-Verschieben (3D-Betrachter fw3d-pan)
+Aenderung: 3D-Figur laesst sich mit zwei Fingern nur noch senkrecht verschieben (seitlich gesperrt)
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
