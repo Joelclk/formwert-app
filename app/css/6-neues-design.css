@@ -83,12 +83,12 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .appbar-search svg{width:22px;height:22px}
 
 /* ---------- Heute-Karte ---------- */
-.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:20px 20px 18px;border-radius:28px;
+.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:16px 18px 16px;border-radius:28px;
   background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 26%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow);animation:fwRise .5s var(--ease) both}
 .heute-karte.calm,.heute-karte.done{background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--good) 18%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
-.hk-top{display:flex;gap:6px;align-items:stretch;min-height:200px}
+.hk-top{display:flex;gap:6px;align-items:stretch;min-height:150px}
 .hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .hk-eye{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
 .heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
@@ -102,9 +102,9 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
 /* Große Figur rechts über die ganze Höhe des Textes - wie im Startbild der Vorschau. */
-.hk-fig{flex:none;width:104px;height:auto;align-self:stretch;margin:-6px -8px 0 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+.hk-fig{flex:none;width:92px;height:auto;align-self:stretch;margin:-4px -8px 0 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
 .hk-fig svg{width:100%;height:100%}
-.fw-go{margin-top:16px;min-height:56px;font-size:17px;gap:10px}
+.fw-go{margin-top:12px;min-height:52px;font-size:17px;gap:10px}
 .fw-go svg{width:20px;height:20px}
 /* Die Heute-Karte übernimmt den "nächsten Schritt" und das laufende Training. */
 #fitnext{display:none!important}
@@ -344,13 +344,13 @@ body:not([data-tab="tab-entdecken"]) .appbar-search{display:none}
 .hk-rec.ok{background:var(--good-soft);color:var(--good)}
 .hk-rec.wait{background:var(--warn-soft);color:var(--warn)}
 .fw-hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
-.fw-hc{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:14px 14px 12px;border:0;border-radius:22px;background:var(--surface);
+.fw-hc{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:12px 14px 10px;border:0;border-radius:22px;background:var(--surface);
   box-shadow:var(--card-sh);font:inherit;color:var(--ink);text-align:left}
 button.fw-hc{cursor:pointer;transition:transform var(--t-fast) var(--ease)}
 button.fw-hc:active{transform:scale(.98)}
 .fw-hc-eye{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .fw-hc-val{display:flex;align-items:baseline;gap:6px}
-.fw-hc-val b{font-family:var(--f-cond);font-weight:600;font-size:44px;line-height:.95;letter-spacing:-.03em}
+.fw-hc-val b{font-family:var(--f-cond);font-weight:600;font-size:38px;line-height:.95;letter-spacing:-.03em}
 .fw-hc-tr{font-size:13px;font-weight:700}
 .fw-hc-tr.up{color:var(--good)}.fw-hc-tr.down{color:var(--warn)}
 .fw-hc .fw-ticks{margin:6px 0 2px}
@@ -358,7 +358,7 @@ button.fw-hc:active{transform:scale(.98)}
 .fw-hc-sub{font-size:12px;color:var(--ink-3)}
 .fw-hc-wrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
 .fw-hc-wrow span{font-size:13px;line-height:1.3;color:var(--ink-2)}
-.fw-ring{flex:none;display:grid;place-items:center;width:60px;height:60px;border-radius:50%;
+.fw-ring{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;
   background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--accent) 0 var(--p),var(--rule) var(--p) 100%)}
 .fw-ring b{font-family:var(--f-cond);font-weight:700;font-size:18px}
 

@@ -257,9 +257,7 @@ function renderHeuteKarte(){
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';
     b.appendChild(document.createTextNode(btn[0]));b.onclick=btn[1];box.appendChild(b);
   }
-  // Nicht nach Plan heute? Eine Einheit weiterspringen, ohne die Reihenfolge zu verändern.
-  if(!workout&&!trained&&viewingToday&&fwPlanIds().length>1){
-    var sk=el("button","hk-skip","Überspringen – nächste Einheit im Plan");sk.type="button";sk.onclick=fwPlanSkip;box.appendChild(sk);}
+
   if(fig)requestAnimationFrame(function(){try{drawMini(fig,"front",fig._sets);}catch(e){}});
 }
 
