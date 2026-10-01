@@ -177,11 +177,15 @@ async function main() {
     const s = await seite({ days });
     const r = await s.page.evaluate(d => { const c = compute(TODAY);
       return { h: mobDay(state.days[d[0]]), g: mobDay(state.days[d[1]]), v: mobDay(state.days[d[2]]), tHeute: isTrainDay(state.days[d[0]]), tGestern: isTrainDay(state.days[d[1]]), trainDays: c.trainDays, mobDays: c.mobDays }; }, [h, G, V]);
-    pruefe(r.h.units === 1 && r.h.min > 10 && r.h.exs === 6, "heute: " + JSON.stringify(r.h));
+    // Bis 10 Minuten volle Einheit, jede Minute darüber zählt halb (mobUnitsFromMin, seit 30.09.).
+    pruefe(r.h.min > 10 && Math.abs(r.h.units - (1 + (r.h.min - 10) / 20)) < 1e-9 && r.h.exs === 6, "heute: " + JSON.stringify(r.h));
     pruefe(r.g.units > 0 && r.g.units < 1, "gestern: " + JSON.stringify(r.g));
     pruefe(r.v.units === 1 && r.v.legacy, "alter Haken: " + JSON.stringify(r.v));
     pruefe(!r.tHeute && r.tGestern && r.trainDays === 1, "Trainingstage: " + JSON.stringify(r));
-    pruefe(Math.abs(r.mobDays - (2 + r.g.units)) < 1e-9, "Einheiten: " + r.mobDays);
+    pruefe(Math.abs(r.mobDays - (r.h.units + 1 + r.g.units)) < 1e-9, "Einheiten: " + r.mobDays);
+    // Obergrenze: auch eine Stunde Dehnen bringt höchstens MOB_DAY_MAX Einheiten.
+    const grenze = await s.page.evaluate(() => [mobUnitsFromMin(5), mobUnitsFromMin(30), mobUnitsFromMin(60), MOB_DAY_MAX]);
+    pruefe(grenze[0] === 0.5 && grenze[1] === 2 && grenze[2] === 2 && grenze[3] === 2, "Obergrenze: " + JSON.stringify(grenze));
     await s.page.evaluate(() => { document.getElementById("tab-koerper").click(); });
     await s.warte(900);
     await s.page.evaluate(() => document.querySelector('#mlistmode [data-m="mob"]').click());

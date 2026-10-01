@@ -157,3 +157,33 @@ Grundlage: Transkripte. Was nur im Bild zu sehen war (Bildschirmaufbau, Farben),
 **Nicht übernehmen:** Bauen ab Null mit React Native/Expo/SwiftUI, Node, npm (Regel: keine
 Build-Kette), fremde GIF-Datensätze, KI-Auswertung von Fotos (bräuchte einen
 Schlüssel und einen Server, dazu KI-Kennzeichnung nach E4).
+
+## E9 „Vibe Coding ist eine Falle“ (Video 19)
+
+- **Behauptung:** Coding-Agenten machen Projekte über die Zeit kaputt. Sie treffen
+  Entscheidungen still und bauen unnötige Komplexität ein. Irgendwann drehen sie sich im
+  Kreis und machen Bestehendes wieder kaputt.
+- **Gegenmittel laut Video:**
+  - Anforderungen mit prüfbaren Kriterien, bevor Code entsteht
+  - geordneter Kontext, damit der Agent nicht raten muss
+  - automatische Tests, die jede Änderung prüfen
+- **Stimmt.** Der Rest des Videos ist ein Lockmittel („Kommentiere Vibe“).
+- **Stand bei Formwert (Prüfung 01.10.2026):**
+  - Kontext haben wir: `AGENTS.md`, Memory, `wissen/`, Plan-Datei.
+  - Tests haben wir auch: `tests/formwert-tests.js`, 14 Prüfungen, laufen auf GitHub bei
+    jedem Push.
+  - **Aber:** Seit 30.09. abends waren sie rot, bei über 25 Pushes, und niemand hat es
+    bemerkt.
+- **Ursache:** Beim Live-Abgleich am 30.09. kam die Regel „über 10 min zählt jede Minute
+  halb, höchstens 2 Einheiten pro Tag“ (`mobUnitsFromMin`). Der Test erwartete weiter genau
+  1 Einheit. Die Änderung war gewollt, aber die Prüfkriterien wurden nicht mitgezogen.
+  Genau das beschreibt das Video.
+- **Was wir gemacht haben:**
+  - Test an die neue Regel angepasst, dazu eine Prüfung der Obergrenze.
+  - SessionStart-Hook `.claude/hooks/tests_status.py` meldet rote Tests. Bei Grün sagt
+    er nichts.
+  - In `AGENTS.md` steht jetzt: Tests vor dem Veröffentlichen grün. Wer Verhalten ändert,
+    passt den Test im selben Commit an. Neue Funktionen bekommen vorher 2–4 prüfbare
+    Kriterien.
+- **Bewusst nicht:** Kein großes „Framework“ und keine Anforderungsdokumente pro
+  Kleinigkeit. Für eine Ein-Personen-App reichen ein paar Kriterien im Plan und ein Test.

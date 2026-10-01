@@ -23,5 +23,6 @@ T = Transkript (gesprochener Text, ab #17 per Skill `video-lernen`). Bei #1–16
 | 16 | [Dds35BRiPR4](https://www.instagram.com/p/Dds35BRiPR4/) | daserfolgskraftwerk | Lernen | 6 Tutor-Prompts: Feynman, Fehlersimulator, Lernpfad | B | prüfen → E7 |
 | 17 | [6q8joS_592k](https://youtu.be/6q8joS_592k) | Mikey No Code (YouTube, 21:51) | App bauen | Mathe-Hilfe-App mit React Native/Expo: erst Oberfläche mit Platzhaltern, dann Foto-Upload, KI-Auswertung, Speichern, Lernbereich, Quiz | T | größtenteils haben wir, Idee „Technik lernen“ prüfen → E8 |
 | 18 | [M26405lGR9s](https://youtu.be/M26405lGR9s) | SuCodee (YouTube, 13:54) | Trainings-App | iOS-Workout-App (SwiftUI): Onboarding → Plan, Übungsbibliothek mit GIFs, Timer im Hintergrund, Banner „laufende Übung“, Dunkelmodus-Fehler | T | größtenteils haben wir, Ausrüstung im Onboarding prüfen → E8 |
+| 19 | [DcA8lcGM7kg](https://www.instagram.com/p/DcA8lcGM7kg/) | alex.sprogis | Arbeitsweise | „Vibe Coding ist eine Falle“: Agenten bauen still Komplexität ein. Abhilfe: prüfbare Anforderungen, Kontext, automatische Tests | T | ja, umgesetzt (Tests waren rot) → E9 |
 
-E1 … E8 verweisen auf die Abschnitte in `erkenntnisse.md`.
+E1 … E9 verweisen auf die Abschnitte in `erkenntnisse.md`.

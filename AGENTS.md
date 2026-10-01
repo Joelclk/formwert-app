@@ -34,6 +34,13 @@ und `wissen/erkenntnisse.md`.
   Dateien. Wenn Speicherung, Backup, Sync oder Eingaben betroffen sind, außerdem
   `/security-review`. Im Testdurchlauf auf 375 px Breite die längsten Übungsnamen
   ansehen (Training, Banner, Routinenliste, Kopfzeile). Sie dürfen nichts aus dem Bild schieben.
+- **Tests müssen grün sein** (`tests/formwert-tests.js`, läuft bei jedem Push). Vor dem
+  Veröffentlichen `gh run list -w Tests -L 1` ansehen. Rot heißt: erst klären, dann weiter.
+  Der SessionStart-Hook `.claude/hooks/tests_status.py` meldet Rot von selbst.
+- **Wer Verhalten bewusst ändert, passt den Test im selben Commit an.** Neue Funktion: vorher
+  2–4 prüfbare Kriterien aufschreiben („10 min Dehnen = 1 Einheit, höchstens 2 pro Tag“). Die
+  wichtigsten davon kommen als Test dazu. Keine Entscheidung still treffen: Gibt es mehrere
+  sinnvolle Varianten, die gewählte im Commit nennen (Hintergrund: `wissen/erkenntnisse.md` E9).
 - **Vor Arbeit an einem Thema** `wissen/` danach durchsehen (Übungstechnik, Design, Tools).
 - **Keine großen Plugin-Pakete installieren.** Sie verlängern die Grundanweisungen jedes
   Schritts. Einzelne Agenten oder Skills nur gezielt übernehmen.
