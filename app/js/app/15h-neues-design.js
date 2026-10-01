@@ -1251,7 +1251,7 @@ function fwMuscleExercises(fk,m){
         var cl=!ex.custom&&typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[ex.id];
         if(cl){var im=el("img");im.src="assets/posen/"+cl+".webp";im.alt="";im.loading="lazy";im.decoding="async";pic.appendChild(im);pic.classList.add("pose");
           im.onerror=function(){im.remove();pic.classList.remove("pose");try{fillExFig(fig());}catch(e){}};
-          var pl=el("i","fw-md-play");pl.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';t.appendChild(pl);}
+          var pl=el("i","fw-md-play");pl.innerHTML='<svg viewBox="0 0 24 24"><path d="M8.5 6.2v11.6l9.6-5.8z" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';t.appendChild(pl);}
         else figs.push(fig());
         t.appendChild(pic);
         t.appendChild(el("span","fw-md-exn",ex.n));

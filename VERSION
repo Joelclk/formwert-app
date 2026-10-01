@@ -1,5 +1,5 @@
-Version 525 (Artifact-Version 1790892911-3f2a)
+Version 526 (Artifact-Version 1790894790-64a0)
 Stand: 2026-10-02
-Aenderung: Muskel-Detail zeigt Bewegungsbilder der Uebungen (mit Play-Zeichen, Uebungen mit Bild zuerst); enthaelt Live-Stand Version 524 der anderen Sitzung (Kniebeuge Langhantel squat_lh)
+Aenderung: Play-Zeichen in den Uebungskacheln des Muskel-Details optisch zentriert
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
