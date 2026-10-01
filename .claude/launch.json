@@ -1,0 +1,122 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "formwert-static",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/joelcelik/Documents/GitHub/formwert app' && exec python3 -m http.server 8934"
+      ],
+      "port": 8934
+    },
+    {
+      "name": "formwert-apptest",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/joelcelik/fw-apptest && exec python3 -m http.server 8935"
+      ],
+      "port": 8935
+    },
+    {
+      "name": "formwert-merge",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/joelcelik/fw-apptest-merge && exec python3 -m http.server 8936"
+      ],
+      "port": 8936
+    },
+    {
+      "name": "formwert-mobil",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/ee7e74d5-4a27-4c29-85c8-1754bfb34c19/scratchpad/testapp && exec python3 -m http.server 8937"
+      ],
+      "port": 8937
+    },
+    {
+      "name": "formwert-posen",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/ee7e74d5-4a27-4c29-85c8-1754bfb34c19/scratchpad && exec python3 srv.py 8938"
+      ],
+      "port": 8938
+    },
+    {
+      "name": "fw3d-test",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/m3d' && exec python3 srv.py 8951"
+      ],
+      "port": 8951
+    },
+    {
+      "name": "fw3d-app",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/wt3d/app' && exec python3 -m http.server 8952"
+      ],
+      "port": 8952
+    },
+    {
+      "name": "fw3d-demo",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/demo/app' && exec python3 ../../m3d/srv.py 8953"
+      ],
+      "port": 8953
+    },
+    {
+      "name": "formwert-aufnahme",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "exec python3 '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/2f966656-28cc-4f32-a2de-0d2e872f1abe/scratchpad/aufnahme/server.py' '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/ee7e74d5-4a27-4c29-85c8-1754bfb34c19/scratchpad/testapp' '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/2f966656-28cc-4f32-a2de-0d2e872f1abe/scratchpad/aufnahme' 8961"
+      ],
+      "port": 8961
+    },
+    {
+      "name": "fw-bank",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/wtbank/app' && exec python3 ../../m3d/srv.py 8954"
+      ],
+      "port": 8954
+    },
+    {
+      "name": "fw-bankdemo",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/bankdemo/app' && exec python3 ../../m3d/srv.py 8955"
+      ],
+      "port": 8955
+    },
+    {
+      "name": "fw-livetest",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/d9c5855f-2007-4250-8170-69939cb5306c/scratchpad/livetest' && exec python3 -m http.server 8956"
+      ],
+      "port": 8956
+    },
+    {
+      "name": "fw-schraegtest",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/joelcelik/fw-schraegtest && exec python3 srv.py 8960"
+      ],
+      "port": 8960
+    }
+  ]
+}

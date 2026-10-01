@@ -17,6 +17,36 @@ Die Einzeldatei `formwert_app.html` und `quelltext/` weiter unten sind **veralte
 
 Die Regeln für den Code weiter unten gelten unverändert.
 
+## Arbeitsweise ab 01.10.2026 – von selbst anwenden, Joel nicht erinnern lassen
+
+Hintergrund: `wissen/kontingent-2026-10-01.md` (lange Sitzungen kosten bis 4× je Schritt)
+und `wissen/erkenntnisse.md`.
+
+- **Eine Aufgabe pro Sitzung.** Ist ein Abschnitt fertig (Muskel, Clip, Funktion), Stand in
+  Memory/Plan festhalten und Joel eine neue Sitzung vorschlagen. Ein Hook
+  (`.claude/hooks/kontext_hinweis.py`) meldet sich ab 250.000 Tokens – dann ansprechen.
+- **Mechanisches an `werkzeug-helfer`** (`.claude/agents/`, günstigeres Modell): Suchen,
+  `ruck_messen.py`, `patch_anwenden.py --probe`, Syntaxprüfung, Blender-Läufe mit Kennzahlen.
+  Entscheidungen, 3D-Gestaltung, Zusammenführen und Veröffentlichen bleiben in der Hauptsitzung.
+- **Ausgaben klein halten:** Blender-Skripte geben nur Kennzahlen aus, der Rest geht in eine
+  Datei. Text lesen statt Screenshots; Screenshots verkleinert (`scale` 0.5).
+- **Vor jedem Veröffentlichen** zusätzlich zum Testdurchlauf: `/code-review` auf die geänderten
+  Dateien. Wenn Speicherung, Backup, Sync oder Eingaben betroffen sind, außerdem
+  `/security-review`. Im Testdurchlauf auf 375 px Breite die längsten Übungsnamen
+  ansehen (Training, Banner, Routinenliste, Kopfzeile). Sie dürfen nichts aus dem Bild schieben.
+- **Tests müssen grün sein** (`tests/formwert-tests.js`, läuft bei jedem Push). Vor dem
+  Veröffentlichen `gh run list -w Tests -L 1` ansehen. Rot heißt: erst klären, dann weiter.
+  Der SessionStart-Hook `.claude/hooks/tests_status.py` meldet Rot von selbst.
+- **Wer Verhalten bewusst ändert, passt den Test im selben Commit an.** Neue Funktion: vorher
+  2–4 prüfbare Kriterien aufschreiben („10 min Dehnen = 1 Einheit, höchstens 2 pro Tag“). Die
+  wichtigsten davon kommen als Test dazu. Keine Entscheidung still treffen: Gibt es mehrere
+  sinnvolle Varianten, die gewählte im Commit nennen (Hintergrund: `wissen/erkenntnisse.md` E9).
+- **Vor Arbeit an einem Thema** `wissen/` danach durchsehen (Übungstechnik, Design, Tools).
+- **Keine großen Plugin-Pakete installieren.** Sie verlängern die Grundanweisungen jedes
+  Schritts. Einzelne Agenten oder Skills nur gezielt übernehmen.
+- **Offene Aufgaben** gehören auf die To-Do-Liste (Artifact „Formwert Offene Punkte“,
+  https://claude.ai/artifact/VKH7jhzqZusa8JakMewBAs), nicht nur in den Chat.
+
 ---
 
 Diese Datei richtet sich an ChatGPT, Claude oder jeden anderen Assistenten,

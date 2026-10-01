@@ -13,7 +13,7 @@ in diesem Repo.
 | Repo | **Veraltet.** Hier liegt noch die Einzeldatei von Version 267. Die aktuelle Fassung existiert nur im Artifact. |
 | Cloud | Sync und Backup-Download laufen über die Claude-Artifact-Laufzeit (`window.claude.use("db")`, `"downloads"`). **Außerhalb von claude.ai gibt es keine Cloud.** |
 | Schriften | Kommen von Google Fonts (externer Server). |
-| Tests | Keine automatischen Tests im Repo. |
+| Tests | `tests/formwert-tests.js` (Playwright, GitHub Actions bei jedem Push), Status meldet `.claude/hooks/tests_status.py`. |
 
 ## 2. Framework: Empfehlung
 
