@@ -83,24 +83,26 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .appbar-search svg{width:22px;height:22px}
 
 /* ---------- Heute-Karte ---------- */
-.heute-karte{position:relative;overflow:hidden;margin:4px -4px var(--s3);padding:20px 20px 18px;border-radius:28px;
+.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:20px 20px 18px;border-radius:28px;
   background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 26%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow);animation:fwRise .5s var(--ease) both}
 .heute-karte.calm,.heute-karte.done{background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--good) 18%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
-.hk-top{display:flex;gap:8px;align-items:stretch;min-height:236px}
+.hk-top{display:flex;gap:8px;align-items:stretch;min-height:190px}
 .hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .hk-eye{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
 .heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
 .heute-karte.live .hk-eye{display:inline-flex;align-items:center;gap:7px}
 .heute-karte.live .hk-eye::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
-.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:31px;line-height:1.02;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
+.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:28px;line-height:1.04;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
 .hk-sub{font-size:14.5px;color:var(--ink-2)}
 .hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
-.hk-chips{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:10px}
+/* Erholt-Schildchen: zwei gleich breite Spalten. Bei zwei Muskeln stehen sie nebeneinander, bei
+   drei kommt der dritte darunter - jedes Schildchen hat immer dieselbe Breite. */
+.hk-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
 .hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
 /* Große Figur rechts über die ganze Höhe des Textes - wie im Startbild der Vorschau. */
-.hk-fig{flex:none;width:118px;height:248px;margin:-10px -10px -8px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+.hk-fig{flex:none;width:110px;height:210px;margin:-10px -8px -6px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
 .hk-fig svg{width:100%;height:100%}
 .fw-go{margin-top:16px;min-height:56px;font-size:17px;gap:10px}
 .fw-go svg{width:20px;height:20px}
@@ -337,8 +339,8 @@ body:not([data-tab="tab-training"]):not([data-tab="tab-entdecken"]) .appbar-sear
 
 /* ---------- Heute wie in der Vorschau ---------- */
 #p-heute #hero,#p-heute .weekcard,#p-heute h2.sec:has(+ .weekcard){display:none!important}
-.hk-rec{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;padding:7px 14px 7px 10px;border-radius:var(--r-pill)}
-.hk-rec svg{width:17px;height:17px}
+.hk-rec{display:flex;align-items:center;gap:5px;min-width:0;font-size:13.5px;font-weight:600;padding:8px 12px 8px 10px;border-radius:var(--r-pill);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk-rec svg{width:15px;height:15px;flex:none}
 .hk-rec.ok{background:var(--good-soft);color:var(--good)}
 .hk-rec.wait{background:var(--warn-soft);color:var(--warn)}
 .fw-hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
