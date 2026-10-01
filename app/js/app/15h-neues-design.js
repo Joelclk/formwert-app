@@ -763,8 +763,10 @@ function fwRichRoutineCards(list){
       Array.prototype.forEach.call(strip.querySelectorAll("svg[data-ex]:not([data-filled])"),function(sv){try{fillExFig(sv);}catch(e){}});
     },{passive:true});
     wrap.appendChild(strip);if(dots.children.length>1)wrap.appendChild(dots);
-    if(card.classList.contains("rc-next"))wrap.appendChild(el("span","rs-next","Als Nächstes"));
     card.insertBefore(wrap,card.firstChild);
+    // "Als Nächstes" steht über dem Namen statt auf dem Bild - dort verdeckte es die Figur.
+    if(card.classList.contains("rc-next")){var mn=card.querySelector(".rc-txt");var nb=el("span","rs-next","Als Nächstes");
+      if(mn)mn.insertBefore(nb,mn.firstChild);else wrap.appendChild(nb);}
   });
   if(draws.length)requestAnimationFrame(function(){draws.forEach(function(o){try{drawMini(o.sv,o.v,o.sets);}catch(e){}});});
 }
@@ -840,6 +842,33 @@ function fwPlanSections(sw,list){
    Wochenziel-Ring und "Eintragen", unten der Verlauf - das ist die bisherige Tagesliste von
    "Heute" (renderToday), hierher verschoben; die Notiz entfällt. */
 var FW_HEART="M3 12h4l2.5-6 4 12 2.5-6H21",FW_STRETCH="M12 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 11l7-4 7 4M12 7v7M12 14l-4 6M12 14l4 6";
+function fwTodayEntries(t,d){
+  var wIds={},groups={},order=[];(d.workouts||[]).forEach(function(wo){wIds[wo.id]=1;});
+  (d.sets||[]).forEach(function(s,i){if(s.wid&&wIds[s.wid])return;var ex=exById(s.ex);if(!ex)return;
+    if(!groups[s.ex]){groups[s.ex]=[];order.push(s.ex);}groups[s.ex].push(i);});
+  if(!order.length&&!(d.workouts||[]).length)return;
+  var ls=el("div","fw-te");
+  (d.workouts||[]).slice().reverse().forEach(function(wo){
+    var r=el("button","fw-te-wo");r.type="button";
+    var m=el("div","fw-te-m");m.appendChild(el("b",null,wo.name));
+    m.appendChild(el("span",null,(wo.exs||0)+" Übungen · "+(wo.sets||0)+" Sätze"+(wo.dur?" · "+Math.max(1,Math.round(wo.dur/60))+" min":"")));r.appendChild(m);
+    var cv=el("i","fw-te-c");cv.innerHTML=svgIcon(IC_CHEV,2);r.appendChild(cv);
+    r.onclick=function(){sheetWorkoutDetail(TODAY,wo);};ls.appendChild(r);});
+  order.forEach(function(id){
+    var ex=exById(id),row=el("div","fw-te-ex"),hd=el("div","fw-te-h");
+    var nm=el("button","fw-te-n",ex.n);nm.type="button";nm.onclick=function(){sheetExerciseDetail(ex);};hd.appendChild(nm);
+    var add=el("button","fw-te-add");add.type="button";add.setAttribute("aria-label","Weiteren Satz "+ex.n);add.innerHTML=svgIcon("M12 5v14M5 12h14",2.4);
+    add.onclick=function(){sheetAddSet(ex);};hd.appendChild(add);row.appendChild(hd);
+    var chips=el("div","fw-te-sets");
+    groups[id].forEach(function(i,k){
+      var c=el("button","fw-te-set");c.type="button";c.setAttribute("aria-label","Satz "+(k+1)+" bearbeiten");
+      c.appendChild(el("small",null,String(k+1)));c.appendChild(document.createTextNode(setLabel(ex,d.sets[i])));
+      var pen=el("i");pen.innerHTML=svgIcon("M4 20h4L19 9l-4-4L4 16v4z",2);c.appendChild(pen);
+      c.onclick=function(){sheetEditLoggedSet(ex,TODAY,i,function(){setTimeout(function(){renderAll();},180);});};
+      chips.appendChild(c);});
+    row.appendChild(chips);ls.appendChild(row);});
+  t.appendChild(ls);
+}
 function fwTrainExtras(){
   var sw=$("start-wrap");if(!sw||!state.profile)return;
   var d=state.days[TODAY]||emptyDay(),g=state.profile.goals||{},w=weekStats(TODAY);
@@ -856,6 +885,10 @@ function fwTrainExtras(){
   [["Kraft",nSets+(nSets===1?" Satz":" Sätze")],["Ausdauer",cMin+" min"],["Mobilität",mMin+" min"]].forEach(function(o){
     var k=el("div","fw-ws");k.appendChild(el("span",null,o[0]));k.appendChild(el("b","num",o[1]));grid.appendChild(k);});
   t.appendChild(grid);
+  // Was heute eingetragen ist, direkt hier zum Antippen und Ändern - vorher stand es nur ganz
+  // unten im Verlauf und war kaum zu finden. Abgeschlossene Trainings als eine Zeile, lose Sätze
+  // je Übung mit einem Knopf pro Satz.
+  try{fwTodayEntries(t,d);}catch(e){}
   // 2) Ausdauer & Mobilität
   var x=$("fw-extra");if(!x){x=el("div","fw-extra");x.id="fw-extra";sw.appendChild(x);}
   x.innerHTML="";x.appendChild(el("h2","fw-extra-h","Ausdauer & Mobilität"));

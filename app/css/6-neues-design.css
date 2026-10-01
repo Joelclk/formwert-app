@@ -657,3 +657,40 @@ body[data-tab="tab-koerper"] .fw-hact{display:none}
 .hk-row:active{opacity:.7}
 .hk-more{align-self:flex-start;margin-top:4px;padding:8px 2px;border:0;background:none;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .heute-karte.recap .fw-go.ghost{min-height:46px;font-size:15px}
+
+/* ---------- Körper: Kopf der Regionen-Liste luftiger ----------
+   Der Umschalter Training/Mobilität war ein Balken über die ganze Breite, der per Minus-Abstand
+   neben die Überschrift rutschte - sein Hintergrund lag als dunkler Streifen hinter dem Titel.
+   Jetzt nur so breit wie die zwei Knöpfe, rechts neben der Überschrift, mit Luft nach unten. */
+#p-koerper h2.sec:has(#mlisthead){margin:22px 2px 12px;padding-right:190px;font-size:22px}
+#p-koerper h2.sec:has(#mlisthead)+#mlistmode{width:max-content;margin:-46px 0 16px auto;padding:3px;gap:2px;
+  background:var(--surface-2);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 7%,transparent)}
+#mlistmode .fchip{height:32px;padding:0 14px;font-size:13px;background:transparent;color:var(--ink-2)}
+#mlistmode .fchip[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+/* Karten rasten im Seitenabstand ein, nicht am Bildschirmrand. */
+#mlist{scroll-padding-inline:var(--s4);gap:12px}
+#mlist>.row.tap:not(.sub):not(.mrow){flex-basis:156px}
+#mlistmode .fchip::before{content:none!important;display:none!important}
+#mlistmode .fchip{padding:0 13px}
+#p-koerper h2.sec:has(#mlisthead){padding-right:172px;font-size:21px;white-space:nowrap}
+
+/* ---------- Training: heute Eingetragenes direkt bearbeitbar ---------- */
+.fw-te{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.fw-te-wo{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:0;border-radius:16px;background:var(--surface-2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fw-te-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fw-te-m b{font-size:15px}
+.fw-te-m span{font-size:12.5px;color:var(--ink-2)}
+.fw-te-c{display:flex;color:var(--ink-3)}.fw-te-c svg{width:16px;height:16px}
+.fw-te-ex{padding:10px 12px 12px 14px;border-radius:16px;background:var(--surface-2)}
+.fw-te-h{display:flex;align-items:center;gap:8px}
+.fw-te-n{flex:1;min-width:0;padding:4px 0;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:600;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.fw-te-add{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;border-radius:50%;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-strong);cursor:pointer}
+.fw-te-add svg{width:16px;height:16px}
+.fw-te-sets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fw-te-set{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 10px 0 6px;border:0;border-radius:12px;
+  background:var(--surface);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 9%,transparent);color:var(--ink);font:inherit;font-size:13.5px;font-variant-numeric:tabular-nums;cursor:pointer}
+.fw-te-set small{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:8px;background:var(--surface-2);color:var(--ink-2);font-size:11.5px;font-weight:700}
+.fw-te-set i{display:flex;color:var(--ink-3)}.fw-te-set i svg{width:13px;height:13px}
+.fw-te-set:active{opacity:.7}
+/* "Als Nächstes" als kleines Schild über dem Namen der Einheit, nicht mehr über der Figur. */
+.rc-item .rc-txt .rs-next{position:static;align-self:flex-start;display:inline-flex;margin:0 0 4px;padding:3px 9px;font-size:10.5px}
