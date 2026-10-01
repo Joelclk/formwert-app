@@ -83,12 +83,12 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .appbar-search svg{width:22px;height:22px}
 
 /* ---------- Heute-Karte ---------- */
-.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:18px 18px 16px;border-radius:26px;
+.heute-karte{position:relative;overflow:hidden;margin:4px -4px var(--s3);padding:20px 20px 18px;border-radius:28px;
   background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 26%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow);animation:fwRise .5s var(--ease) both}
 .heute-karte.calm,.heute-karte.done{background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--good) 18%,var(--surface)) 0%,var(--surface) 62%);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
-.hk-top{display:flex;gap:10px;align-items:flex-start}
+.hk-top{display:flex;gap:8px;align-items:stretch;min-height:236px}
 .hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .hk-eye{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
 .heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
@@ -99,7 +99,8 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
 .hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
 .hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
-.hk-fig{flex:none;width:84px;height:156px;margin:-6px -4px -10px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+/* Große Figur rechts über die ganze Höhe des Textes - wie im Startbild der Vorschau. */
+.hk-fig{flex:none;width:118px;height:248px;margin:-10px -10px -8px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
 .hk-fig svg{width:100%;height:100%}
 .fw-go{margin-top:16px;min-height:56px;font-size:17px;gap:10px}
 .fw-go svg{width:20px;height:20px}
