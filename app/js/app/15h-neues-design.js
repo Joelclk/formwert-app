@@ -95,11 +95,97 @@ function fwRecoveryChips(items){
    Ganz oben auf "Heute": genau eine Sache, die jetzt dran ist, mit einem großen Knopf.
    Reihenfolge der Fälle wie bei renderHeroNext(): laufendes Training > Training > Mobilität > fertig.
    Die nächste Einheit ist die, die in deiner Reihenfolge auf die zuletzt gemachte folgt. */
+/* ================= Mein Plan =================
+   Nicht jede angelegte Einheit gehört in die Reihenfolge - viele sind alte Vorlagen oder kommen
+   nur selten dran. Der Plan sind die 3-4 Einheiten, die man wirklich im Wechsel trainiert, in
+   fester Reihenfolge. Gespeichert direkt an der Einheit (routine.plan = Platz 0, 1, 2 ...), damit
+   er mit den Einheiten in die Cloud geht. "Überspringen" merkt sich die übersprungene Einheit im
+   Profil (profile.planSkip), bis wieder eine Plan-Einheit trainiert wurde. */
+function fwPlanIds(){
+  return Object.keys(state.routines||{}).filter(function(id){var r=state.routines[id];return r&&typeof r.plan==="number";})
+    .sort(function(a,b){return state.routines[a].plan-state.routines[b].plan;});
+}
+function fwPlanLast(plan){
+  // Zuletzt trainierte Plan-Einheit (Datum) - andere Einheiten dazwischen zählen nicht.
+  var last=routineLastUse(),best=-1,bestD="";
+  plan.forEach(function(id,i){var r=state.routines[id],lu=r&&last[r.name];if(lu&&lu.d>=bestD){bestD=lu.d;best=i;}});
+  return {i:best,d:bestD};
+}
 function fwNextRoutine(){
+  var plan=fwPlanIds();
+  if(plan.length){
+    var L=fwPlanLast(plan),nx=plan[(L.i+1)%plan.length];
+    var sk=state.profile&&state.profile.planSkip;
+    // Übersprungen wird ab der zuletzt trainierten Plan-Einheit; nach dem nächsten Training gilt wieder die Reihenfolge.
+    if(sk&&sk.after===L.d&&sk.n>0)nx=plan[(L.i+1+sk.n)%plan.length];
+    return nx;
+  }
+  // Ohne Plan: nur Einheiten der letzten 4 Wochen im Wechsel, sonst die erste.
   var ids=routineIds();if(!ids.length)return null;
+  var rec=fwPlanSuggest();if(rec.length)ids=rec;
   var last=routineLastUse(),best=-1,bestD="";
   ids.forEach(function(id,i){var r=state.routines[id],lu=r&&last[r.name];if(lu&&lu.d>=bestD){bestD=lu.d;best=i;}});
   return ids[(best+1)%ids.length];
+}
+function fwPlanSkip(){
+  var plan=fwPlanIds();if(!plan.length||!state.profile)return;
+  var L=fwPlanLast(plan),sk=state.profile.planSkip;
+  var n=(sk&&sk.after===L.d?sk.n:0)+1;if(n>=plan.length)n=0;
+  state.profile.planSkip={after:L.d,n:n};persist();renderAll();
+}
+/* Vorschlag für einen Plan: die Einheiten, die in den letzten 4 Wochen trainiert wurden, in der
+   Reihenfolge, in der sie zuletzt drankamen (älteste zuerst) - höchstens fünf. */
+function fwPlanSuggest(){
+  var from=shiftDays(TODAY,-27),seen={},order=[];
+  Object.keys(state.days).filter(function(k){return k>=from&&k<=TODAY;}).sort().forEach(function(k){
+    (state.days[k].workouts||[]).forEach(function(wo){if(wo&&wo.name)seen[wo.name]=k;});});
+  Object.keys(state.routines||{}).forEach(function(id){var r=state.routines[id];if(r&&seen[r.name])order.push(id);});
+  order.sort(function(a,b){var x=seen[state.routines[a].name],y=seen[state.routines[b].name];return x<y?-1:x>y?1:0;});
+  return order.slice(-5);
+}
+function fwSetPlan(ids){
+  Object.keys(state.routines).forEach(function(id){
+    var r=state.routines[id],want=ids.indexOf(id);
+    if(want>=0){if(r.plan!==want){r.plan=want;state.dirtyRoutines[id]=true;}}
+    else if(typeof r.plan==="number"){delete r.plan;state.dirtyRoutines[id]=true;}
+  });
+  if(state.profile&&state.profile.planSkip){delete state.profile.planSkip;}
+  persist();secDirty.training=true;renderAll();try{renderRoutines();}catch(e){}
+}
+function sheetPlan(){
+  var plan=fwPlanIds();if(!plan.length)plan=fwPlanSuggest();
+  var sel=plan.slice();
+  openSheet(function(b){
+    sheetTitle(b,"Mein Plan");
+    b.appendChild(el("p","note","Wähl die Einheiten, die du im Wechsel trainierst, und bring sie in deine Reihenfolge. Alles andere steht unter „Weitere Einheiten“ und lässt sich trotzdem jederzeit starten."));
+    var list=el("div","fw-plan-list");b.appendChild(list);
+    function draw(){
+      list.innerHTML="";
+      var all=sel.concat(routineIds().filter(function(id){return sel.indexOf(id)<0;}));
+      all.forEach(function(id){
+        var r=state.routines[id];if(!r)return;var k=sel.indexOf(id),on=k>=0;
+        var row=el("div","fw-plan-row"+(on?" on":""));
+        var tg=el("button","fw-plan-tg");tg.type="button";tg.setAttribute("aria-pressed",String(on));
+        tg.innerHTML=on?'<b>'+(k+1)+'</b>':svgIcon("M12 5v14M5 12h14",2.2);
+        tg.setAttribute("aria-label",on?r.name+" aus dem Plan nehmen":r.name+" in den Plan");
+        tg.onclick=function(){if(on)sel.splice(k,1);else sel.push(id);draw();};
+        row.appendChild(tg);
+        var tx=el("div","fw-plan-tx");tx.appendChild(el("b",null,r.name));tx.appendChild(el("span",null,r.items.length+" Übungen"));row.appendChild(tx);
+        if(on){
+          var up=el("button","iconbtn");up.type="button";up.setAttribute("aria-label",r.name+" nach oben");up.innerHTML=svgIcon("M12 19V5M5 12l7-7 7 7",2);up.disabled=k===0;
+          up.onclick=function(){var t=sel[k-1];sel[k-1]=id;sel[k]=t;draw();};
+          var dn=el("button","iconbtn");dn.type="button";dn.setAttribute("aria-label",r.name+" nach unten");dn.innerHTML=svgIcon("M12 5v14M5 12l7 7 7-7",2);dn.disabled=k===sel.length-1;
+          dn.onclick=function(){var t=sel[k+1];sel[k+1]=id;sel[k]=t;draw();};
+          row.appendChild(up);row.appendChild(dn);
+        }
+        list.appendChild(row);
+      });
+    }
+    draw();
+    var save=el("button","btn primary block","Plan speichern");save.style.marginTop="14px";
+    save.onclick=function(){fwSetPlan(sel);closeSheet();toast(sel.length?"Plan gespeichert":"Plan entfernt");};
+    b.appendChild(save);
+  });
 }
 function fwRegionsOf(items){
   // Die zwei bis drei am stärksten beanspruchten Körperregionen einer Einheit, als kurze Überschrift.
@@ -128,6 +214,7 @@ function renderHeuteKarte(){
     if(r){
       // Wie in der Vorschau: oben der Name der Einheit, groß die Muskeln, die sie trifft.
       eye+=" · "+r.name;
+      var pl=fwPlanIds(),pidx=pl.indexOf(rid);if(pidx>=0&&pl.length>1)eye+=" · "+(pidx+1)+"/"+pl.length;
       var regs=fwRegionsOf(r.items);
       title=regs.length?regs.join(", "):r.name;
       var nSets=r.items.reduce(function(a,i){return a+(i.sets||0);},0);
@@ -164,6 +251,9 @@ function renderHeuteKarte(){
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';
     b.appendChild(document.createTextNode(btn[0]));b.onclick=btn[1];box.appendChild(b);
   }
+  // Nicht nach Plan heute? Eine Einheit weiterspringen, ohne die Reihenfolge zu verändern.
+  if(!workout&&!trained&&viewingToday&&fwPlanIds().length>1){
+    var sk=el("button","hk-skip","Überspringen – nächste Einheit im Plan");sk.type="button";sk.onclick=fwPlanSkip;box.appendChild(sk);}
   if(fig)requestAnimationFrame(function(){try{drawMini(fig,"front",fig._sets);}catch(e){}});
 }
 
@@ -215,7 +305,7 @@ function fwHeuteCards(){
    Wie ein Musik-Miniplayer: solange ein Training läuft, ist es von jedem Tab aus einen Tipp
    entfernt. Auf dem Trainings-Tab selbst und auf "Heute" (dort zeigt es die Heute-Karte) nicht. */
 function fwMiniUpdate(){
-  try{document.body.setAttribute("data-tab",tab);}catch(e){}
+  try{document.body.setAttribute("data-tab",tab);fwHeadAction();}catch(e){}
   var m=$("wo-mini");if(!m)return;
   var show=!!workout&&tab!=="tab-training"&&tab!=="tab-heute";
   m.hidden=!show;document.body.classList.toggle("has-mini",show);
@@ -460,8 +550,8 @@ var FW_UNIT_PREF={"Brust":"--blue","Trizeps":"--blue","Rücken":"--violet","Rüc
   "Schultern":"--gold","Bizeps":"--gold","Unterarme":"--gold","Quadrizeps":"--green","Beinbeuger":"--green","Waden":"--green",
   "Adduktoren":"--green","Gesäß":"--green","Rumpf":"--green"};
 function fwUnitColors(){
-  var out={},used={};
-  routineIds().forEach(function(id){
+  var out={},used={},pl=fwPlanIds();
+  pl.concat(routineIds().filter(function(id){return pl.indexOf(id)<0;})).forEach(function(id){
     var r=state.routines[id];if(!r)return;
     var top=fwRegionsOf(r.items)[0],c=FW_UNIT_PREF[top];
     if(!c||used[c])c=FW_UNIT_PAL.filter(function(x){return !used[x];})[0]||FW_UNIT_PAL[Object.keys(out).length%FW_UNIT_PAL.length];
@@ -534,13 +624,16 @@ function fwItemLabel(ex,it){
 }
 function fwRichRoutineCards(list){
   if(rcSort)return;
-  var ids=routineIds(),cards=list.querySelectorAll(".rc-item"),draws=[],cols=fwUnitColors(),next=fwNextRoutine();
+  var ids=routineIds(),cards=list.querySelectorAll(".rc-item"),draws=[],cols=fwUnitColors(),next=fwNextRoutine(),plan=fwPlanIds();
   Array.prototype.forEach.call(cards,function(card,i){
     var r=state.routines[ids[i]];if(!r)return;
     card.classList.add("rc-rich");card.style.setProperty("--uc",cols[ids[i]]||"var(--accent)");
+    card.setAttribute("data-rid",ids[i]);
     if(ids[i]===next&&ids.length>1)card.classList.add("rc-next");
-    // Nummer = Platz in deiner Reihenfolge, in der Farbe der Einheit.
-    var tx0=card.querySelector(".rc-txt");if(tx0){var num=el("span","rc-num",String(i+1));num.setAttribute("aria-hidden","true");card.insertBefore(num,tx0);}
+    // Nummer = Platz im Plan, in der Farbe der Einheit. Einheiten außerhalb des Plans haben keine Nummer.
+    var pn=plan.indexOf(ids[i]);
+    if(pn<0&&plan.length)card.classList.add("rc-extra");
+    var tx0=card.querySelector(".rc-txt");if(tx0&&pn>=0){var num=el("span","rc-num",String(pn+1));num.setAttribute("aria-hidden","true");card.insertBefore(num,tx0);}
     var old=card.querySelector(".rc-fig");if(old)old.remove();
     var fo=routineFocus(r.items);
     var wrap=el("div","rs-wrap"),strip=el("div","rs-strip"),dots=el("div","rs-dots");dots.setAttribute("aria-hidden","true");
@@ -586,6 +679,53 @@ function fwExFigs(pic,ex){
   });
 }
 
+/* Training-Tab: oben die Übungssuche, dann "Mein Plan" (nummeriert, in Reihenfolge), darunter
+   eingeklappt "Weitere Einheiten". Ohne Plan ein Vorschlag aus den letzten vier Wochen. */
+function fwPlanSections(sw,list){
+  if(rcSort)return;
+  // Übungssuche: großer Balken ganz oben, zeigt, wie viele Übungen es gibt.
+  var sb=$("fw-exsearch");
+  if(!sb){sb=el("button","fw-exsearch");sb.id="fw-exsearch";sb.type="button";sw.insertBefore(sb,sw.firstChild);
+    sb.onclick=function(){selectTab("tab-entdecken");window.scrollTo(0,0);setTimeout(function(){var i=$("disc-search");if(i)try{i.focus();}catch(e){}},250);};}
+  else if(sw.firstChild!==sb)sw.insertBefore(sb,sw.firstChild);
+  // Dieselbe Zählung wie "Alle Übungen" in der Übersicht: ohne Mobilität und Ausdauer.
+  var nEx=EX.filter(function(e){return !e.mob&&e.t!=="cardio";}).length;
+  sb.innerHTML=svgIcon("M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-4.3-4.3",2);
+  sb.appendChild(el("span","fw-exs-t","Übung suchen"));sb.appendChild(el("span","fw-exs-n",nEx+" Übungen"));
+  var plan=fwPlanIds(),head=list.previousElementSibling;
+  // Kopf "Meine Einheiten" wird zu "Mein Plan" mit Bearbeiten-Knopf
+  var cnt=$("routine-count"),hh=cnt&&cnt.closest("h2");
+  if(hh){var t=hh.querySelector(".sec-t");if(t)t.textContent=plan.length?"Mein Plan":"Meine Einheiten";
+    var pe=$("fw-planedit");if(!pe){pe=el("button","fw-planedit");pe.id="fw-planedit";pe.type="button";hh.appendChild(pe);pe.onclick=sheetPlan;}
+    pe.textContent=plan.length?"Plan bearbeiten":"Plan festlegen";
+    if(cnt)cnt.textContent=plan.length?String(plan.length):cnt.textContent;}
+  var tools=list.querySelector(".rc-tools");if(tools)tools.remove();
+  var old=$("fw-more");if(old)old.remove();var hint=$("fw-planhint");if(hint)hint.remove();
+  if(!plan.length){
+    var sug=fwPlanSuggest();
+    if(sug.length>1){
+      var h=el("div","fw-planhint");h.id="fw-planhint";
+      h.appendChild(el("b",null,"Leg deinen Plan fest"));
+      h.appendChild(el("span",null,"Vorschlag aus den letzten 4 Wochen: "+sug.map(function(id){return state.routines[id].name;}).join(" → ")));
+      var row=el("div","fw-planhint-btns"),ok=el("button","btn primary small","Übernehmen"),ed=el("button","btn ghost small","Anpassen");
+      ok.onclick=function(){fwSetPlan(sug);toast("Plan gespeichert");};ed.onclick=sheetPlan;
+      row.appendChild(ok);row.appendChild(ed);h.appendChild(row);
+      list.parentNode.insertBefore(h,list);
+    }
+    return;
+  }
+  // Plan-Karten in Plan-Reihenfolge, der Rest eingeklappt darunter.
+  var cards={};Array.prototype.forEach.call(list.querySelectorAll(".rc-item[data-rid]"),function(c){cards[c.getAttribute("data-rid")]=c;});
+  plan.forEach(function(id){if(cards[id])list.appendChild(cards[id]);});
+  var rest=Object.keys(cards).filter(function(id){return plan.indexOf(id)<0;});
+  if(rest.length){
+    var d=document.createElement("details");d.className="fw-more";d.id="fw-more";
+    var sm=document.createElement("summary");sm.appendChild(el("span",null,"Weitere Einheiten"));sm.appendChild(el("b","rc-count",String(rest.length)));d.appendChild(sm);
+    var inner=el("div","rc-list");rest.forEach(function(id){inner.appendChild(cards[id]);});d.appendChild(inner);
+    list.parentNode.insertBefore(d,list.nextSibling);
+  }
+}
+
 /* ================= Training-Tab: Starten zuerst =================
    Wer den Tab öffnet, will meistens loslegen. Deshalb stehen ganz oben das freie Training und
    daneben "Neue Einheit" / "Aus Vorlage", erst darunter die Liste der eigenen Einheiten.
@@ -601,16 +741,20 @@ function fwExFigs(pic,ex){
     var cnt=$("routine-count");if(cnt){var n=routineIds().length;cnt.textContent=n?String(n):"";cnt.className="rc-count";
       var hh=cnt.closest("h2");if(hh)hh.classList.add("rc-head");}
     var free=sw.querySelector(".free-card");
-    if(free&&sw.firstElementChild!==free){
+    if(free&&!free.dataset.fw){free.dataset.fw="1";
       var h=free.previousElementSibling;if(h&&h.classList.contains("sec"))h.remove();
-      var intro=sw.querySelector(".tr-intro");if(intro)intro.remove();
-      sw.insertBefore(free,sw.firstChild);
-    }
+      var intro=sw.querySelector(".tr-intro");if(intro)intro.remove();}
     var top=$("rc-top");
-    if(!top){top=el("div","rc-top");top.id="rc-top";sw.insertBefore(top,free?free.nextSibling:sw.firstChild);}
+    if(!top){top=el("div","rc-top");top.id="rc-top";}
     top.innerHTML="";
     Array.prototype.slice.call(list.querySelectorAll(".rc-add-row")).forEach(function(b){top.appendChild(b);});
     top.hidden=!top.children.length;
+    try{fwPlanSections(sw,list);}catch(e){}
+    // Reihenfolge oben: Übungssuche, freies Training, Neue Einheit / Vorlage.
+    var sb=$("fw-exsearch"),anchor=sb||null;
+    if(sb&&sw.firstChild!==sb)sw.insertBefore(sb,sw.firstChild);
+    if(free){sw.insertBefore(free,anchor?anchor.nextSibling:sw.firstChild);anchor=free;}
+    sw.insertBefore(top,anchor?anchor.nextSibling:sw.firstChild);
   };
 })();
 
@@ -747,6 +891,23 @@ function fwWoStats(){
   var oF=renderSession;renderSession=function(){oF();try{fwWoStats();}catch(e){}};
 })();
 
+/* Rechts in der Kopfzeile je Seite die passende Schnellaktion (neben dem Konto-Knopf):
+   Heute die Serie, Körper die Rang-Ansicht, Training den Plan, Ränge die Vitrine, Du die
+   Einstellungen. */
+function fwHeadAction(){
+  var bar=document.querySelector(".appbar"),me=$("fw-me");if(!bar||!me)return;
+  var b=$("fw-hact");if(!b){b=el("button","fw-hact");b.id="fw-hact";b.type="button";bar.insertBefore(b,me);}
+  var cfg={
+    "tab-koerper":["M12 2.8l7.5 3v6.1c0 4.4-3.1 7.7-7.5 9.3-4.4-1.6-7.5-4.9-7.5-9.3V5.8zM12 7.6l1.4 2.8 3.1.4-2.3 2.1.6 3-2.8-1.5-2.8 1.5.6-3-2.3-2.1 3.1-.4z","Ränge",function(){var rb=$("rkmode");if(rb)rb.click();setTimeout(fwHeadAction,50);}],
+    "tab-training":["M4 6h11M4 12h11M4 18h7M18 5v14M15 16l3 3 3-3","Plan",sheetPlan],
+    "tab-raenge":["M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4","Vitrine",function(){try{vtOpen("tro");}catch(e){}}],
+    "tab-werte":["M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.6.78 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z","Einstellungen",function(){try{openSettingsPage();}catch(e){}}]
+  }[tab];
+  if(!cfg){b.hidden=true;return;}
+  b.hidden=false;b.innerHTML=svgIcon(cfg[0],1.9);b.appendChild(el("span",null,cfg[1]));b.setAttribute("aria-label",cfg[1]);b.onclick=cfg[2];
+  b.classList.toggle("on",tab==="tab-koerper"&&bodyMode==="rank");
+}
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
@@ -756,6 +917,6 @@ function fwWoStats(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();

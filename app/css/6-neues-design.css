@@ -325,7 +325,7 @@ body.has-mini .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 
 .appbar>div:first-child{display:flex;flex-direction:column-reverse;gap:2px;flex:1;min-width:0}
 .appbar #todaydate{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
 /* Die Lupe (Übungen) nur dort, wo man sie braucht - auf Heute, Körper, Ränge und Du bleibt die Kopfzeile wie in der Vorschau. */
-body:not([data-tab="tab-training"]):not([data-tab="tab-entdecken"]) .appbar-search{display:none}
+body:not([data-tab="tab-entdecken"]) .appbar-search{display:none}
 #btn-settings{display:none!important}
 .fw-streak{flex:none;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--gold);font-size:13px}
 .fw-streak svg{width:16px;height:16px}
@@ -413,3 +413,40 @@ body.fw-go-on.wo-live #session-wrap>.card.flush{margin-bottom:80px}
 .hk-fig{position:relative;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--accent) 45%,transparent))}
 .hk-fig::before{content:"";position:absolute;inset:8% -10% 14%;border-radius:50%;z-index:-1;
   background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 30%,transparent),transparent)}
+
+/* ---------- Kopfzeile: Serie nur auf Heute, Schnellaktion je Seite ---------- */
+body:not([data-tab="tab-heute"]) .fw-streak{display:none}
+body[data-tab="tab-heute"] .fw-hact,body:not([data-tab]) .fw-hact{display:none}
+.fw-hact{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:0;border-radius:var(--r-pill);background:var(--surface-2);
+  color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.fw-hact svg{width:17px;height:17px;color:var(--accent)}
+.fw-hact.on{background:color-mix(in srgb,var(--gold) 20%,var(--surface-2));box-shadow:inset 0 0 0 1.5px var(--gold)}
+.fw-hact.on svg{color:var(--gold)}
+.fw-hact[hidden]{display:none}
+/* ---------- Training: Übungssuche, Plan ---------- */
+.fw-exsearch{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:4px 0 12px;padding:0 16px;border:0;border-radius:var(--r-pill);
+  background:var(--surface);box-shadow:var(--card-sh),inset 0 0 0 1px var(--rule);font:inherit;color:var(--ink-3);cursor:pointer;text-align:left}
+.fw-exsearch svg{width:20px;height:20px;color:var(--ink-2)}
+.fw-exs-t{flex:1;font-size:15px;color:var(--ink-2)}
+.fw-exs-n{font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-strong)}
+.fw-planedit{margin-left:auto;border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent-strong);cursor:pointer;padding:6px 0 6px 10px}
+.rc-head{display:flex;align-items:center;gap:8px}
+.fw-planhint{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:14px 16px;border-radius:20px;background:var(--surface);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 40%,transparent)}
+.fw-planhint b{font-family:var(--f-cond);font-size:17px}
+.fw-planhint span{font-size:13px;color:var(--ink-2);line-height:1.4}
+.fw-planhint-btns{display:flex;gap:8px;margin-top:4px}
+.fw-more{margin-top:14px}
+.fw-more summary{display:flex;align-items:center;gap:8px;padding:12px 4px;cursor:pointer;list-style:none;font-family:var(--f-cond);font-weight:700;font-size:17px;color:var(--ink-2)}
+.fw-more summary::-webkit-details-marker{display:none}
+.fw-more summary::after{content:"";width:8px;height:8px;margin-left:auto;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);transition:transform var(--t-fast) ease}
+.fw-more[open] summary::after{transform:rotate(-135deg)}
+.rc-item.rc-extra{--uc:var(--rule-2)!important}
+.hk-skip{display:block;margin:10px auto 0;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer;padding:6px}
+.fw-plan-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.fw-plan-row{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:16px;background:var(--surface-2)}
+.fw-plan-row.on{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.fw-plan-tg{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;border:0;cursor:pointer;background:var(--surface);color:var(--ink-3);box-shadow:inset 0 0 0 1px var(--rule-2)}
+.fw-plan-row.on .fw-plan-tg{background:var(--accent);color:var(--accent-ink);box-shadow:none;font-family:var(--f-cond);font-size:16px}
+.fw-plan-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.fw-plan-tx b{font-size:15px}
+.fw-plan-tx span{font-size:12px;color:var(--ink-3)}
