@@ -550,8 +550,8 @@ function fwMuscleRanks(){
     if(lg)lg.hidden=!rank;
     // Kurzinfo zur Auswahl ("Brust · 0 Sätze …") liegt als Schild auf der Figur statt als eigener
     // Kasten darüber - so bekommt die Figur den Platz.
-    var co=$("callout"),b3=$("body3d");if(co&&b3&&co.parentNode!==b3)b3.appendChild(co);
     try{fwBodyStage();}catch(e){}
+    try{fwSelCard();}catch(e){}
     // Ohne Auswahl zeigt der Detailkasten nur den Tipp, der schon unten in der Figur steht - dann weg damit.
     var md=$("mdetail");if(md)md.classList.toggle("fw-empty",!selFine&&!(selSet&&selSet.length));
   };
@@ -764,9 +764,9 @@ function fwRichRoutineCards(list){
     },{passive:true});
     wrap.appendChild(strip);if(dots.children.length>1)wrap.appendChild(dots);
     card.insertBefore(wrap,card.firstChild);
-    // "Als Nächstes" steht über dem Namen statt auf dem Bild - dort verdeckte es die Figur.
-    if(card.classList.contains("rc-next")){var mn=card.querySelector(".rc-txt");var nb=el("span","rs-next","Als Nächstes");
-      if(mn)mn.insertBefore(nb,mn.firstChild);else wrap.appendChild(nb);}
+    // "Als Nächstes" sitzt vorn in der Zeile "Zuletzt vor …" - nicht auf der Figur und ohne eigene Zeile.
+    if(card.classList.contains("rc-next")){var lt=card.querySelector(".rc-last"),nb=el("span","rs-next","Als Nächstes");
+      if(lt)lt.insertBefore(nb,lt.firstChild);else wrap.appendChild(nb);}
   });
   if(draws.length)requestAnimationFrame(function(){draws.forEach(function(o){try{drawMini(o.sv,o.v,o.sets);}catch(e){}});});
 }
@@ -1128,20 +1128,49 @@ function fwBodyStage(){
       var k=el("button","fw-sbtn");k.type="button";k.setAttribute("aria-label",o[0]);k.innerHTML=svgIcon(o[1],2);k.onclick=o[2];sb.appendChild(k);});
     b3.appendChild(sb);
   }
-  // Glas-Schild: Bild des Muskels, Skala mit Marker, Rangwappen.
-  var co=$("callout");if(!co||!lastC)return;
-  var f=effFine()&&FINE[effFine()],m=f&&muscleById(f.g);
-  var old=co.querySelector(".fw-co-x");if(old)old.remove();
-  if(!f||!m||co.querySelector(".co-hint"))return;
-  var x=el("div","fw-co-x"),pic=el("div","fw-co-pic");pic.setAttribute("aria-hidden","true");
-  var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");pic.appendChild(sv);
-  var sets={};sets[f.g]=1;requestAnimationFrame(function(){try{drawMini(sv,m.view==="back"?"back":"front",sets);}catch(e){}});
-  x.appendChild(pic);
-  var v=lastC.ms[f.g]||0,cm=corr(m),sc=el("div","fw-co-scale"),mk=el("i");mk.style.left=clamp(volLegendPos(v,m),0,100)+"%";sc.appendChild(mk);
-  var right=el("div","fw-co-r");right.appendChild(el("span","fw-co-goal",Math.round(v*10)/10+" Sätze · Ziel "+cm.mav));right.appendChild(sc);x.appendChild(right);
-  var rk=null;try{rk=fwMuscleRanks()[f.g];}catch(e){}
-  if(rk){var cr=el("span","fw-co-crest");cr.innerHTML=rankBadge(rk,34);cr.title=rk.name;x.appendChild(cr);}
-  co.appendChild(x);
+}
+/* Auswahl-Karte zwischen Figur und Regionen. Vorher lag ein Glas-Schild mit Fachbegriff, Prozent,
+   Zone und Betonung in einer Zeile auf der Figur und verdeckte sie. Jetzt steht darunter eine
+   eigene Karte mit nur dem Nötigen: Name, Status, Sätze gegen Ziel, Skala - und ein X zum Abwählen. */
+function fwSelCard(){
+  var b3=$("body3d");if(!b3||!lastC)return;
+  var box=$("fw-sel");
+  if(!box){box=el("div","fw-sel");box.id="fw-sel";}
+  if(box.previousElementSibling!==b3)b3.parentNode.insertBefore(box,b3.nextSibling);
+  box.innerHTML="";
+  var f=selFine&&FINE[selFine],ms=lastC.ms||{};
+  if(!f&&!(selSet&&selSet.length)){box.hidden=true;return;}
+  box.hidden=false;
+  var top=el("div","fw-sel-top"),tx=el("div","fw-sel-t"),pic=null,status=null,z=-1;
+  if(f){
+    var m=muscleById(f.g);
+    pic=el("div","fw-sel-pic");pic.setAttribute("aria-hidden","true");
+    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");pic.appendChild(sv);
+    if(m){var st={};st[f.g]=1;requestAnimationFrame(function(){try{drawMini(sv,m.view==="back"?"back":"front",st);}catch(e){}});}
+    tx.appendChild(el("b",null,f.de));
+    if(m){var v=Math.round((ms[f.g]||0)*10)/10;z=zoneOf(v,m);status=zoneLabel(z);}
+    else tx.appendChild(el("span","fw-sel-note","Wird im Training nicht eigens gezählt"));
+  }else{
+    var ids=[];selSet.forEach(function(k){var g=FINE[k]&&FINE[k].g;if(g&&ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
+    tx.appendChild(el("b",null,selLabel||"Auswahl"));
+    if(ids.length){var ok=0;ids.forEach(function(id){if(zoneOf(ms[id]||0,muscleById(id))===1)ok++;});
+      z=ok===ids.length?1:0;status=ok+" von "+ids.length+" im Ziel";}
+    else tx.appendChild(el("span","fw-sel-note","Wird im Training nicht eigens gezählt"));
+  }
+  if(status){var p=el("span","fw-sel-st z"+z);p.appendChild(el("i"));p.appendChild(document.createTextNode(status));tx.appendChild(p);}
+  if(pic)top.appendChild(pic);top.appendChild(tx);
+  var rk=null;if(f)try{rk=fwMuscleRanks()[f.g];}catch(e){}
+  if(rk){var cr=el("span","fw-sel-crest");cr.innerHTML=rankBadge(rk,38);cr.title=rk.name;top.appendChild(cr);}
+  var x=el("button","fw-sel-x");x.type="button";x.setAttribute("aria-label","Auswahl aufheben");x.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.2);
+  x.onclick=function(){selReset();selSet=null;selFine=null;selLabel=null;selTapKey=null;renderBodySel();try{renderRegionChips();}catch(e){}};
+  top.appendChild(x);box.appendChild(top);
+  // Zahl und Skala nur beim einzelnen gezählten Muskel.
+  var mm=f&&muscleById(f.g);
+  if(mm){
+    var val=Math.round((ms[f.g]||0)*10)/10,cm=corr(mm),row=el("div","fw-sel-num");
+    row.appendChild(el("b","num",fmtNum(val)));row.appendChild(el("span",null,"von "+cm.mav+" Sätzen · 7 Tage"));box.appendChild(row);
+    var sc=el("div","fw-co-scale fw-sel-scale"),mk=el("i");mk.style.left=clamp(volLegendPos(val,mm),0,100)+"%";sc.appendChild(mk);box.appendChild(sc);
+  }
 }
 (function(){
   // Muskelzeilen einer aufgeklappten Region unter die Kartenreihe legen (volle Breite).

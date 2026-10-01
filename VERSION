@@ -1,5 +1,5 @@
-Version 520 (Artifact-Version 1790881728-c446)
+Version 521 (Artifact-Version 1790882598-a963)
 Stand: 2026-10-01
-Aenderung: 3D: ein Finger senkrecht = hoch/runter; Koerper-Listenkopf entzerrt; heute eingetragene Saetze im Training-Tab bearbeitbar; "Als Naechstes" nicht mehr ueber der Figur
+Aenderung: Koerper: Muskel-Auswahl als eigene Karte unter der Figur (Name, Status, Saetze/Ziel, Skala, X); "Als Naechstes" in der Zuletzt-Zeile
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
