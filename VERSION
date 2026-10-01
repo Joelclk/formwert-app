@@ -1,5 +1,5 @@
-Version 518 (Artifact-Version 1790854804-d26e)
+Version 519 (Artifact-Version 1790859444-0632)
 Stand: 2026-10-01
-Aenderung: 3D-Betrachter: Gesten von Hand (Drehen sofort, zwei Finger nur senkrecht mit Schwung und Anschlag), Zeichnen nur bei Aenderung, Umdrehen-Knopf von jedem Winkel
+Aenderung: Heute-Karte zeigt fuer andere Tage (und heute nach dem Training) einen Tagesrueckblick statt "Training starten"
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

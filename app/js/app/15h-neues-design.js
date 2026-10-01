@@ -203,8 +203,10 @@ function renderHeuteKarte(){
   var box=$("heute-karte");if(!box||!state.profile)return;
   box.innerHTML="";box.className="heute-karte";
   var viewingToday=heuteDate===TODAY;
-  if(!viewingToday&&!workout){box.hidden=true;return;}
+  fwHeuteTitle();
   box.hidden=false;
+  // Ein anderer Tag in der Wochenleiste: zeigen, was an dem Tag gemacht wurde, statt zum Training aufzufordern.
+  if(!viewingToday){fwDayRecap(box,heuteDate);return;}
   var d=state.days[TODAY]||emptyDay();
   var trained=isTrainDay(d)||(d.workouts||[]).some(function(wo){return !(d.sets||[]).some(function(s){return s.wid===wo.id;});});
   var mobDone=mobDay(d).units>=1,w=weekStats(TODAY),goal=state.profile.goals.days||0;
@@ -234,12 +236,9 @@ function renderHeuteKarte(){
       sub="Leg eine Einheit an oder trainiere frei – jeder Satz zählt.";
       btn=["Training starten",function(){selectTab("tab-training");window.scrollTo(0,0);}];
     }
-  }else if(!mobDone){
-    eye="Training erledigt";title="Noch ein paar Minuten Mobilität";sub="Rundet den Tag ab und zählt für deinen Formwert.";
-    btn=["Mobilität eintragen",function(){sheetMob();}];box.classList.add("calm");
   }else{
-    eye="Alles erledigt";title="Stark gemacht heute";sub="Training und Mobilität sind drin. Morgen geht’s weiter.";
-    box.classList.add("done");
+    // Heute schon trainiert: dieselbe Rückblick-Karte wie für vergangene Tage.
+    fwDayRecap(box,TODAY);return;
   }
   var top=el("div","hk-top"),tx=el("div","hk-tx");
   tx.appendChild(el("span","hk-eye",eye));
@@ -260,6 +259,90 @@ function renderHeuteKarte(){
 
   if(fig)requestAnimationFrame(function(){try{drawMini(fig,"front",fig._sets);}catch(e){}});
 }
+
+/* ================= Tagesrückblick in der Heute-Karte =================
+   Für vergangene Tage (Wochenleiste antippen) und für heute nach dem Training: welche
+   Muskeln, welche Übungen mit bestem Satz, Volumen, Dauer, dazu Ausdauer und Mobilität.
+   Vorher blieb dort "Heute dran - Training starten" stehen, egal welcher Tag gewählt war. */
+var FW_MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+function fwHeuteTitle(){
+  // Der Seitentitel sagt, welcher Tag gezeigt wird - "Heute" über einem Dienstag verwirrt.
+  if(tab!=="tab-heute")return;var t=$("apptitle");if(!t)return;
+  t.textContent=heuteDate===TODAY?"Heute":heuteDate===shiftDays(TODAY,-1)?"Gestern":"Rückblick";
+}
+function fwDaySummary(dk){
+  var d=state.days[dk]||emptyDay(),order=[],by={},vol=0;
+  (d.sets||[]).forEach(function(s){
+    var ex=exById(s.ex);if(!ex||ex.mob||ex.t==="cardio")return;
+    var g=by[s.ex];if(!g){g=by[s.ex]={ex:ex,n:0,best:null,wid:s.wid};order.push(g);}
+    g.n++;
+    var sc=ex.t==="load"?(s.kg||0)*1000+(s.reps||0):(s.reps||0);
+    if(!g.best||sc>g.bestSc){g.best=s;g.bestSc=sc;}
+    if(ex.t==="load"&&ex.wt!=="body")vol+=(s.kg||0)*(s.reps||0);
+  });
+  var names=[],dur=0;
+  (d.workouts||[]).forEach(function(wo){if(!wo)return;if(wo.name&&names.indexOf(wo.name)<0)names.push(wo.name);dur+=wo.dur||0;});
+  var cardio=(d.cardio||[]).map(function(c){var ex=exById(c.ex);return {n:ex?ex.n:"Ausdauer",min:Math.round(c.min||0)};}).filter(function(c){return c.min>0;});
+  return {d:d,groups:order,sets:order.reduce(function(a,g){return a+g.n;},0),vol:vol,names:names,dur:dur,cardio:cardio,mob:mobDay(d)};
+}
+function fwBestLabel(ex,s){
+  if(ex.t==="sec")return (s.reps||0)+" s";
+  if(ex.t!=="load")return (s.reps||0)+" Wdh.";
+  if(ex.wt==="body"&&!(s.kg>0))return (s.reps||0)+" Wdh.";
+  return (ex.wt==="body"?"+":"")+fmtNum(s.kg||0)+" kg × "+(s.reps||0);
+}
+function fwDayRecap(box,dk){
+  var sm=fwDaySummary(dk),isToday=dk===TODAY,dt=parseIso(dk),any=sm.sets||sm.cardio.length||sm.mob.min>0||sm.mob.legacy;
+  box.classList.add("recap");box.classList.add(sm.sets?"done":"past");
+  // Das Datum steht schon in der Kopfzeile; oben in der Karte steht, was gemacht wurde.
+  var eye=sm.names.length?sm.names.join(" + "):sm.sets?(isToday?"Training erledigt":"Trainiert"):any?"Erledigt":sm.d.rest?"Erholung":"Kein Eintrag",title,sub="";
+  if(sm.sets){
+    var items=sm.groups.map(function(g){return {ex:g.ex.id,sets:g.n};});
+    var regs=fwRegionsOf(items);title=regs.length?regs.join(", "):(sm.names[0]||"Training");
+    var p=[sm.groups.length+(sm.groups.length===1?" Übung":" Übungen"),sm.sets+(sm.sets===1?" Satz":" Sätze")];
+    if(sm.vol>0)p.push(sm.vol>=1000?String(Math.round(sm.vol/100)/10).replace(".",",")+" t":Math.round(sm.vol)+" kg");
+    if(sm.dur>0)p.push(Math.max(1,Math.round(sm.dur/60))+" min");
+    sub=p.join(" · ");
+  }else if(any){title=sm.cardio.length?"Ausdauer-Tag":"Mobilitäts-Tag";}
+  else if(sm.d.rest){title="Ruhetag";sub="Erholung gehört dazu.";}
+  else{title="Kein Training";sub="An diesem Tag ist nichts eingetragen.";}
+  var top=el("div","hk-top"),tx=el("div","hk-tx");
+  tx.appendChild(el("span","hk-eye",eye));tx.appendChild(el("h2","hk-title",title));
+  if(sub)tx.appendChild(el("span","hk-sub",sub));
+  var cw=el("div","hk-chips");
+  sm.cardio.forEach(function(c){var ch=el("span","hk-chip cardio");ch.innerHTML=svgIcon(FW_HEART,2.2);ch.appendChild(document.createTextNode(c.n+" · "+c.min+" min"));cw.appendChild(ch);});
+  if(sm.mob.min>0||sm.mob.legacy){var mc=el("span","hk-chip mob");mc.innerHTML=svgIcon(FW_STRETCH,2.2);mc.appendChild(document.createTextNode("Mobilität"+(sm.mob.min>0?" · "+Math.round(sm.mob.min)+" min":"")));cw.appendChild(mc);}
+  if(cw.children.length)tx.appendChild(cw);
+  top.appendChild(tx);
+  var fig=null;
+  if(sm.sets){var fo=routineFocus(sm.groups.map(function(g){return {ex:g.ex.id,sets:g.n};}));
+    if(fo.max>0){fig=document.createElementNS("http://www.w3.org/2000/svg","svg");fig.setAttribute("viewBox","0 0 800 1500");
+      var fw=el("div","hk-fig");fw.setAttribute("aria-hidden","true");fw.appendChild(fig);top.appendChild(fw);
+      requestAnimationFrame(function(){try{drawMini(fig,"front",fo.sets);}catch(e){}});}}
+  box.appendChild(top);
+  // Übungen mit Anzahl Sätze und bestem Satz; Antippen öffnet die Übung mit ihrem Verlauf.
+  if(sm.groups.length){
+    var ls=el("div","hk-list"),MAX=6;
+    sm.groups.forEach(function(g,i){
+      var r=el("button","hk-row");r.type="button";if(i>=MAX)r.hidden=true;
+      var rt=el("div","hk-row-t");rt.appendChild(el("b",null,g.ex.n));
+      rt.appendChild(el("span",null,g.n+(g.n===1?" Satz":" Sätze")+" · bester "+fwBestLabel(g.ex,g.best)));r.appendChild(rt);
+      var cv=el("i","hk-row-c");cv.innerHTML=svgIcon(IC_CHEV,2);r.appendChild(cv);
+      r.onclick=function(){sheetExerciseDetail(g.ex);};ls.appendChild(r);});
+    if(sm.groups.length>MAX){var more=el("button","hk-more");more.type="button";more.textContent="+ "+(sm.groups.length-MAX)+" "+"weitere";
+      more.onclick=function(){Array.prototype.forEach.call(ls.querySelectorAll(".hk-row[hidden]"),function(x){x.hidden=false;});more.remove();};ls.appendChild(more);}
+    box.appendChild(ls);
+  }
+  var btn=null;
+  if(isToday){if(!(sm.mob.units>=1))btn=["Mobilität eintragen",function(){sheetMob();},"primary"];}
+  else btn=["Zurück zu heute",function(){gotoHeuteDate(TODAY);window.scrollTo(0,0);},"ghost"];
+  if(btn){var b=el("button","btn "+btn[2]+" block fw-go");b.type="button";b.textContent=btn[0];b.onclick=btn[1];box.appendChild(b);}
+}
+(function(){
+  // Tageswechsel über die Wochenleiste baut die Heute-Karte bisher nicht neu - dann blieb "Heute dran" stehen.
+  var o=renderHeuteDay;renderHeuteDay=function(){o();try{renderHeuteKarte();}catch(e){}};
+})();
+function WD_LONG(dt){return ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][dt.getDay()];}
 
 /* ================= Heute: zwei kleine Karten unter der Heute-Karte =================
    Wie in der Vorschau: links der Formwert (Zahl, Trend, Formwert-Leiste, Punkte bis zur
@@ -312,7 +395,7 @@ function fwHeuteCards(){
    Wie ein Musik-Miniplayer: solange ein Training läuft, ist es von jedem Tab aus einen Tipp
    entfernt. Auf dem Trainings-Tab selbst und auf "Heute" (dort zeigt es die Heute-Karte) nicht. */
 function fwMiniUpdate(){
-  try{document.body.setAttribute("data-tab",tab);fwHeadAction();}catch(e){}
+  try{document.body.setAttribute("data-tab",tab);fwHeadAction();fwHeuteTitle();}catch(e){}
   var m=$("wo-mini");if(!m)return;
   var show=!!workout&&tab!=="tab-training"&&tab!=="tab-heute";
   m.hidden=!show;document.body.classList.toggle("has-mini",show);
