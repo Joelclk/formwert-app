@@ -910,14 +910,13 @@ function fwWoStats(){
 })();
 
 /* Rechts in der Kopfzeile je Seite die passende Schnellaktion (neben dem Konto-Knopf):
-   Heute die Serie, Körper die Rang-Ansicht, Training den Plan, Ränge die Vitrine, Du die
-   Einstellungen. */
+   Heute die Serie, Körper die Rang-Ansicht, Ränge die Vitrine, Du die Einstellungen.
+   Training bewusst ohne - der Plan hat dort seinen Knopf über der Liste. */
 function fwHeadAction(){
   var bar=document.querySelector(".appbar"),me=$("fw-me");if(!bar||!me)return;
   var b=$("fw-hact");if(!b){b=el("button","fw-hact");b.id="fw-hact";b.type="button";bar.insertBefore(b,me);}
   var cfg={
     "tab-koerper":["M12 2.8l7.5 3v6.1c0 4.4-3.1 7.7-7.5 9.3-4.4-1.6-7.5-4.9-7.5-9.3V5.8zM12 7.6l1.4 2.8 3.1.4-2.3 2.1.6 3-2.8-1.5-2.8 1.5.6-3-2.3-2.1 3.1-.4z","Ränge",function(){var rb=$("rkmode");if(rb)rb.click();setTimeout(fwHeadAction,50);}],
-    "tab-training":["M4 6h11M4 12h11M4 18h7M18 5v14M15 16l3 3 3-3","Plan",sheetPlan],
     "tab-raenge":["M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4","Vitrine",function(){try{vtOpen("tro");}catch(e){}}],
     "tab-werte":["M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.6.78 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z","Einstellungen",function(){try{openSettingsPage();}catch(e){}}]
   }[tab];
