@@ -111,7 +111,12 @@ function backupAgeText(){
 }
 function backupOverdue(){var d=state.profile&&state.profile.lastBackup;return !d||daysBetween(d,TODAY)>30;}
 function markBackupDone(){if(state.profile){state.profile.lastBackup=TODAY;persist();}}
-function csvCell(v){v=v==null?"":String(v);return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function csvCell(v){v=v==null?"":String(v);
+  // Beginnt ein Text mit = + - @ (oder Tab/CR), fuehrt Excel ihn als Formel aus - z. B. ein
+  // Uebungsname "=HYPERLINK(...)". Ein vorangestelltes ' macht daraus reinen Text. Zahlen
+  // (auch negative wie "-2,5") bleiben unberuehrt.
+  if(/^[=+\-@\t\r]/.test(v)&&!/^-?\d+(,\d+)?$/.test(v))v="'"+v;
+  return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
 function csvNum(v){return v==null||v===""?"":String(Math.round(v*100)/100).replace(".",",");}
 function trainingCsv(){
   var rows=[["Datum","Art","Übung","kg","Wdh. / Sek.","Wdh. links","Wdh. rechts","Reserve","Minuten","km","Training"]];

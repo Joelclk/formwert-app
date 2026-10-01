@@ -20,10 +20,16 @@ function closeSheet(){
   if(tab!=="tab-heute"&&secDirty[tab.replace("tab-","")])renderSection(tab);
 }
 $("scrim").addEventListener("click",closeSheet);
+// Jedes Blatt bekommt eine sichtbare Schließen-Schaltflaeche neben dem Titel - vorher liess
+// sich ein hochgewachsenes Blatt (z. B. der Einheiten-Editor) nur per Wischgeste auf dem Griff
+// schliessen, was mit Maus/Tastatur (und ohne den Griff im Blick) in eine Sackgasse fuehrte.
 function sheetTitle(b,txt,trailing){
-  if(!trailing){b.appendChild(el("h3",null,txt));return;}
   var row=el("div","sheet-title-row");
-  row.appendChild(el("h3",null,txt));row.appendChild(trailing);
+  row.appendChild(el("h3",null,txt));
+  if(trailing)row.appendChild(trailing);
+  var close=el("button","iconbtn sheet-x");close.type="button";close.setAttribute("aria-label","Schließen");
+  close.innerHTML=svgIcon(IC_X,2);close.onclick=closeSheet;
+  row.appendChild(close);
   b.appendChild(row);
 }
 function askNumber(title,val,step,min,max,unit,cb){

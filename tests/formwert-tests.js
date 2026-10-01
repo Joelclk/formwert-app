@@ -231,6 +231,91 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 10) "Nächstes Ziel" auf Heute: ohne Training aus, mit Training ein Ziel, das sich nach dem
+  //     Erreichen ändert.
+  await test("Nächstes-Ziel-Karte", async () => {
+    let s = await seite({});
+    pruefe(await s.page.evaluate(() => { const c = document.getElementById("nextgoal"); return !c || c.hidden; }), "ohne Training sichtbar");
+    await s.ctx.close();
+    const days = {};
+    for (let i = 1; i <= 4; i++) { const d = new Date(); d.setDate(d.getDate() - i * 3); days[iso(d)] = Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 70 + i, reps: 6, ts: i }] }); }
+    s = await seite({ days });
+    const vorher = await s.page.evaluate(() => { const c = document.getElementById("nextgoal"); return c && !c.hidden ? c.innerText : null; });
+    pruefe(vorher && /Nächstes Ziel/i.test(vorher), "Karte fehlt: " + vorher);
+    const nachher = await s.page.evaluate(() => { const g = nextGoalPick(); let rec;
+      if (g.kind === "rank") { const need = valueForScore(g.ex, exRank(g.ex).next + 0.5); rec = { ex: g.ex.id, kg: Math.ceil(rawKg(g.ex, need)), reps: 1, ts: Date.now() }; }
+      else { const m = g.m; rec = { ex: m.ex ? m.ex[0] : "bench", kg: m.unit === "kg" ? m.steps[g.i] : 0, reps: m.unit === "kg" ? 1 : m.steps[g.i], ts: Date.now() }; }
+      day(TODAY).sets.push(rec); touch(TODAY); renderAll(); return document.getElementById("nextgoal").innerText; });
+    pruefe(nachher !== vorher, "Karte unverändert: " + nachher);
+    pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
+    await s.ctx.close();
+  });
+
+  // 11) Rangleitern: jede Stufe höher als die vorige, Wert -> Rang -> Wert ergibt dasselbe –
+  //     für jede Übung mit Rang, Mann und Frau.
+  await test("Rangleitern stimmig", async () => {
+    const s = await seite({});
+    const probs = await s.page.evaluate(() => { const out = [];
+      [["m", 80], ["w", 60]].forEach(([sex, bw]) => { const prof = Object.assign({}, state.profile, { sex, bodyweight: bw });
+        EX.filter(e => e.std && RANK_LADDER[ladderKey(e)]).forEach(ex => { const L = ladderThresholds(ex, prof);
+          for (let i = 1; i < 19; i++) if (!(L[i] > L[i - 1])) out.push(sex + " " + ex.id + " Stufe " + i);
+          [1, 6, 9.5, 15, 17.5].forEach(r => { const sc = r * 100 / 18, v = valueForScoreLadder(L, sc), g = gradeLadder(L, v);
+            if (!g || Math.abs(g.score - sc) > 0.05) out.push(sex + " " + ex.id + " Rundreise " + r); }); }); });
+      return out; });
+    pruefe(!probs.length, probs.slice(0, 5).join(" | "));
+    await s.ctx.close();
+  });
+
+  // 12) Sicherheit: Backup nur, wenn es wirklich ein Formwert-Backup ist (vorher Sicherungskopie),
+  //     kein HTML aus gespeicherten Daten, CSV ohne ausführbare Formeln.
+  await test("Sicherheit: Backup, HTML, CSV", async () => {
+    const g = new Date(); g.setDate(g.getDate() - 2); const G = iso(g);
+    const s = await seite({ days: { [G]: Object.assign(tagLeer(""), { sets: [{ ex: "bench", kg: 60, reps: 8, wid: "w1" }],
+      workouts: [{ id: "w1", name: "Test", dur: 600, exs: "<img src=x id=boese>", sets: 1, vol: "<img src=x id=boese2>" }] }) } });
+    const r = await s.page.evaluate(() => {
+      const echt = JSON.stringify(backupData()), vorher = Object.keys(state.days).length;
+      readBackupText(JSON.stringify({ profile: {}, days: {} }));            // fremde Datei
+      readBackupText(JSON.stringify({ profile: state.profile, days: [] })); // kaputte Tage
+      const nachFalsch = Object.keys(state.days).length, profilOk = !!(state.profile && state.profile.goals);
+      const gueltig = backupLooksValid(JSON.parse(echt));
+      applyBackup(JSON.parse(echt));
+      const kopie = !!localStorage.getItem("formwert-vor-backup");
+      return { vorher, nachFalsch, profilOk, gueltig, kopie };
+    });
+    pruefe(r.nachFalsch === r.vorher && r.profilOk, "ungültiges Backup hat Daten verändert: " + JSON.stringify(r));
+    pruefe(r.gueltig && r.kopie, "echtes Backup abgelehnt oder keine Sicherungskopie: " + JSON.stringify(r));
+    const html = await s.page.evaluate(G => { const wo = state.days[G].workouts[0]; sheetWorkoutDetail ? sheetWorkoutDetail(G, wo) : null;
+      return { img: !!document.getElementById("boese") || !!document.getElementById("boese2") }; }, G).catch(() => ({ img: false, skip: true }));
+    pruefe(!html.img, "HTML aus gespeicherten Daten wurde ausgeführt");
+    const csv = await s.page.evaluate(() => [csvCell("=HYPERLINK(1)"), csvCell("-2,5"), csvCell("@x"), csvCell("Bank")]);
+    pruefe(csv[0] === "'=HYPERLINK(1)" && csv[1] === "-2,5" && csv[2] === "'@x" && csv[3] === "Bank", "CSV: " + JSON.stringify(csv));
+    await s.ctx.close();
+  });
+
+  // 13) Sync: Ein Tag bleibt "offen", bis die Cloud den Empfang bestätigt; Profil und eigene
+  //     Übungen werden erst geschrieben, wenn der Cloud-Stand einmal geladen wurde.
+  await test("Sync: offen bis bestätigt, erst laden dann schreiben", async () => {
+    const s = await seite({});
+    const r = await s.page.evaluate(async () => {
+      const alt = db, altPulled = cloudPulled, writes = []; let loes = null;
+      const haengt = new Promise(res => { loes = res; });
+      db = { doc: p => ({ set: () => { writes.push(p); return p.startsWith("days/") ? haengt : Promise.resolve(); }, get: () => Promise.resolve({ exists: false }), delete: () => Promise.resolve() }) };
+      cloudPulled = false;
+      day(TODAY).note = "x"; touch(TODAY); persist();
+      const offenWaehrend = !!state.dirty[TODAY];
+      const profilGeschrieben = writes.includes("state/profile") || writes.includes("state/customex");
+      loes(); await new Promise(r => setTimeout(r, 50));
+      const offenDanach = !!state.dirty[TODAY];
+      cloudPulled = true; writes.length = 0; persist(); await new Promise(r => setTimeout(r, 50));
+      const profilJetzt = writes.includes("state/profile");
+      db = alt; cloudPulled = altPulled;
+      return { offenWaehrend, profilGeschrieben, offenDanach, profilJetzt };
+    });
+    pruefe(r.offenWaehrend && !r.offenDanach, "Offen-Markierung falsch: " + JSON.stringify(r));
+    pruefe(!r.profilGeschrieben && r.profilJetzt, "Profil zu früh/nicht geschrieben: " + JSON.stringify(r));
+    await s.ctx.close();
+  });
+
   await browser.close();
   srv.close();
   const schlecht = ergebnisse.filter(e => !e[0]);

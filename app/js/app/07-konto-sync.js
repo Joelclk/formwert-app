@@ -64,6 +64,7 @@ function replaceCloudFromState(d){
 }
 
 function applyBackup(o){
+  backupSafetyCopy();
   state.profile=o.profile;state.days=o.days||{};state.routines=o.routines||{};state.customEx=o.customEx||[];
   for(var i=EX.length-1;i>=0;i--)if(EX[i].custom)EX.splice(i,1);
   EX_BY_ID=null;
@@ -88,9 +89,31 @@ function applyBackup(o){
     toast("Backup lokal eingespielt – Konto folgt beim nächsten Verbinden");setTimeout(connect,30000);
   });
 }
+/* Einspielen ersetzt ALLES (Geraet und Konto) - deshalb nur Dateien annehmen, die wirklich wie
+   ein Formwert-Backup aussehen. Eine fremde oder beschaedigte Datei liess sich frueher einspielen,
+   die App brach danach ab und loeschte beim naechsten Verbinden die Tage im Konto. */
+function backupLooksValid(o){
+  if(!o||typeof o!=="object"||Array.isArray(o))return false;
+  var p=o.profile;
+  if(!p||typeof p!=="object"||!(p.version>=3)||!p.goals||typeof p.goals!=="object")return false;
+  if(!o.days||typeof o.days!=="object"||Array.isArray(o.days))return false;
+  var ok=true;
+  Object.keys(o.days).forEach(function(k){var d=o.days[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!d||typeof d!=="object"||(d.sets&&!Array.isArray(d.sets)))ok=false;});
+  if(o.routines&&(typeof o.routines!=="object"||Array.isArray(o.routines)))ok=false;
+  if(o.customEx&&!Array.isArray(o.customEx))ok=false;
+  return ok;
+}
+/* Vor dem Ersetzen den bisherigen Stand auf dem Geraet aufheben - falls sich das Einspielen als
+   Fehlgriff herausstellt, ist so nichts endgueltig verloren. Es wird immer nur die letzte
+   Sicherung behalten (Speicherplatz). */
+function backupSafetyCopy(){
+  try{localStorage.setItem("formwert-vor-backup",JSON.stringify({at:new Date().toISOString(),app:"formwert",profile:state.profile,days:state.days,routines:state.routines,customEx:state.customEx,exOverrides:state.exOverrides}));return true;}
+  catch(e){return false;}
+}
 function readBackupText(txt){
   var o=null;try{o=JSON.parse(txt);}catch(e){}
-  if(!o||!o.profile||typeof o.days!=="object"){toast("Datei nicht lesbar");return;}
+  if(!backupLooksValid(o)){toast("Datei ist kein gültiges Formwert-Backup");return;}
   askConfirm("Backup einspielen?","Ersetzt alles auf diesem Gerät und im Konto durch: "+backupStats(o)+".","Einspielen",function(){applyBackup(o);},true);
 }
 function sheetRestore(){
@@ -141,7 +164,7 @@ function renderFormula(c){
    "Konstanz        Trainingstage "+c.win+" T ÷ "+Math.round(p.goals.days*c.win/7)+"\n"+
    "Muskelabdeckung Ø Sätze je Muskel gegen MEV/MAV (7 T)\n"+
    "Ausdauer        WHO-Minuten + VO2max-Perzentil\n"+
-   "Mobilität       Einheiten "+c.win+" T ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, höchstens 1 pro Tag\n\n"+
+   "Mobilität       Einheiten "+c.win+" T ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, darüber zählt\n                jede Minute halb, max. "+MOB_DAY_MAX+" pro Tag\n\n"+
    "1RM   Epley (1–3 Wdh) · Brzycki (4–6) · Wathen (7–15, bei Klimmzug/\n      Dips bis 40 Wdh.), weich gemischt, aus dem besten Satz\n\n"+
    "Figur: react-native-body-highlighter (MIT)\n\n"+"jetzt  "+Math.round(c.kraft)+" / "+Math.round(c.konst)+" / "+Math.round(c.deckung)+" / "+Math.round(c.ausdauer)+" / "+Math.round(c.mob)+"   →   "+c.fitness;
 }
@@ -248,6 +271,17 @@ function renderRoutines(){
   add.appendChild(el("span",null,"Neue Einheit"));
   add.onclick=function(){sheetEditor(null);};
   if(!rcSort)box.appendChild(add);
+  // Fertige Vorlagen (ROUTINE_TPL, data.js) als eigene Einheit uebernehmen - siehe sheetTemplates().
+  if(!rcSort&&typeof ROUTINE_TPL!=="undefined"&&ROUTINE_TPL.length){
+    var tpl=el("button","rc-add-row rc-tpl-row");tpl.type="button";
+    var tic=el("span","rc-add-ic");tic.innerHTML=svgIcon("M8 4h10a2 2 0 0 1 2 2v10M4 8h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z",2);tpl.appendChild(tic);
+    var tt=el("span","rc-tpl-txt");
+    tt.appendChild(el("span",null,"Aus Vorlage erstellen"));
+    tt.appendChild(el("small",null,"Fertige Einheiten, z. B. Mobilität"));
+    tpl.appendChild(tt);
+    tpl.onclick=function(){sheetTemplates();};
+    box.appendChild(tpl);
+  }
   if(ids.length>1){
     var tools=el("div","rc-tools");
     var so=el("button","linkbtn",rcSort?"Fertig":"Reihenfolge ändern");so.type="button";

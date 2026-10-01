@@ -36,12 +36,15 @@ function ageFactorV2(age){
    keinen belegten positiven Zusammenhang mit dem Koerpergewicht (eher das Gegenteil), daher dort
    keine Koerpergewichts-Skalierung - nur Alter und der Uebungs-sf wirken, die Ladder-Werte selbst
    sind schon die absoluten Sekunden/Wiederholungen bei der Referenz. */
+/* Welche Rangleiter gilt: eigene Leiter der Variante (LADDER_EX) oder die der Leituebung (std). */
+function ladderKey(ex){return (ex&&typeof LADDER_EX!=="undefined"&&LADDER_EX[ex.id])||(ex&&ex.std);}
 function ladderThresholds(ex,prof){
   var p=prof||state.profile;
   if(!ex||!ex.std||!p)return null;
-  var ladder=RANK_LADDER[ex.std];if(!ladder)return null;
+  var lk=ladderKey(ex),ladder=RANK_LADDER[lk];if(!ladder)return null;
   var sex=(p.sex==="w")?"w":"m", ratios=ladder[sex];
-  var af=ageFactorV2(p.age||30), sc=(ex.sf!=null?ex.sf:1);
+  // Eigene Leiter einer Variante (LADDER_EX, data.js) ist schon auf die Uebung selbst geeicht - kein sf.
+  var af=ageFactorV2(p.age||30), sc=(lk!==ex.std?1:(ex.sf!=null?ex.sf:1));
   if(ladder.bw===false){
     var noScale=af*sc;
     return ratios.map(function(r){return r*noScale;});
@@ -67,7 +70,7 @@ function gradeLadder(ladder,val){
   return {idx:r,name:null,score:clamp((r+p)*step,0,100),next:ladder[r+1],pct:p};
 }
 function grade(ex,val,prof){
-  if(ex&&ex.std&&RANK_LADDER[ex.std]){
+  if(ex&&ex.std&&RANK_LADDER[ladderKey(ex)]){
     var lad=ladderThresholds(ex,prof);
     if(lad){var g=gradeLadder(lad,val);if(g)return g;}
     // Fallback auf die alte Tabelle, falls z. B. das Profil fehlt.
@@ -403,8 +406,11 @@ function muscleScore(v,m){
   var c=corr(m);
   if(v<c.mev)return v/c.mev*70;
   if(v<c.mav)return 70+30*(v-c.mev)/(c.mav-c.mev);
-  if(v<=c.mrv)return 100;
-  return Math.max(70,100-(v-c.mrv)*5);
+  // Vorher sank die Zahl uebers Limit hinaus wieder (bis auf 70). Dafuer gibt es aber
+  // keine belastbare Evidenz - das Limit (MRV) heisst nur "zusaetzliches Volumen bringt
+  // wahrscheinlich keinen weiteren Wachstumsreiz mehr, weil die Erholung nicht mehr
+  // mithaelt", nicht "du baust dadurch messbar weniger Muskeln auf". Bleibt jetzt bei 100.
+  return 100;
 }
 function windowDays(asOf){
   var st=(state.profile&&state.profile.startedAt)||asOf;
@@ -443,10 +449,11 @@ function cardioMinutes(asOf,win){
 /* ================= Mobilität ================= */
 /* Mobilität wird nicht abgehakt, sondern aus den eingetragenen Mobilitätsübungen gemessen –
    gehaltene Dehnungen und bewegte Übungen (Drehen, Kreisen, 90/90) zählen gleich. 10 Minuten
-   an einem Tag sind eine volle Einheit. Mehr zählt am selben Tag nicht weiter: eine lange
-   Sitzung soll eine Woche ohne Mobilität nicht aufwiegen, denn Beweglichkeit kommt aus
-   Regelmäßigkeit. */
-var MOB_UNIT_MIN=10;
+   an einem Tag sind eine volle Einheit. Mehr zählt am selben Tag nur noch zur Hälfte, bis
+   höchstens 2 Einheiten (20 min = 1,5 · 30 min = 2): wer länger dranbleibt, bekommt etwas
+   mehr, aber eine lange Sitzung soll eine Woche ohne Mobilität nicht aufwiegen, denn
+   Beweglichkeit kommt aus Regelmäßigkeit. */
+var MOB_UNIT_MIN=10,MOB_DAY_MAX=2;
 // Übungen in Wiederholungen: geschätzte Sekunden je Wiederholung – neuere Übungen tragen das
 // selbst (ex.sw), für die älteren steht es hier; sonst 4 s.
 var MOB_SEK_WDH={mob_catcow:6,mob_wgs:15,mob_legswing:2,mob_9090:4,mob_wrist_circ:3};
@@ -461,13 +468,18 @@ function mobSetSec(ex,s){
   if(n<=0)return 0;
   return (ex.t==="sec"?n:n*(ex.sw||MOB_SEK_WDH[ex.id]||4))+MOB_WECHSEL_S*Math.min(mobSides(ex),2);
 }
-/* Mobilität eines Tages: Minuten, Anzahl Übungen, erreichter Anteil einer Einheit (0–1). */
+/* Minuten eines Tages -> Einheiten: bis MOB_UNIT_MIN voll, darüber jede Minute halb, max. MOB_DAY_MAX. */
+function mobUnitsFromMin(min){
+  var base=Math.min(min/MOB_UNIT_MIN,1),extra=Math.max(0,min-MOB_UNIT_MIN)/MOB_UNIT_MIN*0.5;
+  return Math.min(base+extra,MOB_DAY_MAX);
+}
+/* Mobilität eines Tages: Minuten, Anzahl Übungen, erreichte Einheiten (0–MOB_DAY_MAX). */
 function mobDay(dd){
   var o={min:0,exs:0,units:0,legacy:false},seen={},sec=0;
   if(!dd)return o;
   (dd.sets||[]).forEach(function(s){var ex=exById(s.ex);if(!ex||!ex.mob)return;
     sec+=mobSetSec(ex,s);if(!seen[ex.id]){seen[ex.id]=1;o.exs++;}});
-  o.min=sec/60;o.units=Math.min(o.min/MOB_UNIT_MIN,1);
+  o.min=sec/60;o.units=mobUnitsFromMin(o.min);
   // Ältere Stände kennen nur den Haken "Mobilität erledigt" – der zählt weiter als volle Einheit.
   if(dd.mobility){o.legacy=true;o.units=1;}
   return o;

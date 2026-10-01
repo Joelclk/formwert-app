@@ -1,0 +1,720 @@
+/* ==========================================================
+   6-neues-design.css - Neues Design (Oktober 2026). Letzte Schicht, überschreibt 1-5.
+   Leitsatz: ruhige, edle Basis – der Körper und die Ränge leuchten.
+   Inhalt:
+   - Grundwerte (Navigation schwebt, daher mehr Platz unten)
+   - Schwebende Navigation mit Start-Knopf in der Mitte
+   - Knöpfe zum Eindrücken
+   - Kopfzeile (Sync nur bei Problemen, Übungssuche)
+   - Heute-Karte
+   - Formwert-Leiste (schräge Striche)
+   - Ränge-Tab: Gesamtstärke und Rangkarten
+   - Schwebende Leiste für ein laufendes Training
+   - Erscheinungsbild-Schalter
+   Farben nur aus den Variablen in 1-basis.css; die Rangfarbe kommt je Karte als --rkc.
+   ========================================================== */
+
+/* ---------- Grundwerte ---------- */
+:root{--nav-h:92px;--nav-bar:70px;--nav-gap:12px;--glow:color-mix(in srgb,var(--accent) 55%,transparent)}
+@keyframes fwShine{0%{transform:translateX(-170%) skewX(-20deg)}55%,100%{transform:translateX(330%) skewX(-20deg)}}
+@keyframes fwRise{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes fwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+@keyframes fwBreathe{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ---------- Schwebende Navigation ---------- */
+nav.bottom{left:50%;right:auto;bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap));transform:translateX(-50%);
+  width:min(calc(100% - 32px),520px);height:var(--nav-bar);padding:0 8px;border:0;border-radius:var(--r-pill);
+  background:color-mix(in srgb,var(--surface-2) 88%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(22px);backdrop-filter:saturate(1.5) blur(22px);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 9%,transparent),0 18px 40px -14px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:space-around}
+/* Maße 1:1 aus der Design-Vorschau: Leiste 70 px, Symbol 22 px, Beschriftung 11 px halbfett,
+   darunter ein 4-px-Punkt für den aktiven Tab (bei den anderen als leerer Platzhalter). */
+nav.bottom button{flex:1;max-width:none;min-height:48px;padding:0;gap:3px;font-size:11px;font-weight:600;letter-spacing:0;justify-content:center;
+  color:var(--ink-3);position:relative;border-radius:var(--r-pill)}
+nav.bottom button svg{width:22px;height:22px;padding:0;background:none!important;border-radius:0}
+nav.bottom button[aria-selected="true"]{color:var(--accent)}
+nav.bottom button[aria-selected="true"] svg{color:var(--accent)}
+nav.bottom button:not(.nav-start)::after{content:"";position:static;flex:none;width:4px;height:4px;border-radius:50%;
+  background:var(--accent);transform:scale(0);transition:transform var(--t-mid) var(--ease)}
+nav.bottom button[aria-selected="true"]:not(.nav-start)::after{transform:scale(1)}
+nav.bottom button:not(.nav-start) span{transition:opacity var(--t-fast) ease}
+/* Start-Knopf wie in der Design-Vorschau: groß, rund, ragt zur Hälfte über die Leiste, mit
+   einem Ring in Hintergrundfarbe, der ihn von der Leiste abhebt. Ohne Beschriftung darunter –
+   das Play-Zeichen spricht für sich (für Screenreader bleibt "Training" als Name erhalten). */
+nav.bottom .nav-start{flex:0 0 74px;color:var(--ink-2)}
+nav.bottom .nav-start span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.nav-start-k{display:grid;place-items:center;width:62px;height:62px;margin:0;transform:translateY(-15px);border-radius:50%;color:var(--accent-ink);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 82%,#fff) 0%,var(--accent) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 14px 28px -10px var(--glow),0 0 0 5px var(--ground);
+  transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+/* Das Dreieck ist im Pfad schon nach rechts versetzt (Schwerpunkt ≈ Mitte) - kein zusätzlicher Versatz. */
+.nav-start-k svg{width:26px!important;height:26px!important;margin:0!important;color:var(--accent-ink)!important;display:block}
+nav.bottom .nav-start:active .nav-start-k{transform:translateY(-12px) scale(.97);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 color-mix(in srgb,var(--accent) 50%,#000),0 6px 14px -8px var(--glow),0 0 0 5px var(--ground)}
+nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 0 color-mix(in srgb,var(--accent) 50%,#000),0 0 22px -2px var(--glow),0 0 0 5px var(--ground)}
+.fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px)}
+.toast{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 12px)}
+.sessbar{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
+
+/* ---------- Knöpfe zum Eindrücken ----------
+   Hauptknöpfe haben eine dunklere Unterkante wie eine echte Taste. Beim Tippen sinkt der Knopf
+   um die Kantenhöhe ein – das Gefühl, wirklich etwas gedrückt zu haben. */
+/* Hauptknöpfe: kupferner Verlauf, ohne dunkle Unterkante und ohne Schatten darunter (wirkte
+   wie ein Fleck). Beim Tippen gibt der Knopf leicht nach. */
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff) 0%,var(--accent) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32);font-weight:700;letter-spacing:.005em;transition:transform var(--t-fast) var(--ease),filter var(--t-fast) ease}
+.btn.primary:hover{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff) 0%,color-mix(in srgb,var(--accent) 94%,#fff) 100%)}
+.btn.primary:active{transform:scale(.98);filter:brightness(.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.btn.primary.small{box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.primary.small:active{transform:scale(.97)}
+.btn.ghost:active,.btn:active{transform:translateY(1px) scale(.99)}
+.card.tap,button.card{transition:transform var(--t-mid) var(--ease),box-shadow var(--t-mid) ease}
+.card.tap:active,button.card:active{transform:scale(.985)}
+
+/* ---------- Kopfzeile ---------- */
+/* Der Sync-Status ist nur interessant, wenn etwas nicht stimmt: sonst genügt der Punkt. */
+/* Die Kopfzeile ist mit Serie und Konto voll: der Sync-Status bleibt immer nur ein Punkt (Farbe
+   zeigt den Zustand), der Text ist für Screenreader weiter da. */
+.sync{padding:0;width:18px;height:30px;justify-content:center;background:transparent!important;box-shadow:none!important;flex:none}
+.sync #synctxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.appbar-search{color:var(--ink-2)}
+.appbar-search[aria-selected="true"]{color:var(--accent)}
+.appbar-search svg{width:22px;height:22px}
+
+/* ---------- Heute-Karte ---------- */
+.heute-karte{position:relative;overflow:hidden;margin:4px 0 var(--s3);padding:16px 18px 16px;border-radius:28px;
+  background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 26%,var(--surface)) 0%,var(--surface) 62%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow);animation:fwRise .5s var(--ease) both}
+.heute-karte.calm,.heute-karte.done{background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--good) 18%,var(--surface)) 0%,var(--surface) 62%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
+.hk-top{display:flex;gap:6px;align-items:stretch;min-height:150px}
+.hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hk-eye{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
+.heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
+.heute-karte.live .hk-eye{display:inline-flex;align-items:center;gap:7px}
+.heute-karte.live .hk-eye::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
+.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:26px;line-height:1.05;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
+.hk-sub{font-size:13.5px;color:var(--ink-2)}
+.hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
+/* Erholt-Schildchen links unter dem Text, so breit wie ihr Inhalt; passen zwei in eine Zeile,
+   stehen sie nebeneinander. Die rechte Seite gehört ganz der Figur. */
+.hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
+/* Große Figur rechts über die ganze Höhe des Textes - wie im Startbild der Vorschau. */
+.hk-fig{flex:none;width:92px;height:auto;align-self:stretch;margin:-4px -8px 0 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
+.hk-fig svg{width:100%;height:100%}
+.fw-go{margin-top:12px;min-height:52px;font-size:17px;gap:10px}
+.fw-go svg{width:20px;height:20px}
+/* Die Heute-Karte übernimmt den "nächsten Schritt" und das laufende Training. */
+#fitnext{display:none!important}
+#wo-banner{display:none!important}
+
+/* ---------- Formwert-Leiste ---------- */
+.fw-ticks{display:flex;gap:3px;align-items:center;margin:8px 0 6px}
+.fw-ticks i{display:block;flex:0 0 5px;height:14px;border-radius:2px;transform:skewX(-18deg);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.fw-ticks i.on{background:var(--tc,var(--accent))}
+.fw-ticks i.lead{box-shadow:0 0 10px var(--tc,var(--accent));animation:fwBreathe 2.4s ease-in-out infinite}
+
+/* ---------- Ränge-Tab ---------- */
+#p-raenge{padding-top:2px}
+.rg-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;width:100%;margin:4px 0 0;padding:18px;border:0;border-radius:26px;
+  text-align:left;color:var(--ink);font:inherit;cursor:pointer;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--rkc) 34%,var(--surface)) 0%,var(--surface) 64%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--rkc) 50%,transparent),0 24px 46px -28px var(--rkc);animation:fwRise .5s var(--ease) both}
+.rg-hero.empty{background:var(--surface);box-shadow:var(--card-sh)}
+.rg-hero:active{transform:scale(.985)}
+.rg-hero-b{flex:none;width:96px;height:96px;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--rkc) 60%,transparent))}
+.rg-hero-b svg{width:96px;height:96px;overflow:visible}
+.rg-hero-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rg-eye{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.rg-hero-t b{font-family:var(--f-cond);font-weight:700;font-size:28px;line-height:1.05}
+.rg-title{font-size:14px;color:var(--ink-2)}
+.rg-next{font-size:12.5px;color:var(--ink-3)}
+.rg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rg-card{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px 12px;border:0;border-radius:20px;
+  font:inherit;color:var(--ink);cursor:pointer;text-align:center;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--rkc) 28%,var(--surface)) 0%,var(--surface) 60%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--rkc) 42%,transparent),0 16px 30px -22px var(--rkc);
+  animation:fwRise .5s var(--ease) both;animation-delay:var(--d,0s);transition:transform var(--t-mid) var(--ease)}
+.rg-card:active{transform:scale(.97)}
+.rg-shine{position:absolute;inset:0 auto 0 0;width:42%;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.13),rgba(255,255,255,0));animation:fwShine 3.8s ease-in-out infinite;animation-delay:var(--d,0s)}
+.rg-tier{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--rkc) 72%,var(--ink))}
+.rg-badge{width:76px;height:76px;filter:drop-shadow(0 6px 12px color-mix(in srgb,var(--rkc) 40%,transparent))}
+.rg-badge svg{width:76px;height:76px;overflow:visible}
+.rg-ex{font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1.15;min-height:2.3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rg-pills{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.rg-p{font-size:12px;font-weight:600;padding:3px 8px;border-radius:8px;background:var(--surface-2)}
+.rg-p2{background:color-mix(in srgb,var(--rkc) 20%,var(--surface-2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rkc) 55%,transparent)}
+.rg-bar{width:100%;height:4px;margin-top:4px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.rg-bar i{display:block;height:100%;border-radius:inherit;background:var(--rkc)}
+.rg-open{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px 14px;border-radius:18px;background:var(--surface);
+  box-shadow:inset 0 0 0 1.5px var(--rule);font-size:13.5px;line-height:1.4;color:var(--ink-3)}
+.rg-lock{flex:none;display:grid;place-items:center;color:var(--ink-3)}
+.rg-lock svg{width:22px;height:22px}
+
+/* ---------- Schwebende Leiste: laufendes Training ---------- */
+.wo-mini{position:fixed;z-index:49;left:50%;transform:translateX(-50%);width:min(calc(100% - 40px),500px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 10px);
+  display:flex;align-items:center;gap:10px;min-height:54px;padding:6px 7px 6px 16px;border:0;border-radius:var(--r-pill);
+  font:inherit;color:var(--ink);text-align:left;cursor:pointer;background:var(--surface-2);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),0 14px 32px -12px rgba(0,0,0,.6);animation:fwRise .35s var(--ease) both}
+.wo-mini:active{transform:translateX(-50%) scale(.98)}
+.wm-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
+.wm-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.wm-tx b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-tx span{font-size:11.5px;color:var(--ink-3)}
+.wm-time{font-family:var(--f-mono);font-size:15px;font-weight:600}
+.wm-go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink)}
+.wm-go svg{width:18px;height:18px;margin-left:2px}
+body.has-mini .wrap{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 104px)}
+body.has-mini .fab{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 72px)}
+
+/* ---------- Erscheinungsbild-Schalter ---------- */
+.fw-theme-row{flex-wrap:wrap}
+.fw-seg{display:inline-flex;gap:3px;padding:3px;border-radius:var(--r-pill);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.fw-seg button{border:0;background:none;min-height:36px;padding:6px 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer}
+.fw-seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-strong)}
+
+@media (prefers-reduced-motion:reduce){.rg-shine,.fw-ticks i.lead,.wm-dot,.heute-karte.live .hk-eye::before{animation:none}}
+
+/* ---------- Schnell-Eintragen (+) ----------
+   Der kupferne Start-Knopf in der Leiste ist die Hauptaktion. Das Plus zum Nachtragen von
+   Mobilität, Ausdauer usw. tritt daneben zurück, statt mit ihm um Aufmerksamkeit zu konkurrieren. */
+.fab{width:50px;height:50px;right:16px;background:var(--surface-2);color:var(--accent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent),0 12px 26px -10px rgba(0,0,0,.6)}
+.fab svg{width:24px;height:24px}
+
+/* ---------- Körper: Legende der Ansicht "Rang" ---------- */
+.rklegend{margin-top:12px}
+.rkl-row{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+.rkl{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.rkl i{width:10px;height:10px;border-radius:3px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 15%,transparent)}
+.rkl.none i{background:var(--rule-2)}
+
+/* ---------- Aktions-Sheet (+): Start, Einheiten, Schnell eintragen ---------- */
+.fw-act .fa-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;margin:2px 0 4px;padding:18px 16px 18px 18px;border:0;border-radius:24px;
+  font:inherit;text-align:left;cursor:pointer;color:var(--accent-ink);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 78%,#fff) 0%,var(--accent) 55%,color-mix(in srgb,var(--accent) 80%,#000) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease);animation:fwRise .4s var(--ease) both}
+.fw-act .fa-hero:active{transform:scale(.98)}
+.fa-hero-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fa-hero-tx .fa-eye{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.fa-hero-tx b{font-family:var(--f-cond);font-weight:700;font-size:25px;line-height:1.05}
+.fa-hero-tx span:last-child{font-size:13px;opacity:.8}
+.fa-hero-go{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:color-mix(in srgb,var(--accent-ink) 88%,transparent);color:var(--accent)}
+.fa-hero-go svg{width:24px;height:24px;display:block}
+.fa-hero.live .fa-eye::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:currentColor;vertical-align:1px;animation:fwPulse 1.4s ease-in-out infinite}
+.fa-shine{position:absolute;inset:0 auto 0 0;width:40%;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));animation:fwShine 4.2s ease-in-out infinite}
+.fa-h{display:flex;align-items:baseline;justify-content:space-between;margin:20px 2px 10px}
+.fa-h b{font-family:var(--f-cond);font-weight:700;font-size:17px;color:var(--ink)}
+.fa-h span{font-size:12.5px;color:var(--ink-3)}
+.fa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fa-rt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:150px;padding:12px 12px 12px 14px;border:0;border-radius:20px;
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);overflow:hidden;
+  background:linear-gradient(160deg,var(--surface-2) 0%,var(--surface) 100%);box-shadow:0 0 0 1px var(--rule);
+  animation:fwRise .4s var(--ease) both;animation-delay:var(--d,0s);transition:transform var(--t-fast) var(--ease)}
+.fa-rt:active{transform:scale(.97)}
+.fa-rt.next{background:radial-gradient(120% 90% at 90% 10%,color-mix(in srgb,var(--accent) 22%,var(--surface-2)) 0%,var(--surface) 70%);
+  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--accent) 60%,transparent),0 14px 28px -18px var(--glow)}
+.fa-badge{position:absolute;top:10px;left:12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);background:var(--accent);color:var(--accent-ink)}
+.fa-fig{position:absolute;right:4px;top:6px;width:48px;height:92px;opacity:.95}
+.fa-rt.next .fa-fig{top:14px}
+.fa-fig svg{width:100%;height:100%}
+.fa-rt-tx{margin-top:auto;display:flex;flex-direction:column;gap:2px;padding-right:40px;min-width:0}
+.fa-rt-tx b{font-family:var(--f-cond);font-weight:700;font-size:17px;line-height:1.1;overflow-wrap:anywhere}
+.fa-rt-tx span{font-size:12px;color:var(--ink-3)}
+.fa-rt-go{position:absolute;right:10px;bottom:10px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--surface-2);color:var(--accent);box-shadow:0 0 0 1px var(--rule)}
+.fa-rt.next .fa-rt-go{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.fa-rt-go svg{width:16px;height:16px;display:block}
+.fa-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:6px}
+.fa-q{display:flex;align-items:center;gap:10px;min-height:64px;padding:10px 12px;border:0;border-radius:18px;font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  background:var(--surface-2);box-shadow:0 0 0 1px var(--rule);transition:transform var(--t-fast) var(--ease)}
+.fa-q:active{transform:scale(.97)}
+.fa-q-ic{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:13px;color:var(--qc);background:color-mix(in srgb,var(--qc) 16%,transparent)}
+.fa-q-ic svg{width:21px;height:21px}
+.fa-q-tx{min-width:0;display:flex;flex-direction:column;gap:1px}
+.fa-q-tx b{font-size:14.5px;font-weight:600}
+.fa-q-tx span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){.fa-shine,.fa-hero.live .fa-eye::before{animation:none}}
+
+/* ---------- Körper: eigener Knopf für die Rang-Ansicht ---------- */
+.rkmode-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin:14px 0 4px;padding:8px 14px;border:0;border-radius:var(--r-pill);
+  font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink-2);background:transparent;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 45%,var(--rule));transition:background var(--t-fast) ease,color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.rkmode-btn svg{width:18px;height:18px;color:var(--gold)}
+.rkmode-btn:active{transform:scale(.98)}
+.rkmode-btn[aria-pressed="true"]{color:var(--ink);background:color-mix(in srgb,var(--gold) 18%,var(--surface-2));box-shadow:inset 0 0 0 1.5px var(--gold),0 0 18px -6px var(--gold)}
+
+/* ---------- Training-Tab: Start oben ---------- */
+#start-wrap .free-card{margin-top:4px;background:radial-gradient(120% 95% at 88% 0%,color-mix(in srgb,var(--accent) 20%,var(--surface)) 0%,var(--surface) 62%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 22px 44px -26px var(--glow)}
+.rc-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 4px}
+.rc-top .rc-add-row{margin:0;min-height:64px;padding:10px 12px;gap:10px;border-radius:18px}
+.rc-top .rc-tpl-txt small{display:none}
+
+/* ---------- Einheiten-Karten: Streifen zum Durchwischen ---------- */
+@keyframes fwNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.rc-item.rc-rich{flex-wrap:wrap;padding:10px 12px 12px;row-gap:10px}
+.rc-rich .rc-exs{display:none}
+.rs-wrap{flex:0 0 100%;position:relative;min-width:0}
+.rs-strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:18px;background:var(--surface-2)}
+.rs-strip::-webkit-scrollbar{display:none}
+.rs-slide{flex:0 0 100%;scroll-snap-align:start;display:flex;align-items:center;gap:12px;height:210px;padding:10px 14px;box-sizing:border-box;min-width:0}
+.rs-ov-figs{flex:none;display:flex;gap:4px;height:100%;width:52%;
+  /* Festes Leuchten statt Pulsieren: pulsierend wirkte es je nach Karte mal stark, mal schwach. */
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--uc,var(--accent)) 45%,transparent))}
+.rs-ov-figs svg{flex:1 1 0;min-width:0;height:100%}
+.rs-ov-tx,.rs-ex-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.rs-eye{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
+.rs-chips{display:flex;flex-wrap:wrap;gap:5px}
+.rs-hint{margin-top:4px;font-size:12px;color:var(--ink-3)}
+.rs-hint::after{content:" →";display:inline-block;animation:fwNudge 1.4s ease-in-out infinite}
+.rs-pic{flex:none;width:52%;height:100%;display:flex;gap:2px;align-items:center;justify-content:center;border-radius:14px;overflow:hidden}
+
+.rs-pic img{width:100%;height:100%;object-fit:contain}
+.rs-pic svg{flex:1 1 0;min-width:0;height:100%}
+.rs-n{font-size:11.5px;font-weight:700;color:var(--ink-3);font-family:var(--f-mono)}
+.rs-ex-tx b{font-family:var(--f-cond);font-weight:700;font-size:18px;line-height:1.1;overflow-wrap:anywhere}
+.rs-sets{font-size:13px;font-weight:600;color:var(--ink)}
+.rs-reg{font-size:12px;color:var(--ink-3)}
+.rs-dots{display:flex;justify-content:center;gap:5px;margin-top:8px}
+.rs-dots i{width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,var(--ink) 18%,transparent);transition:width var(--t-fast) var(--ease),background var(--t-fast) ease}
+.rs-dots i.on{width:16px;border-radius:3px;background:var(--accent)}
+.rc-rich .rc-txt{flex:1;min-width:0}
+@media (prefers-reduced-motion:reduce){.rs-hint::after{animation:none}}
+
+/* ---------- Einheiten: Farbe, Nummer, Überschrift ---------- */
+.rc-head{margin-top:26px!important;padding-top:20px;border-top:1px solid var(--rule);align-items:center}
+#start-wrap h2.rc-head .sec-t{font-size:24px!important;line-height:1.1;font-family:var(--f-cond);font-weight:700;color:var(--ink)}
+.rc-count{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:var(--r-pill);
+  background:var(--accent-soft);color:var(--accent-strong);font-weight:700;font-size:14px}
+.rc-item.rc-rich{position:relative;overflow:hidden;padding-left:17px}
+.rc-item.rc-rich::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--uc)}
+.rc-rich .rs-strip{background:radial-gradient(110% 100% at 25% 50%,color-mix(in srgb,var(--uc) 22%,var(--surface-2)) 0%,var(--surface-2) 72%)}
+.rc-rich .rs-eye{color:color-mix(in srgb,var(--uc) 80%,var(--ink))}
+.rs-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--uc) 16%,transparent);color:color-mix(in srgb,var(--uc) 78%,var(--ink))}
+.rc-rich .rs-dots i.on{background:var(--uc)}
+.rc-num{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--uc);color:var(--surface);
+  font-family:var(--f-cond);font-weight:700;font-size:16px}
+.rc-item.rc-next{box-shadow:0 0 0 1.5px var(--accent),0 18px 34px -20px var(--glow)}
+.rs-next{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 9px;border-radius:var(--r-pill);background:var(--accent);color:var(--accent-ink)}
+.wd.done.wd-unit .pip{background:var(--uc);color:var(--surface);box-shadow:none}
+.rc-rich .rs-eye{white-space:nowrap;letter-spacing:.05em;font-size:11px}
+
+/* ---------- Wochenleiste oben auf "Heute" ---------- */
+.fw-weektop{display:flex;justify-content:space-between;margin:0 2px 12px}
+.wt-d{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:40px;padding:0;border:0;background:none;font:inherit;cursor:pointer}
+.wt-d:disabled{cursor:default}
+.wt-l{font-size:11.5px;font-weight:600;color:var(--ink-3)}
+.wt-d.today .wt-l{color:var(--accent)}
+.wt-c{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;box-sizing:border-box;
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule);color:var(--ink);font-weight:700;font-size:14px;font-family:var(--f-mono)}
+.wt-c.done{background:var(--accent-soft);color:var(--accent-strong);box-shadow:none}
+.wt-c.done.unit{background:color-mix(in srgb,var(--uc) 22%,var(--surface));color:var(--uc)}
+.wt-c.done svg{width:17px;height:17px}
+.wt-c.rest{background:var(--surface-2);box-shadow:none;color:var(--ink-3);font-family:var(--f-body);font-size:10.5px;font-weight:600}
+.wt-d.today .wt-c{box-shadow:inset 0 0 0 2px var(--accent)}
+.wt-d.viewing:not(.today) .wt-c{box-shadow:inset 0 0 0 2px var(--ink-3)}
+.wt-d:active .wt-c{transform:scale(.94)}
+
+/* ---------- Kopfzeile: Datum als Überzeile, Serie, Konto ---------- */
+.appbar>div:first-child{display:flex;flex-direction:column-reverse;gap:2px;flex:1;min-width:0}
+.appbar #todaydate{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+/* Die Lupe (Übungen) nur dort, wo man sie braucht - auf Heute, Körper, Ränge und Du bleibt die Kopfzeile wie in der Vorschau. */
+body:not([data-tab="tab-entdecken"]) .appbar-search{display:none}
+#btn-settings{display:none!important}
+.fw-streak{flex:none;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--gold);font-size:13px}
+.fw-streak svg{width:16px;height:16px}
+.fw-streak b{font-weight:600;color:var(--ink)}
+.fw-streak.off{color:var(--ink-3)}
+.fw-me{flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;cursor:pointer;
+  background:conic-gradient(var(--rkc) 0 var(--p),var(--rule) var(--p) 100%);transition:transform var(--t-fast) var(--ease)}
+.fw-me:active{transform:scale(.94)}
+.fw-me-i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:13px}
+.fw-me-i svg{width:20px;height:20px}
+
+/* ---------- Heute wie in der Vorschau ---------- */
+#p-heute #hero,#p-heute .weekcard,#p-heute h2.sec:has(+ .weekcard){display:none!important}
+.hk-rec{display:inline-flex;align-items:center;gap:5px;min-width:0;font-size:12px;font-weight:600;padding:5px 10px 5px 8px;border-radius:var(--r-pill);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk-rec svg{width:14px;height:14px;flex:none}
+.hk-rec.ok{background:var(--good-soft);color:var(--good)}
+.hk-rec.wait{background:var(--warn-soft);color:var(--warn)}
+.fw-hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
+.fw-hc{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:12px 14px 10px;border:0;border-radius:22px;background:var(--surface);
+  box-shadow:var(--card-sh);font:inherit;color:var(--ink);text-align:left}
+button.fw-hc{cursor:pointer;transition:transform var(--t-fast) var(--ease)}
+button.fw-hc:active{transform:scale(.98)}
+.fw-hc-eye{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.fw-hc-val{display:flex;align-items:baseline;gap:6px}
+.fw-hc-val b{font-family:var(--f-cond);font-weight:600;font-size:38px;line-height:.95;letter-spacing:-.03em}
+.fw-hc-tr{font-size:13px;font-weight:700}
+.fw-hc-tr.up{color:var(--good)}.fw-hc-tr.down{color:var(--warn)}
+.fw-hc .fw-ticks{margin:6px 0 2px}
+.fw-hc .fw-ticks i{flex-basis:4px;height:12px}
+.fw-hc-sub{font-size:12px;color:var(--ink-3)}
+.fw-hc-wrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+.fw-hc-wrow span{font-size:13px;line-height:1.3;color:var(--ink-2)}
+.fw-ring{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--accent) 0 var(--p),var(--rule) var(--p) 100%)}
+.fw-ring b{font-family:var(--f-cond);font-weight:700;font-size:18px}
+
+/* ---------- Laufendes Training wie in der Vorschau ---------- */
+/* Reserve-Spalte entfällt: Kopf "Reserve" und die Knöpfe ausblenden, Spalten neu verteilen. */
+.wo-rir,.wo-table .wo-row.head span:nth-last-child(2){display:none!important}
+.wo-row{grid-template-columns:30px 1fr 1.1fr 48px}
+.wo-table.has-kg .wo-row{grid-template-columns:30px 0.9fr 1.1fr 1fr 48px}
+.wo-table.uni-load .wo-row{grid-template-columns:24px 0.9fr 0.8fr 0.7fr 0.7fr 46px}
+.wo-table.uni-plain .wo-row{grid-template-columns:24px 1fr 0.85fr 0.85fr 46px}
+.wo-head.fw{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:10px 12px 6px}
+.fw-wo-min{width:44px;height:44px;border-radius:50%;background:var(--surface-2)!important;color:var(--ink)}
+.fw-wo-center{display:flex;flex-direction:column;align-items:center;min-width:0}
+.fw-wo-center .wo-name{width:100%;max-width:200px;padding:0;border:0;background:none;text-align:center;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);min-height:0}
+.fw-wo-center .wo-timer b{font-family:var(--f-mono);font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.fw-wo-right{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.fw-fertig{min-height:40px!important;padding:6px 16px!important;border-radius:var(--r-pill);background:var(--surface-2);color:var(--good);font-weight:700;border:0}
+.fw-wo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 12px 8px}
+.fw-ws{display:flex;flex-direction:column;gap:1px;padding:9px 12px;border-radius:16px;background:var(--surface-2)}
+.fw-ws span{font-size:11px;color:var(--ink-3)}
+.fw-ws b{font-family:var(--f-mono);font-size:17px;font-weight:600;white-space:nowrap}
+.wo-pagehead{align-items:center;gap:10px}
+.fw-wo-thumb{flex:none;width:58px;height:64px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden}
+.fw-wo-thumb img{width:100%;height:100%;object-fit:contain}
+.fw-wo-crest{flex:none;width:40px;height:40px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+.fw-wo-crest svg{width:40px;height:40px;overflow:visible}
+.fw-wo-hint{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:2px 0 4px;padding:9px 12px;border:0;border-radius:14px;font:inherit;cursor:pointer;
+  background:color-mix(in srgb,var(--rkc) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rkc) 40%,transparent);color:var(--ink)}
+.fw-wo-hint-l{display:flex;align-items:center;gap:6px;min-width:0;color:color-mix(in srgb,var(--rkc) 75%,var(--ink))}
+.fw-wo-hint-l svg{width:16px;height:16px;flex:none}
+.fw-wo-hint-l b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-wo-hint-r{flex:none;font-size:12px;color:var(--ink-3)}
+.wo-row{padding:4px 6px;border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+.wo-row.head{background:none;padding:0 6px}
+.wo-row.done{background:color-mix(in srgb,var(--good) 8%,transparent)}
+.wo-row.cur{background:color-mix(in srgb,var(--accent) 8%,transparent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.fw-wo-go{position:fixed;z-index:48;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),520px);min-height:58px;border-radius:var(--r-pill);
+  bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 26px);font-size:17px;gap:10px;display:flex;align-items:center;justify-content:center}
+.fw-wo-go svg{width:20px;height:20px}
+.fw-wo-go:active{transform:translateX(-50%) scale(.98)}
+body.fw-go-on.wo-live #session-wrap>.card.flush{margin-bottom:80px}
+.fw-wo-go[hidden]{display:none!important}
+/* Kopf je Übung: Bild | Name + Angaben | Wappen in einer Zeile (die Werkzeuge stehen darunter). */
+.wo-pagehead{display:flex;flex-wrap:nowrap;align-items:center;gap:12px}
+.wo-pagehead .main{display:block;flex:1;min-width:0}
+.wo-pagehead .main b{padding-right:0}
+.wo-pagehead .main span{margin-top:3px}
+.fw-wo-tools{display:flex;justify-content:flex-end;gap:2px;margin:-4px -6px 0}
+.fw-wo-tools .iconbtn{min-width:38px;min-height:38px;padding:8px;color:var(--ink-3)}
+
+/* Figur hervorheben: heller Lichtkegel hinter der Figur, damit sie auf dem dunklen Grund steht. */
+.hk-fig{position:relative;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--accent) 45%,transparent))}
+.hk-fig::before{content:"";position:absolute;inset:8% -10% 14%;border-radius:50%;z-index:-1;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 30%,transparent),transparent)}
+
+/* ---------- Kopfzeile: Serie nur auf Heute, Schnellaktion je Seite ---------- */
+body:not([data-tab="tab-heute"]) .fw-streak{display:none}
+body[data-tab="tab-heute"] .fw-hact,body:not([data-tab]) .fw-hact{display:none}
+.fw-hact{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:0;border-radius:var(--r-pill);background:var(--surface-2);
+  color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.fw-hact svg{width:17px;height:17px;color:var(--accent)}
+.fw-hact.on{background:color-mix(in srgb,var(--gold) 20%,var(--surface-2));box-shadow:inset 0 0 0 1.5px var(--gold)}
+.fw-hact.on svg{color:var(--gold)}
+.fw-hact[hidden]{display:none}
+/* ---------- Training: Übungssuche, Plan ---------- */
+.fw-exsearch{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:4px 0 12px;padding:0 16px;border:0;border-radius:var(--r-pill);
+  background:var(--surface);box-shadow:var(--card-sh),inset 0 0 0 1px var(--rule);font:inherit;color:var(--ink-3);cursor:pointer;text-align:left}
+.fw-exsearch svg{width:20px;height:20px;color:var(--ink-2)}
+.fw-exs-t{flex:1;font-size:15px;color:var(--ink-2)}
+.fw-exs-n{font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-strong)}
+.fw-planedit{margin-left:auto;border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent-strong);cursor:pointer;padding:6px 0 6px 10px}
+.rc-head{display:flex;align-items:center;gap:8px}
+.fw-planhint{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:14px 16px;border-radius:20px;background:var(--surface);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 40%,transparent)}
+.fw-planhint b{font-family:var(--f-cond);font-size:17px}
+.fw-planhint span{font-size:13px;color:var(--ink-2);line-height:1.4}
+.fw-planhint-btns{display:flex;gap:8px;margin-top:4px}
+.fw-more{margin-top:14px}
+.fw-more summary{display:flex;align-items:center;gap:8px;padding:12px 4px;cursor:pointer;list-style:none;font-family:var(--f-cond);font-weight:700;font-size:17px;color:var(--ink-2)}
+.fw-more summary::-webkit-details-marker{display:none}
+.fw-more summary::after{content:"";width:8px;height:8px;margin-left:auto;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);transition:transform var(--t-fast) ease}
+.fw-more[open] summary::after{transform:rotate(-135deg)}
+.rc-item.rc-extra{--uc:var(--rule-2)!important}
+.hk-skip{display:block;margin:10px auto 0;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer;padding:6px}
+.fw-plan-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.fw-plan-row{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:16px;background:var(--surface-2)}
+.fw-plan-row.on{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.fw-plan-tg{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;border:0;cursor:pointer;background:var(--surface);color:var(--ink-3);box-shadow:inset 0 0 0 1px var(--rule-2)}
+.fw-plan-row.on .fw-plan-tg{background:var(--accent);color:var(--accent-ink);box-shadow:none;font-family:var(--f-cond);font-size:16px}
+.fw-plan-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.fw-plan-tx b{font-size:15px}
+.fw-plan-tx span{font-size:12px;color:var(--ink-3)}
+.fw-planchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.fw-planchip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px 6px 9px;border:0;border-radius:var(--r-pill);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  background:var(--surface-2);color:var(--ink-3);text-decoration:line-through}
+.fw-planchip svg{width:15px;height:15px}
+.fw-planchip.on{background:var(--accent-soft);color:var(--accent-strong);text-decoration:none}
+.fw-plan-h{margin:8px 2px 0;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.fw-plan-add{flex:none;min-height:36px;padding:6px 14px;border:0;border-radius:var(--r-pill);background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule-2);font:inherit;font-size:13px;font-weight:600;color:var(--accent-strong);cursor:pointer}
+.fw-plan-rm{color:var(--ink-3)}
+
+/* ---------- Training: Heute eingetragen, Ausdauer & Mobilität, Verlauf ---------- */
+#p-heute .fw-oldtodayh{display:none!important}
+.fw-today{margin:0 0 12px;padding:14px;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh)}
+.fw-today-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.fw-today-h b{display:block;font-family:var(--f-cond);font-size:18px;margin-top:1px}
+.fw-today-add{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:var(--r-pill);background:var(--surface-2);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.fw-today-add svg{width:16px;height:16px}
+.fw-today-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fw-extra{margin:16px 0 4px}
+.fw-extra-h{margin:0 0 10px;font-family:var(--f-cond);font-weight:700;font-size:22px;color:var(--ink)}
+.fw-extra-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fw-xt{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh);min-width:0}
+.fw-xt-top{display:flex;align-items:center;gap:10px;min-width:0}
+.fw-xt-ic{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--xc);background:color-mix(in srgb,var(--xc) 16%,transparent)}
+.fw-xt-ic svg{width:20px;height:20px}
+.fw-xt-t{min-width:0;display:flex;flex-direction:column}
+.fw-xt-t b{font-family:var(--f-cond);font-size:16px}
+.fw-xt-t span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-xt-mid{display:flex;align-items:center;gap:10px}
+.fw-xt .fw-ring{width:50px;height:50px;background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--rc) 0 var(--p),var(--rule) var(--p) 100%)}
+.fw-xt .fw-ring b{font-size:13px}
+.fw-xt-l{display:flex;flex-direction:column;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.fw-xt-l small{font-size:11.5px;color:var(--ink-3)}
+.fw-xt-b{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border:0;border-radius:var(--r-pill);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  color:var(--xc);background:color-mix(in srgb,var(--xc) 14%,transparent)}
+.fw-xt-b svg{width:16px;height:16px}
+.fw-verlauf{margin-top:22px}
+.fw-verlauf .dsec-note{display:none!important}
+/* Leere Bereiche (noch nichts eingetragen) im Verlauf ausblenden - dafür gibt es oben die Kacheln. */
+.fw-verlauf .dsec:has(.estate),.fw-verlauf .dsec-inline:not(.on){display:none}
+.fw-verlauf .daylist:not(:has(.dsec:not(:has(.estate)):not(.dsec-note):not(.dsec-inline:not(.on))))::before{content:"Noch nichts eingetragen.";display:block;padding:14px 4px;font-size:13.5px;color:var(--ink-3)}
+
+/* ---------- Heute ist eine feste Seite ohne Scrollen (wie in der Vorschau) ---------- */
+/* Heute scrollt wieder normal; unten nur so viel Abstand wie die Leiste braucht. */
+body[data-tab="tab-heute"] .wrap{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 16px)}
+/* Nächstes Ziel kompakter, damit alles auf den festen Bildschirm passt. */
+#p-heute .nextgoal{padding:10px 14px;gap:10px;border-radius:20px}
+#p-heute .nextgoal .ng-ic{width:40px;height:42px}
+#p-heute .nextgoal .ng-eye{font-size:10.5px}
+#p-heute .nextgoal b{font-size:15px;line-height:1.2}
+#p-heute .nextgoal .ng-sub{font-size:12.5px}
+#p-heute .nextgoal .pbar{margin-top:4px;height:4px}
+/* ---------- Plus-Knopf rechts unten entfällt ----------
+   Alles, was er bot, hat jetzt einen festen Platz: Training starten über den runden Knopf in der
+   Leiste, Satz / Ausdauer / Mobilität nachtragen im Training-Tab. */
+#fab{display:none!important}
+
+/* ---------- Körper ---------- */
+/* Die Figur ist die Hauptsache: Karte ohne Rahmen, Figur so hoch wie möglich. */
+#p-koerper>.card:first-child{background:none;box-shadow:none;padding:0}
+#p-koerper .body3d{border-radius:26px;margin:4px 0 12px;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent),0 24px 48px -28px rgba(0,0,0,.9)}
+#p-koerper .body3d iframe{height:clamp(420px,calc(100dvh - 330px),640px)}
+#p-koerper .bodymode{margin-bottom:10px}
+#p-koerper #regionchips{margin-bottom:8px}
+/* Auswahl-Schild oben links auf der Figur; ohne Auswahl unsichtbar (der Hinweis steht unten in der Figur). */
+#p-koerper .body3d #callout{position:absolute;z-index:3;top:12px;left:12px;right:auto;max-width:calc(100% - 24px);margin:0;padding:10px 14px;border-radius:16px;
+  background:rgba(20,19,17,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08);color:#f3efe8}
+#p-koerper .body3d #callout:has(.co-hint),#p-koerper .body3d #callout:empty{display:none}
+#p-koerper .body3d #callout b{font-family:var(--f-cond);font-size:18px}
+#p-koerper .body3d #callout span{color:rgba(243,239,232,.7)}
+/* Rang-Ansicht schaltet der Knopf "Ränge" oben rechts - der zweite Knopf unter der Figur entfällt. */
+#rkmode{display:none!important}
+/* Regionen als Kacheln im Zweierraster: große Prozentzahl, Name, Balken, Kurzinfo, Figur oben rechts. */
+#mlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none!important;box-shadow:none!important;padding:0!important;overflow:visible}
+#mlist>.row{grid-column:1/-1;border-radius:16px;background:var(--surface);box-shadow:var(--card-sh);border:0!important}
+#mlist>.row.tap:not(.sub):not(.mrow){grid-column:auto;position:relative;display:flex;flex-direction:column;align-items:stretch;gap:4px;min-height:132px;padding:14px 14px 12px;border-radius:20px}
+#mlist>.row.tap:not(.sub):not(.mrow) .rfig{position:absolute;top:10px;right:10px;width:42px;flex:none}
+#mlist>.row.tap:not(.sub):not(.mrow) .hval{order:-1;font-family:var(--f-cond);font-size:30px;font-weight:700;line-height:1;text-align:left}
+#mlist>.row.tap:not(.sub):not(.mrow) .hval em{font-size:14px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main{display:flex;flex-direction:column;gap:2px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main b{font-family:var(--f-cond);font-size:16px;padding-right:44px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main span{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#mlist>.row.tap:not(.sub):not(.mrow) .chev{display:none}
+#p-koerper #mdetail.fw-empty{display:none}
+
+/* ======================= Entwurf 2 ======================= */
+/* ---------- Heute ---------- */
+.wt-c{border-radius:12px}
+.wt-c.done{background:var(--accent);color:var(--accent-ink)}
+.wt-c.done.unit{background:var(--uc);color:var(--surface)}
+.wt-c.rest{font-size:10px;font-weight:700;letter-spacing:0}
+.wt-d.today .wt-c{box-shadow:inset 0 0 0 2px var(--accent);background:transparent;color:var(--ink)}
+.fw-weektop{margin-bottom:12px}
+.heute-karte{margin:0 0 12px;padding:16px 18px 16px;border-radius:30px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 22%,var(--surface)) 0%,var(--surface) 55%)}
+.heute-karte::after{content:"";position:absolute;right:-30px;top:-20px;width:230px;height:230px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 35%,transparent),transparent)}
+.heute-karte>*{position:relative;z-index:1}
+.hk-eye{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
+.hk-tx{gap:10px}
+.hk-title{font-size:28px;line-height:1}
+.hk-sub{font-size:13.5px}
+.hk-chips{margin-top:2px}
+.hk-rec{height:26px;padding:0 10px 0 8px;font-size:12px}
+.hk-rec svg{width:13px;height:13px}
+.hk-fig{width:112px;margin:-8px -12px -6px 0}
+.hk-fig::before{display:none}
+.hk-top{min-height:0}
+.fw-go{margin-top:12px;min-height:52px}
+.fw-hcards{display:flex;flex-direction:column;gap:10px;margin:0 0 10px}
+.fw-rings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fw-rt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px 10px;border:0;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh);font:inherit;color:var(--ink);cursor:pointer}
+.fw-rt:active{transform:scale(.97)}
+.fw-rt .fw-ring{width:52px;height:52px;background:radial-gradient(closest-side,var(--surface) 78%,transparent 80%),conic-gradient(var(--rc) 0 var(--p),color-mix(in srgb,var(--ink) 8%,transparent) var(--p) 100%)}
+.fw-rt .fw-ring b{font-size:15px}
+.fw-rt .fw-ring i{display:grid;place-items:center;color:var(--rc)}
+.fw-rt .fw-ring i svg{width:20px;height:20px}
+.fw-rt>span{font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.fw-fwrow{display:flex;align-items:center;gap:14px;width:100%;padding:10px 14px;border:0;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh);font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.fw-fwrow:active{transform:scale(.99)}
+.fw-fwrow-v{flex:none;display:flex;align-items:baseline;gap:4px}
+.fw-fwrow-v b{font-family:var(--f-cond);font-weight:600;font-size:38px;line-height:.9;letter-spacing:-.03em}
+.fw-fwrow-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.fw-fwrow .fw-ticks{margin:0}
+.fw-fwrow .fw-ticks i{flex-basis:4px;height:12px}
+.fw-fwrow .chev{color:var(--ink-3)}
+#p-heute .nextgoal{padding:12px 14px}
+#p-heute .nextgoal .ng-ic{width:38px;height:40px}
+#p-heute .nextgoal .ng-eye{color:var(--blue)}
+.fw-streak{background:var(--surface);height:36px}
+
+/* ---------- Körper ---------- */
+body[data-tab="tab-koerper"] .fw-hact{display:none}
+#p-koerper #regionchips,#p-koerper .vollegend,#p-koerper #reclegend,#p-koerper #rklegend{display:none!important}
+#p-koerper .body3d{position:relative;height:clamp(420px,calc(100dvh - 300px),560px);border-radius:32px;margin:0 0 14px;
+  background:radial-gradient(70% 55% at 50% 42%,var(--surface-2) 0%,color-mix(in srgb,var(--ground) 70%,#000) 75%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent),0 30px 60px -30px rgba(0,0,0,.95)}
+#p-koerper .body3d iframe{height:100%;background:transparent}
+#p-koerper .body3d-hint{display:none}
+#p-koerper #bodymode{margin:0 0 10px;padding:4px;gap:4px;border-radius:var(--r-pill);background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule)}
+#p-koerper #bodymode button{height:36px;min-height:0;font-family:var(--f-body);font-size:13.5px;color:var(--ink-3);background:transparent;box-shadow:none}
+#p-koerper #bodymode button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
+.fw-stage-btns{position:absolute;z-index:4;top:14px;right:14px;display:flex;flex-direction:column;gap:6px}
+.fw-sbtn{width:40px;height:40px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#f3efe8;
+  background:rgba(20,19,17,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.fw-sbtn svg{width:18px;height:18px}
+.fw-sbtn:active{transform:scale(.94)}
+#p-koerper .body3d #callout{top:auto;left:14px;right:14px;bottom:14px;max-width:none;padding:12px 14px;border-radius:20px;
+  background:rgba(20,19,17,.78);box-shadow:0 0 0 1px rgba(255,255,255,.1);display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
+#p-koerper .body3d #callout b{order:1}
+#p-koerper .body3d #callout>span{order:2;font-size:11.5px}
+#p-koerper .body3d #callout em{order:3;flex-basis:100%;font-size:12.5px;color:#bcb5aa}
+#p-koerper .body3d #callout .fw-co-x{order:0;flex-basis:100%;display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.fw-co-pic{flex:none;width:54px;height:64px;border-radius:14px;background:rgba(255,255,255,.06);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.fw-co-pic svg{width:100%;height:100%;transform:scale(1.9);transform-origin:50% 26%}
+.fw-co-r{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.fw-co-goal{font-size:12.5px;color:#bcb5aa}
+.fw-co-scale{position:relative;height:5px;border-radius:99px;background:linear-gradient(90deg,var(--m3d0),var(--m3dk) 34%,var(--m3d2) 62%,var(--m3d3) 80%,var(--m3d4))}
+.fw-co-scale i{position:absolute;top:-3px;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #141311}
+.fw-co-crest{flex:none;width:34px;height:34px}
+.fw-co-crest svg{width:34px;height:34px;overflow:visible}
+/* Überschrift + Umschalter in einer Zeile */
+#p-koerper h2.sec:has(#mlisthead){display:flex;align-items:center;gap:8px;margin-top:4px}
+#p-koerper h2.sec:has(#mlisthead) #mlisthead{display:none}
+#mlistmode{margin-left:auto;padding:4px;gap:4px;border-radius:var(--r-pill);background:var(--surface);box-shadow:none}
+#mlistmode .fchip{height:30px;min-height:0;padding:0 12px;font-size:12.5px;border:0}
+#mlistmode .fchip[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+#p-koerper h2.sec:has(#mlisthead){flex-wrap:nowrap}
+#p-koerper h2.sec:has(#mlisthead)+#mlistmode{margin-top:-44px;justify-content:flex-end}
+/* Regionen als Karten zum Wischen */
+#mlist{display:flex!important;grid-template-columns:none;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;margin:0 calc(-1*var(--s4));padding:0 var(--s4) 6px!important}
+#mlist::-webkit-scrollbar{display:none}
+#mlist>.row.tap:not(.sub):not(.mrow){flex:0 0 150px;scroll-snap-align:start;min-height:0;padding:12px;gap:8px;border-radius:22px}
+#mlist>.row.tap:not(.sub):not(.mrow) .rfig{position:static;order:-2;width:100%;height:130px;border-radius:16px;overflow:hidden;
+  background:radial-gradient(80% 70% at 50% 40%,color-mix(in srgb,var(--accent) 12%,var(--surface-2)) 0%,var(--surface-2) 70%);display:flex;align-items:center;justify-content:center}
+#mlist>.row.tap:not(.sub):not(.mrow) .rfig svg{width:auto;height:100%;background:none;border-radius:0}
+#mlist>.row.tap:not(.sub):not(.mrow) .hval{order:-1;position:absolute;right:12px;top:150px;font-size:20px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main b{font-size:16px;padding-right:56px}
+#mlist>.row.tap:not(.sub):not(.mrow) .main .minibar{height:5px}
+#mlist>.row.sub,#mlist>.row.mrow,#mlist>.row.sub2{display:none}
+.fw-mlist-sub{margin-top:10px}
+.fw-mlist-sub[hidden]{display:none}
+
+/* ---------- Heute-Karte als Tagesrückblick (anderer Tag / heute schon trainiert) ---------- */
+.heute-karte.recap.done{background:linear-gradient(160deg,color-mix(in srgb,var(--good) 16%,var(--surface)) 0%,var(--surface) 55%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 20%,transparent),var(--card-sh)}
+.heute-karte.recap.done::after{background:radial-gradient(closest-side,color-mix(in srgb,var(--good) 22%,transparent),transparent)}
+.heute-karte.recap.done .hk-eye{color:var(--good)}
+.heute-karte.recap.past{background:var(--surface);box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent),var(--card-sh)}
+.heute-karte.recap.past::after{display:none}
+.heute-karte.recap.past .hk-eye{color:var(--ink-3)}
+.heute-karte.recap .hk-fig{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--good) 30%,transparent))}
+.heute-karte.recap .hk-chip{display:inline-flex;align-items:center;gap:5px}
+.heute-karte.recap .hk-chip svg{width:13px;height:13px}
+.hk-chip.cardio{background:color-mix(in srgb,var(--yellow) 16%,transparent);color:var(--yellow)}
+.hk-chip.mob{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.hk-list{display:flex;flex-direction:column;margin-top:12px;border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.hk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:8px 2px;border:0;
+  border-bottom:1px solid color-mix(in srgb,var(--ink) 7%,transparent);background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.hk-row:last-child{border-bottom:0}
+.hk-row-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hk-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;font-weight:600}
+.hk-row span{font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.hk-row-c{flex:none;display:flex;color:var(--ink-3)}
+.hk-row-c svg{width:16px;height:16px}
+.hk-row:active{opacity:.7}
+.hk-more{align-self:flex-start;margin-top:4px;padding:8px 2px;border:0;background:none;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.heute-karte.recap .fw-go.ghost{min-height:46px;font-size:15px}
+
+/* ---------- Körper: Kopf der Regionen-Liste luftiger ----------
+   Der Umschalter Training/Mobilität war ein Balken über die ganze Breite, der per Minus-Abstand
+   neben die Überschrift rutschte - sein Hintergrund lag als dunkler Streifen hinter dem Titel.
+   Jetzt nur so breit wie die zwei Knöpfe, rechts neben der Überschrift, mit Luft nach unten. */
+#p-koerper h2.sec:has(#mlisthead){margin:22px 2px 12px;padding-right:190px;font-size:22px}
+#p-koerper h2.sec:has(#mlisthead)+#mlistmode{width:max-content;margin:-46px 0 16px auto;padding:3px;gap:2px;
+  background:var(--surface-2);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 7%,transparent)}
+#mlistmode .fchip{height:32px;padding:0 14px;font-size:13px;background:transparent;color:var(--ink-2)}
+#mlistmode .fchip[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+/* Karten rasten im Seitenabstand ein, nicht am Bildschirmrand. */
+#mlist{scroll-padding-inline:var(--s4);gap:12px}
+#mlist>.row.tap:not(.sub):not(.mrow){flex-basis:156px}
+#mlistmode .fchip::before{content:none!important;display:none!important}
+#mlistmode .fchip{padding:0 13px}
+#p-koerper h2.sec:has(#mlisthead){padding-right:172px;font-size:21px;white-space:nowrap}
+
+/* ---------- Training: heute Eingetragenes direkt bearbeitbar ---------- */
+.fw-te{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.fw-te-wo{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:0;border-radius:16px;background:var(--surface-2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fw-te-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fw-te-m b{font-size:15px}
+.fw-te-m span{font-size:12.5px;color:var(--ink-2)}
+.fw-te-c{display:flex;color:var(--ink-3)}.fw-te-c svg{width:16px;height:16px}
+.fw-te-ex{padding:10px 12px 12px 14px;border-radius:16px;background:var(--surface-2)}
+.fw-te-h{display:flex;align-items:center;gap:8px}
+.fw-te-n{flex:1;min-width:0;padding:4px 0;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:600;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.fw-te-add{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;border-radius:50%;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-strong);cursor:pointer}
+.fw-te-add svg{width:16px;height:16px}
+.fw-te-sets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fw-te-set{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 10px 0 6px;border:0;border-radius:12px;
+  background:var(--surface);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 9%,transparent);color:var(--ink);font:inherit;font-size:13.5px;font-variant-numeric:tabular-nums;cursor:pointer}
+.fw-te-set small{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:8px;background:var(--surface-2);color:var(--ink-2);font-size:11.5px;font-weight:700}
+.fw-te-set i{display:flex;color:var(--ink-3)}.fw-te-set i svg{width:13px;height:13px}
+.fw-te-set:active{opacity:.7}
+/* "Als Nächstes" als kleines Schild über dem Namen der Einheit, nicht mehr über der Figur. */
+
+/* ---------- Körper: Auswahl als Ring oben links auf der Bühne ----------
+   Die Bühne ist in beiden Erscheinungsbildern dunkel, deshalb feste helle Schrift wie bei den Knöpfen rechts. */
+#p-koerper #callout{display:none!important}
+.fw-selring{position:absolute;z-index:4;top:14px;left:14px;display:flex;flex-direction:column;align-items:center;gap:6px;max-width:112px;
+  padding:10px 10px 9px;border-radius:22px;cursor:pointer;color:#f3efe8;
+  background:rgba(20,19,17,.66);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08);
+  animation:fwRise .3s var(--ease) both}
+.fw-selring[hidden]{display:none}
+.fw-selring-r{--rc:#8a8f98;display:grid;place-items:center;width:66px;height:66px;border-radius:50%;
+  background:radial-gradient(closest-side,#16191e 78%,transparent 80%),conic-gradient(var(--rc) 0 var(--p),color-mix(in srgb,var(--rc) 24%,rgba(255,255,255,.06)) var(--p) 100%)}
+.fw-selring-r.z0{--rc:var(--yellow)}
+.fw-selring-r.z1{--rc:var(--good)}
+.fw-selring-r.z2{--rc:var(--red)}
+.fw-selring-r b{font-family:var(--f-cond);font-weight:700;font-size:22px;line-height:1;color:#f3efe8}
+.fw-selring-r small{font-size:12px;font-weight:600;color:rgba(243,239,232,.55)}
+.fw-selring-n{font-family:var(--f-cond);font-size:14px;font-weight:600;line-height:1.15;text-align:center;overflow-wrap:anywhere}
+.fw-selring-x{position:absolute;top:-6px;right:-6px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  background:#2a2a28;color:rgba(243,239,232,.8);box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+.fw-selring-x svg{width:11px;height:11px}
+
+/* ---------- Training: Abschnitt "Als Nächstes" über der Liste ---------- */
+.fw-nextbox{margin-bottom:6px}
+.fw-nextbox .fw-next-h .sec-t{color:var(--accent-strong)}
+.fw-nextbox .rc-item{margin:0}

@@ -131,6 +131,7 @@ var _uiBusy=false;
     [/Muskelabdeckung Ø Sätze je Muskel gegen MEV\/MAV \((\d+) T\)/g,"Muscle coverage avg sets per muscle vs MEV/MAV ($1 d)"],
     [/Ausdauer        WHO-Minuten \+ VO2max-Perzentil/g,"Endurance       WHO minutes + VO2max percentile"],
     [/Mobilität       Einheiten (\d+) T ÷ (\d+)/g,"Mobility        sessions $1 d ÷ $2"],
+    [/1 Einheit = (\d+) min am Tag, darüber zählt\n(\s+)jede Minute halb, max\. (\d+) pro Tag/g,"1 session = $1 min a day, beyond that\n$2each minute counts half, max. $3 per day"],
     [/Epley \(1–3 Wdh\)/g,"Epley (1–3 reps)"],
     [/weich gemischt, aus dem besten Satz/g,"smoothly blended, from the best set"],
     [/\nFigur: /g,"\nFigure: "],
@@ -221,24 +222,43 @@ function applyUiLang(root){
   /* Nicht pro eingefuegtem Knoten uebersetzen: beim Aufbau einer Liste kommen hunderte
      Einfuegungen, und jede Teilmenge wuerde mehrfach durchlaufen. Stattdessen wird EIN
      Durchlauf ueber die Seite gebuendelt und im naechsten Frame ausgefuehrt. */
-  var pending=false;
+  /* Nur die geaenderten Stellen uebersetzen, nicht jedes Mal die ganze Seite: frueher lief bei
+     jeder kleinen Aenderung (z. B. beim Scrollen in Entdecken, wenn Karten ihre Bilder bekommen)
+     ein Durchlauf ueber ALLE Texte der App - gemessen rund 4 s Rechenzeit bei einer Minute
+     Scrollen, sichtbar als Ruckeln. Auf Deutsch ist gar nichts zu tun: die App erzeugt ihre Texte
+     deutsch, und beim Zurueckschalten setzt setLang() die festen Beschriftungen einmal zurueck. */
+  var pending=false,roots=[],all=false;
   function schedule(){
     if(pending)return;
     pending=true;
     (window.requestAnimationFrame||setTimeout)(function(){
-      pending=false;applyUiLang(document.body);
+      pending=false;
+      var list=roots;roots=[];
+      if(LANG!=="en")return;
+      if(all||list.length>150){all=false;applyUiLang(document.body);return;}
+      // Nur die aeussersten geaenderten Knoten - innere werden dabei ohnehin mit erfasst.
+      list.forEach(function(n){
+        if(!n.isConnected)return;
+        for(var i=0;i<list.length;i++){var o=list[i];if(o!==n&&o.nodeType===1&&o.isConnected&&o.contains(n))return;}
+        applyUiLang(n);
+      });
     },0);
   }
-  var mo=new MutationObserver(function(){
-    if(_uiBusy)return;
-    schedule();
+  var mo=new MutationObserver(function(muts){
+    if(_uiBusy||LANG!=="en")return;
+    for(var i=0;i<muts.length;i++){var m=muts[i];
+      if(m.type==="characterData")roots.push(m.target);
+      else for(var j=0;j<m.addedNodes.length;j++){var a=m.addedNodes[j];if(a.nodeType===1||a.nodeType===3)roots.push(a);}
+      if(roots.length>150){all=true;roots=[];break;}
+    }
+    if(roots.length||all)schedule();
   });
   mo.observe(document.body,{childList:true,subtree:true,characterData:true});
 })();
 var LANG="de";
 var REG_EN={"Brust": "Chest", "Schultern": "Shoulders", "Rücken": "Back", "Rückenstrecker": "Spinal erectors", "Bizeps": "Biceps", "Trizeps": "Triceps", "Unterarme": "Forearms", "Rumpf": "Core", "Gesäß": "Glutes", "Quadrizeps": "Quadriceps", "Beinbeuger": "Hamstrings", "Adduktoren": "Adductors", "Waden": "Calves", "Hals": "Neck (front)", "Nacken": "Neck (back)"};
 var MUS_EN={"tg_brust_ober": "Upper chest", "tg_brust_mitte": "Mid chest", "tg_brust_unten": "Lower chest", "tg_brust_serratus": "Serratus anterior", "tg_bizeps": "Biceps", "tg_brachialis": "Brachialis", "tg_trizeps_lang": "Triceps long head", "tg_trizeps_lat": "Triceps lateral & medial", "tg_rueck_lat": "Latissimus dorsi", "tg_rueck_teres_major": "Teres major", "tg_rueck_trapez_ob": "Upper trapezius", "tg_rueck_trapez_mit": "Mid trapezius", "tg_rueck_trapez_unt": "Lower trapezius", "tg_rueck_rhomb": "Rhomboids", "tg_rueck_strecker": "Spinal erectors (deep)", "tg_schulter_vorn": "Front delt", "tg_schulter_seit": "Side delt", "tg_schulter_hint": "Rear delt", "tg_schulter_rot_infra": "Infraspinatus", "tg_schulter_rot_teres_min": "Teres minor", "tg_schulter_rot_sub": "Subscapularis", "tg_schulter_rot_supra": "Supraspinatus", "tg_bauch_gerade": "Rectus abdominis", "tg_bauch_schraeg": "Obliques", "tg_bauch_tief": "Deep core & breathing muscles", "tg_quadrizeps": "Quadriceps", "tg_huefte": "Hip flexors", "tg_adduktoren": "Adductors", "tg_kniesehnen": "Hamstrings", "tg_gesaess_haupt": "Gluteus maximus", "tg_gesaess_med": "Gluteus medius", "tg_gesaess_min": "Gluteus minimus", "tg_wade_gastro": "Calf (standing)", "tg_wade_soleus": "Calf (seated)", "tg_wade_fussheber": "Shin / dorsiflexors", "tg_unterarm_beug": "Wrist flexors & pronators", "tg_unterarm_streck": "Wrist extensors & supinators", "tg_nacken": "Neck (back)", "tg_hals_nacken": "Front/side neck muscles"};
-var EX_EN={"bench": "Barbell bench press", "bench_db": "Dumbbell bench press", "bench_inc": "Incline bench press", "bench_inc_db": "Incline DB press", "bench_dec": "Decline bench press", "machine_press": "Chest press machine", "machine_press_lying": "Lying chest press", "pushup": "Push-ups", "pushup_diamond": "Diamond push-ups", "pushup_arch": "Archer push-ups", "pushup_dec": "Feet-elevated push-ups", "dips": "Dips", "fly_db": "Dumbbell fly", "cable_fly": "Cable fly", "fly_machine": "Pec deck", "pullover": "Pullovers", "ohp": "Barbell overhead press", "ohp_db": "Dumbbell overhead press", "push_press": "Push press", "arnold": "Arnold press", "pike_pushup": "Pike push-ups", "hspu": "Handstand push-ups", "handstand": "Wall handstand hold", "pullup": "Pull-ups (overhand)", "chinup": "Chin-ups", "pullup_wide": "Wide-grip pull-ups", "pullup_weight": "Weighted pull-ups", "latpull": "Lat pulldown", "latpull_close": "Close-grip pulldown", "pullup_neg": "Negative pull-ups", "deadhang": "Passive hang", "row_bb": "Barbell row", "row_db": "Dumbbell row", "row_pendlay": "Pendlay row", "row_tbar": "T-bar row", "row_cable": "Cable row", "row_machine": "Lever seated row", "row_inv": "Inverted rows", "row_band": "Band row", "facepull": "Face pulls", "shrug": "Shrugs", "shrug_db": "Dumbbell shrugs", "shrug_cable": "Cable shrugs (both sides)", "squat": "Barbell squat", "squat_front": "Front squat", "squat_goblet": "Goblet squat", "squat_bw": "Bodyweight squat", "squat_pistol": "Pistol squat", "squat_bulg": "Bulgarian split squat", "legpress": "Leg press", "hacksquat": "Hack squat", "lunge": "Lunges", "lunge_walk": "Walking lunges", "stepup": "Step-ups", "stepup_bw": "Bodyweight step-ups", "legext": "Leg extension", "sissy": "Sissy squat", "wallsit": "Wall sit", "deadlift": "Deadlift", "deadlift_rdl": "Romanian deadlift", "deadlift_sumo": "Sumo deadlift", "deadlift_sl": "Single-leg deadlift", "hipthrust": "Hip thrust", "goodmorning": "Good morning", "backext": "Back extension", "legcurl": "Leg curl", "nordic": "Nordic curl", "kb_swing": "Kettlebell swing", "plank": "Plank", "lsit": "L-sit", "sideplank": "Side plank", "hollow": "Hollow body hold", "legraise": "Hanging leg raise", "kneeraise": "Hanging knee raise", "crunch": "Crunches", "situp": "Sit-ups", "russian": "Russian twist", "abwheel": "Ab wheel", "cablecrunch": "Cable crunch", "torso_rot": "Torso rotation machine", "deadbug": "Dead bug", "birddog": "Bird dog", "pallof": "Pallof press", "dragonflag": "Dragon flag", "lateral": "Lateral raise", "lateral_cable": "Cable lateral raise", "frontraise": "Front raise", "reversefly": "Reverse fly", "upright_row": "Upright row", "cuban": "Cuban press", "bandpullapart": "Band pull-apart", "curl_bb": "Barbell curl", "curl_db": "Dumbbell curl", "curl_hammer": "Hammer curl", "curl_incline": "Incline curl", "curl_preacher": "Preacher curl", "curl_preacher_machine": "Preacher curl machine", "curl_cable": "Cable curl", "curl_cable_lying": "Lying cable curl", "tri_push": "Triceps pushdown", "tri_skull": "Skull crusher", "tri_over": "Overhead triceps extension", "tri_kick": "Triceps kickback", "dips_bench": "Bench dips", "wrist_curl": "Wrist curl", "wrist_curl_rev": "Reverse wrist curl", "farmers": "Farmer's walk", "ricebucket": "Rice bucket grip work", "fatgripz": "Fat-grip holds", "calf_stand": "Standing calf raise", "calf_seat": "Seated calf raise", "calf_bw": "Bodyweight calf raise", "adduct": "Adductor machine", "clamshell": "Clamshells", "sidelying_raise": "Side-lying leg raise", "bandwalk_lat": "Lateral band walk", "abduct": "Abductor machine", "copenhagen": "Copenhagen plank", "neck_curl": "Neck curl", "neck_ext_bw": "Neck extension", "neck_flex_bw": "Neck flexion", "neck_side_bw": "Lateral neck flexion", "neck_harness": "Head harness", "neck_bridge": "Neck bridge", "run": "Running", "run_interval": "Interval runs", "bike": "Cycling", "row_erg": "Rowing machine", "swim": "Swimming", "jumprope": "Jump rope", "walk": "Brisk walking", "hike": "Hiking", "stairs": "Stair climbing", "burpee": "Burpees", "elliptical": "Elliptical", "football": "Football / ball sports", "mob_hip": "Hip openers", "mob_shoulder": "Shoulder mobility", "mob_thoracic": "Thoracic spine", "mob_hamstring": "Hamstring stretch", "mob_ankle": "Ankle mobility", "mob_couch": "Couch stretch", "mob_deadhang": "Dead hang decompression", "mob_pancake": "Pancake / straddle", "mob_chest": "Pectoralis stretch", "mob_biceps": "Biceps stretch", "mob_cobra": "Prone press-up", "mob_reardelt": "Cross-body shoulder stretch", "mob_triceps": "Overhead triceps stretch", "mob_neck": "Upper trapezius stretch", "mob_lat": "Lat stretch", "mob_knee2chest": "Knee-to-chest", "mob_twist": "Supine spinal twist", "mob_wrist_flex": "Wrist flexor stretch", "mob_wrist_ext": "Wrist extensor stretch", "mob_hipflex": "Kneeling hip flexor stretch", "mob_pigeon": "Pigeon / figure-4", "mob_glutemed": "Gluteus medius stretch", "mob_quad": "Standing quad stretch", "mob_frog": "Frog stretch", "mob_calf_straight": "Gastrocnemius stretch", "mob_calf_bent": "Soleus stretch", "mob_tibialis": "Tibialis anterior stretch", "mob_catcow": "Cat-cow", "mob_wgs": "World's greatest stretch", "mob_legswing": "Leg swings", "mob_9090": "90/90 hip switch", "mob_wrist_circ": "Wrist mobilisation", "rot_internal": "Cable internal rotation", "emptycan": "Empty-can raise", "hipflex_cable": "Cable hip flexion"};
+var EX_EN={"bench": "Barbell bench press", "bench_db": "Dumbbell bench press", "bench_inc": "Incline bench press", "bench_inc_db": "Incline DB press", "bench_dec": "Decline bench press", "machine_press": "Chest press machine", "machine_press_lying": "Lying chest press", "pushup": "Push-ups", "pushup_diamond": "Diamond push-ups", "pushup_arch": "Archer push-ups", "pushup_dec": "Feet-elevated push-ups", "dips": "Dips", "fly_db": "Dumbbell fly", "cable_fly": "Cable fly", "fly_machine": "Pec deck", "pullover": "Pullovers", "ohp": "Barbell overhead press", "ohp_db": "Dumbbell overhead press", "push_press": "Push press", "arnold": "Arnold press", "pike_pushup": "Pike push-ups", "hspu": "Handstand push-ups", "handstand": "Wall handstand hold", "pullup": "Pull-ups (overhand)", "chinup": "Chin-ups", "pullup_wide": "Wide-grip pull-ups", "pullup_weight": "Weighted pull-ups", "latpull": "Lat pulldown", "latpull_close": "Close-grip pulldown", "pullup_neg": "Negative pull-ups", "deadhang": "Passive hang", "row_bb": "Barbell row", "row_db": "Dumbbell row", "row_pendlay": "Pendlay row", "row_tbar": "T-bar row", "row_cable": "Cable row", "row_machine": "Lever seated row", "row_inv": "Inverted rows", "row_band": "Band row", "facepull": "Face pulls", "shrug": "Shrugs", "shrug_db": "Dumbbell shrugs", "shrug_cable": "Cable shrugs (both sides)", "squat": "Barbell squat", "squat_front": "Front squat", "squat_goblet": "Goblet squat", "squat_bw": "Bodyweight squat", "squat_pistol": "Pistol squat", "squat_bulg": "Bulgarian split squat", "legpress": "Leg press", "hacksquat": "Hack squat", "lunge": "Lunges", "lunge_walk": "Walking lunges", "stepup": "Step-ups", "stepup_bw": "Bodyweight step-ups", "legext": "Leg extension", "sissy": "Sissy squat", "wallsit": "Wall sit", "deadlift": "Deadlift", "deadlift_rdl": "Romanian deadlift", "deadlift_sumo": "Sumo deadlift", "deadlift_sl": "Single-leg deadlift", "hipthrust": "Hip thrust", "goodmorning": "Good morning", "backext": "Back extension", "legcurl": "Leg curl", "nordic": "Nordic curl", "kb_swing": "Kettlebell swing", "plank": "Plank", "lsit": "L-sit", "sideplank": "Side plank", "hollow": "Hollow body hold", "vacuum": "Stomach vacuum", "legraise": "Hanging leg raise", "kneeraise": "Hanging knee raise", "crunch": "Crunches", "situp": "Sit-ups", "russian": "Russian twist", "abwheel": "Ab wheel", "cablecrunch": "Cable crunch", "torso_rot": "Torso rotation machine", "deadbug": "Dead bug", "birddog": "Bird dog", "pallof": "Pallof press", "dragonflag": "Dragon flag", "lateral": "Lateral raise", "lateral_cable": "Cable lateral raise", "frontraise": "Front raise", "reversefly": "Reverse fly", "upright_row": "Upright row", "cuban": "Cuban press", "bandpullapart": "Band pull-apart", "curl_bb": "Barbell curl", "curl_db": "Dumbbell curl", "curl_hammer": "Hammer curl", "curl_incline": "Incline curl", "curl_preacher": "Preacher curl", "curl_preacher_machine": "Preacher curl machine", "curl_cable": "Cable curl", "curl_cable_lying": "Lying cable curl", "tri_push": "Triceps pushdown", "tri_skull": "Skull crusher", "tri_over": "Overhead triceps extension", "tri_kick": "Triceps kickback", "dips_bench": "Bench dips", "wrist_curl": "Wrist curl", "wrist_curl_rev": "Reverse wrist curl", "farmers": "Farmer's walk", "ricebucket": "Rice bucket grip work", "fatgripz": "Fat-grip holds", "calf_stand": "Standing calf raise", "calf_seat": "Seated calf raise", "calf_bw": "Bodyweight calf raise", "adduct": "Adductor machine", "clamshell": "Clamshells", "sidelying_raise": "Side-lying leg raise", "bandwalk_lat": "Lateral band walk", "abduct": "Abductor machine", "copenhagen": "Copenhagen plank", "neck_curl": "Neck curl", "neck_ext_bw": "Neck extension", "neck_flex_bw": "Neck flexion", "neck_side_bw": "Lateral neck flexion", "neck_harness": "Head harness", "neck_bridge": "Neck bridge", "run": "Running", "run_interval": "Interval runs", "bike": "Cycling", "row_erg": "Rowing machine", "swim": "Swimming", "jumprope": "Jump rope", "walk": "Brisk walking", "hike": "Hiking", "stairs": "Stair climbing", "burpee": "Burpees", "elliptical": "Elliptical", "football": "Football / ball sports", "mob_hip": "Hip openers", "mob_shoulder": "Shoulder mobility", "mob_thoracic": "Thoracic spine", "mob_hamstring": "Hamstring stretch", "mob_ankle": "Ankle mobility", "mob_couch": "Couch stretch", "mob_deadhang": "Dead hang decompression", "mob_pancake": "Pancake / straddle", "mob_chest": "Pectoralis stretch", "mob_biceps": "Biceps stretch", "mob_cobra": "Prone press-up", "mob_reardelt": "Cross-body shoulder stretch", "mob_triceps": "Overhead triceps stretch", "mob_neck": "Upper trapezius stretch", "mob_lat": "Lat stretch", "mob_knee2chest": "Knee-to-chest", "mob_twist": "Supine spinal twist", "mob_wrist_flex": "Wrist flexor stretch", "mob_wrist_ext": "Wrist extensor stretch", "mob_hipflex": "Kneeling hip flexor stretch", "mob_pigeon": "Pigeon / figure-4", "mob_glutemed": "Gluteus medius stretch", "mob_quad": "Standing quad stretch", "mob_frog": "Frog stretch", "mob_calf_straight": "Gastrocnemius stretch", "mob_calf_bent": "Soleus stretch", "mob_tibialis": "Tibialis anterior stretch", "mob_catcow": "Cat-cow", "mob_wgs": "World's greatest stretch", "mob_legswing": "Leg swings", "mob_9090": "90/90 hip switch", "mob_wrist_circ": "Wrist mobilisation", "rot_internal": "Cable internal rotation", "emptycan": "Empty-can raise", "hipflex_cable": "Cable hip flexion"};
 /* Ein paar Feinmuskel-Schluessel sind Kuerzel oder wuerden beim Umwandeln holprig lesen. */
 var FINE_EN_FIX={tfl:"Tensor fasciae latae"};
 function enFromKey(k){
@@ -275,7 +295,7 @@ function applyLangData(){
     "✓ erledigt":"✓ done","✓ fertig":"✓ done","Kategorien":"Categories","Alle zurücksetzen":"Reset all","Eigene Übung":"Custom exercise","Angepasst":"Edited",
     "Zusatzgewicht":"Weighted","Wiederholungen":"Reps","Halten":"Hold","Dehnen":"Stretch","Mobilisieren":"Mobilise","Keine passende Übung":"No matching exercise",
     "Probier einen kürzeren Suchbegriff oder nimm einen Filter heraus.":"Try a shorter search term or remove a filter.",
-    "Trainingsvolumen":"Training volume","Sätze je Muskel · letzte 7 Tage":"Sets per muscle · last 7 days","im Zielbereich":"in target range","hoch":"high",
+    "Trainingsvolumen":"Training volume","Sätze je Muskel · letzte 7 Tage":"Sets per muscle · last 7 days","im Zielbereich":"in target range","hoch":"high","zu viel":"too much","Erholung":"Recovery","seit der letzten Belastung":"since last trained","frisch belastet":"just trained","halb erholt":"half recovered","bereit":"ready","Noch in Erholung":"Still recovering","Bereit":"Ready","Gruppen bereit":"groups ready","noch in Erholung":"still recovering","Erholt":"Recovered","Länger nicht trainiert":"Not trained lately","antippen zeigt den Muskel":"tap to show muscle",
     "Wie wird gezählt?":"How is it counted?","Formwert":"Form score","Kraft":"Strength","Ausdauer im Detail":"Endurance in detail","Verlauf · 90 Tage":"History · 90 days",
     "Muskeln im Körper-Tab ansehen":"View muscles in Body tab","Ohne Vorlage":"Without template","Freies Training":"Free workout",
     "Leer starten, Übungen fügst du unterwegs hinzu.":"Start empty and add exercises as you go.",
@@ -284,6 +304,22 @@ function applyLangData(){
     "je Bereich · 90 Tage":"per area · 90 days","Training":"Training","Tagesnotiz":"Daily note"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
+/* Nachtrag Uebersetzung: Raenge/Vitrine-Ecken, die im Englisch-Modus noch deutsch
+   geblieben waren (einzelne Lueckenwoerter, keine vollstaendige Uebersetzung des
+   Vitrine-Moduls - dessen Beschreibungstexte und Geheim-Titel bleiben ein eigenes
+   groesseres Vorhaben). */
+(function(){
+  var add={"Muskelmonster":"Muscle monster","noch nicht gemacht":"not done yet","Dein Stand":"Your status",
+    "Zählt aus":"What counts","Rudern":"Rowing","Big-3-Summe":"Big 3 total","Serie":"Streak","Ausgewogen":"Balanced","Gesamt":"Overall",
+    "Jede Stufe hat ihren eigenen Titel – von Lauch bis Weltenheber. Grundlage ist deine Kraft im Verhältnis zu Körpergewicht, Alter und Geschlecht (beste Sätze der letzten 90 Tage).":
+      "Every tier has its own title – from Leek to World lifter. Based on your strength relative to body weight, age and sex (best sets over the last 90 days)."};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.push([/Nächster Rang: (Holz|Bronze|Silber|Gold|Diamant|Champion|Legende)( (I{1,3}))?/g,function(m,t,_,d){
+  var T={Holz:"Wood",Silber:"Silver",Diamant:"Diamond",Legende:"Legend"}[t]||t;
+  return "Next rank: "+T+(d?" "+d:"");
+}]);
+UI_RX.push([/^Bring die Summe aus Bankdrücken, Kniebeuge und Kreuzheben auf (.+)\.$/g,"Bring the total of bench press, squat and deadlift to $1."]);
 /* Nachtrag Uebersetzung (Sept. 2026): Texte, die im Englisch-Modus noch deutsch geblieben
    waren - Onboarding, Werte, Uebungsdetail, Training, Ausruestung, Bewegungsmuster. */
 (function(){
@@ -426,3 +462,47 @@ function T(k){
   if(!d)return k;
   return (LANG==="en"&&d.en!=null)?d.en:d.de;
 }
+/* Nachtrag Uebersetzung: Vorlagen-Einheiten (ROUTINE_TPL in data.js, sheetTemplates in
+   10-routinen.js). Namen/Beschreibungen der Vorlagen stehen hier als Klartext - tplText()
+   holt den Namen beim Uebernehmen daraus, damit auch das Eingabefeld im Editor stimmt. */
+(function(){
+  var add={"Aus Vorlage erstellen":"Create from template","Fertige Einheiten, z. B. Mobilität":"Ready-made sessions, e.g. mobility",
+    "Die Vorlage wird als eigene Einheit kopiert – Übungen, Sätze und Zeiten passt du danach frei an.":
+      "The template is copied as your own session – adjust exercises, sets and times freely afterwards.",
+    "Kurzes Ganzkörper-Warm-up":"Short full-body warm-up",
+    "Nur dynamische Übungen, von Kopf bis Fuß – vor dem Training oder morgens zum Wachwerden.":
+      "Dynamic moves only, head to toe – before training or to wake up in the morning.",
+    "Mobilität für die Beine":"Leg mobility",
+    "Hüftbeuger, Oberschenkel vorn und hinten, Waden und Sprunggelenk – erst locker schwingen, dann halten.":
+      "Hip flexors, front and back of the thighs, calves and ankles – swing loosely first, then hold.",
+    "Hüfte öffnen":"Hip opener",
+    "Innen- und Außenrotation, Adduktoren und Gesäß – gut nach langem Sitzen oder vor Kniebeugen.":
+      "Internal and external rotation, adductors and glutes – good after long sitting or before squats.",
+    "Mobilität für den Oberkörper":"Upper-body mobility",
+    "Schultern, Brust, Lat und Handgelenke – dynamisch öffnen, dann gezielt dehnen.":
+      "Shoulders, chest, lats and wrists – open up dynamically, then stretch specifically.",
+    "Mobilität für Rücken und Wirbelsäule":"Back and spine mobility",
+    "Beugen, Strecken und Drehen der ganzen Wirbelsäule – sanft, auch an Ruhetagen.":
+      "Flexing, extending and rotating the whole spine – gentle, fine on rest days too."};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.push([/\bca\. (\d+)[\u00a0 ]min/g,"approx. $1\u00a0min"]);
+/* Nachtrag Uebersetzung: Vorschau der Vorlagen (sheetTplPreview, 10-routinen.js). */
+(function(){
+  var add={"Antippen zeigt die Vorschau. Übernommen wird eine Kopie – Übungen, Sätze und Zeiten passt du danach frei an.":
+      "Tap for a preview. A copy is added – adjust exercises, sets and times freely afterwards.",
+    "Dehnt:":"Stretches:","Bewegt:":"Mobilises:","Trainiert:":"Trains:",
+    "Was wird gedehnt?":"What gets stretched?","Was wird bewegt?":"What gets mobilised?","Welche Muskeln?":"Which muscles?",
+    "Ablauf":"Sequence","Als eigene Einheit übernehmen":"Add as my own session","Andere Vorlage wählen":"Choose another template",
+    "ohne Pause":"no rest","✓ volle Einheit":"✓ full session","Ganze Einheit":"Whole session","Weniger anzeigen":"Show less","Schwerpunkt":"Focus","deutlich":"clearly","mitbeansprucht":"also worked"};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.push([/(\d+) s Pause zwischen Sätzen/g,"$1 s rest between sets"]);
+UI_RX.push([/(\d+) × ([\d–]+) (s|Wdh\.)( je Richtung und Seite| je Richtung| je Seite)?/g,function(m,a,b,u,s){
+  var S={" je Richtung und Seite":" per direction and side"," je Richtung":" per direction"," je Seite":" per side"}[s||""]||"";
+  return a+" × "+b+" "+(u==="s"?"s":"reps")+S;}]);
+UI_RX.push([/Alle (\d+) Muskeln anzeigen/g,"Show all $1 muscles"]);
+UI_RX.push([/ · Bewegung$/g," · Movement"]);
+/* Nachtrag Uebersetzung: Mobilität über 10 min zählt anteilig weiter (mobUnitsFromMin, 02-berechnung.js). */
+UI_RX.push([/^✓ ([\d,]+) Einheiten · Tageshöchstwert$/g,"✓ $1 sessions · daily maximum"]);
+UI_RX.push([/^✓ ([\d,]+) Einheiten$/g,"✓ $1 sessions"]);

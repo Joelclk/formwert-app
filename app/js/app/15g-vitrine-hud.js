@@ -509,8 +509,8 @@ function trophySvg(o){
   return s+'</svg>';
 }
 /* Stand der Sammlung: je Stufe wie viele der 17 Medaillen da sind. */
-function lgState(D){
-  var L=msList(D||vitrineData()),t=[0,0,0,0,0],got=0;
+function lgState(D,L){
+  L=L||msList(D||vitrineData());var t=[0,0,0,0,0],got=0;
   L.forEach(function(x){if(x.got){t[x.i]++;got++;}});
   var N=MILESTONES.length;
   return {t:t,got:got,N:N,total:L.length,lit:t.map(function(k){return k>=N;}),done:got>=L.length&&L.length>0};
@@ -551,22 +551,37 @@ function lgOnTick(rec){
 }
 function lgCheck(rec){
   var p=state.profile;if(!p)return;
-  var after=lgState(),before=null;
+  var La=msList(vitrineData()),after=lgState(null,La),before=null,Lb=null;
   var sets=rec&&state.days[TODAY]?state.days[TODAY].sets:null,ix=sets?sets.indexOf(rec):-1;
-  if(ix>=0){sets.splice(ix,1);try{before=lgState();}finally{sets.splice(ix,0,rec);}}
-  var sa=p.setsAt||{},changed=!p.setsAt,newSets=[],legendNew=false;
+  if(ix>=0){sets.splice(ix,1);try{Lb=msList(vitrineData());before=lgState(null,Lb);}finally{sets.splice(ix,0,rec);}}
+  var sa=p.setsAt||{},ma=p.medalsAt||{},changed=!p.setsAt||!p.medalsAt,newSets=[],newMedals=[],legendNew=false;
+  // Neue Medaillen: jetzt da, ohne diesen Satz nicht, und noch nie gefeiert (medalsAt, Schluessel
+  // "bench-2" = Reihe-Stufe). Schon vorhandene Medaillen werden still eingetragen.
+  La.forEach(function(x,k){
+    if(!x.got)return;var key=x.m.id+"-"+x.i;if(ma[key])return;
+    ma[key]=TODAY;changed=true;
+    if(Lb&&!Lb[k].got)newMedals.push(x);
+  });
   for(var i=0;i<5;i++){
     var k=LG_TIER_KEY[i];
     if(after.lit[i]&&!sa[k]){sa[k]=TODAY;changed=true;if(before&&!before.lit[i])newSets.push(i);}
   }
-  p.setsAt=sa;
+  p.setsAt=sa;p.medalsAt=ma;
   if(after.done&&!p.legendAt){p.legendAt=TODAY;changed=true;if(before&&!before.done)legendNew=true;}
   if(changed){try{persist();}catch(e){}}
-  // Die 85. Medaille macht immer auch eine Sammlung voll - dann nur die grosse Feier,
-  // die ohnehin alle 5 Ringe nacheinander aufleuchten laesst.
+  // Reihenfolge: erst die Medaille(n), dann die Sammlung, zuletzt die Legende. Die 85. Medaille
+  // macht immer auch eine Sammlung voll - dann nur die grosse Feier, die ohnehin alle 5 Ringe
+  // nacheinander aufleuchten laesst.
+  // Mehrere Stufen derselben Reihe auf einmal (z. B. Bronze bis Gold): nur die hoechste zeigen.
+  var byRow={},rows=[];
+  newMedals.forEach(function(x){var g=byRow[x.m.id];
+    if(!g){byRow[x.m.id]={x:x,also:[]};rows.push(byRow[x.m.id]);return;}
+    if(x.i>g.x.i){g.also.push(g.x.i);g.x=x;}else g.also.push(x.i);});
+  rows.sort(function(a,b){return b.x.i-a.x.i;});
+  rows.forEach(function(g,j){prQ.push({fn:lgShowMedal,x:g.x,also:g.also.sort(),k:j+1,n:rows.length});});
   if(legendNew)prQ.push({fn:lgShowLegend});
   else newSets.forEach(function(i){prQ.push({fn:lgShowSet,i:i,lit:after.lit});});
-  if((legendNew||newSets.length)&&!prBusy)prNext();
+  if((legendNew||newSets.length||newMedals.length)&&!prBusy)prNext();
 }
 function lgVibrate(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
 /* Funkenregen aus einem Punkt (Farben der Legende-Stufe). */
@@ -623,6 +638,31 @@ function lgShowSet(job){
   var t2=setTimeout(function(){lgClose(o,job);},reduce?3200:3800);
   o.onclick=function(){clearTimeout(t1);clearTimeout(t2);lgClose(o,job);};
 }
+/* Neue Medaille: faellt drehend herein, Strahlen in der Stufenfarbe, Funken beim Landen.
+   Mehrere Medaillen aus einem Satz laufen nacheinander ("2 von 3"). */
+function lgShowMedal(job){
+  var x=job.x,m=x.m,i=x.i,c=MEDAL_LV[i],o=lgOverlay("medal"),reduce=prReduce();
+  o.setAttribute("aria-label","Neue Medaille: "+m.name+" "+c.n);
+  o.style.setProperty("--tc",c.m);
+  var card=el("div","lg-card"),st=el("div","md-stage");
+  st.appendChild(el("div","md-rays"));
+  var md=el("div","md-coin");md.innerHTML=medalSvg(i,msShort(m,x.step),150,false,m);st.appendChild(md);
+  card.appendChild(st);
+  card.appendChild(el("span","md-eye",job.n>1?job.k+" von "+job.n+" neuen Medaillen":"Neue Medaille"));
+  card.appendChild(el("b","lg-h",m.name));
+  var chip=el("span","md-chip",c.n+" · "+msStepLabel(m,x.step));chip.style.color=c.l;chip.style.borderColor=c.m;card.appendChild(chip);
+  if(job.also&&job.also.length)card.appendChild(el("span","lg-s","Zusammen mit "+job.also.map(function(k){return MEDAL_LV[k].n;}).join(" und ")));
+  var v=msValue(m,vitrineData());
+  card.appendChild(el("span","lg-s",i<4?"Nächste Stufe: "+MEDAL_LV[i+1].n+" – "+msRemain(m,v,m.steps[i+1]):"Alle 5 Stufen geschafft"));
+  o.appendChild(card);
+  lgVibrate([30,40,80]);
+  requestAnimationFrame(function(){o.classList.add("on");});
+  var t1=setTimeout(function(){
+    var r=md.getBoundingClientRect();lgSparks(o,r.left+r.width/2,r.top+r.height*.55,22,90);lgVibrate(35);
+  },reduce?0:720);
+  var t2=setTimeout(function(){lgClose(o,job);},reduce?2600:job.n>1?2900:3400);
+  o.onclick=function(){clearTimeout(t1);clearTimeout(t2);lgClose(o,job);};
+}
 /* Grosse Feier: alle 85 Medaillen. Pokal steigt auf, die 5 Ringe leuchten nacheinander auf,
    dann Strahlen, Funken und Schrift. Bleibt stehen, bis man tippt. */
 function lgShowLegend(job){
@@ -662,4 +702,67 @@ function lgShowLegend(job){
   o.onclick=function(){if(!canClose)return;ts.forEach(clearTimeout);lgClose(o,job);};
   // Datum speichern (falls diese Feier ueber einen anderen Weg als lgCheck kam)
   if(!job.replay&&state.profile&&!state.profile.legendAt){state.profile.legendAt=TODAY;try{persist();}catch(e){}}
+}
+
+/* =========================================================================
+   "Naechstes Ziel" auf Heute: genau ein Ziel, das am naechsten liegt - der naechste Rang einer
+   zuletzt trainierten Uebung, die naechste Medaille oder die naechste volle Sammlung.
+   Verglichen wird der Fortschritt innerhalb der aktuellen Stufe (0-1); das hoechste gewinnt.
+   ========================================================================= */
+function nextGoalPick(){
+  var best=null;
+  // Ganz ohne Training gibt es noch nichts, das "nah dran" waere.
+  if(!Object.keys(state.days).some(function(d){return d<=TODAY&&isTrainDay(state.days[d]);}))return null;
+  function take(g){if(g&&g.p<1&&g.p>=0&&(!best||g.p>best.p))best=g;}
+  // Raenge: nur Uebungen der letzten 30 Tage - ein Ziel fuer eine laengst vergessene Uebung
+  // waere nicht "erreichbar", nur theoretisch nah.
+  var from=shiftDays(TODAY,-(WIN_STATE-1)),seen={};
+  Object.keys(state.days).forEach(function(d){if(d<from||d>TODAY)return;
+    (state.days[d].sets||[]).forEach(function(s){seen[s.ex]=1;});});
+  Object.keys(seen).forEach(function(id){
+    var ex=exById(id);if(!ex||!ex.std||ex.mob)return;
+    var rk=exRank(ex);if(!rk||rk.next==null)return;
+    var h=rankNextHint(ex,rk);if(!h||!h.rank)return;
+    take({kind:"rank",p:rk.pct,ex:ex,rk:rk,to:h.rank,
+      title:ex.n+" → "+h.rank.name,sub:h.txt?"Schaffe z. B. "+h.txt:"Noch "+Math.max(1,Math.round((1-rk.pct)*100))+" % bis dahin"});
+  });
+  // Medaillen (wie "Naechste Medaille" im Werte-Tab)
+  var D=vitrineData(),L=msList(D);
+  MILESTONES.forEach(function(m){
+    var v=msValue(m,D);if(v==null&&m.kind!=="days")return;
+    for(var i=0;i<m.steps.length;i++){if(!(v>=m.steps[i])){
+      var base=i?m.steps[i-1]:0,p=((v||0)-base)/(m.steps[i]-base);
+      take({kind:"medal",p:p,m:m,i:i,title:m.name+" · "+MEDAL_LV[i].n,sub:msRemain(m,v,m.steps[i])});
+      break;}}
+  });
+  // Sammlungen: zaehlt nur, wenn schon mindestens die Haelfte da ist
+  var st=lgState(D,L);
+  for(var k=0;k<5;k++){if(st.lit[k])continue;var q=st.t[k]/st.N;
+    if(q>=.5){var r=st.N-st.t[k];take({kind:"set",p:q,i:k,title:VT_SETNAMES[k],sub:"Noch "+r+(r===1?" Medaille":" Medaillen")+" bis zum Ring im Sockel"});}
+    break;}
+  return best;
+}
+function renderNextGoal(){
+  var box=$("nextgoal");
+  if(!box){var wc=document.querySelector("#p-heute .weekcard");if(!wc)return;
+    box=el("button","card tap nextgoal");box.id="nextgoal";box.type="button";wc.parentNode.insertBefore(box,wc.nextSibling);}
+  var g=null;try{if(state.profile)g=nextGoalPick();}catch(e){g=null;}
+  box.hidden=!g;if(!g)return;
+  box.innerHTML="";box.setAttribute("data-kind",g.kind);
+  var ic=el("div","ng-ic");
+  if(g.kind==="rank")ic.innerHTML=rankBadge(g.to,46);
+  else if(g.kind==="medal")ic.innerHTML=medalSvg(g.i,msShort(g.m,g.m.steps[g.i]),46,false,g.m);
+  else{ic.innerHTML=trophySvg({size:50,done:false,lit:lgState().lit});}
+  box.appendChild(ic);
+  var tx=el("div","ng-tx");tx.appendChild(el("span","ng-eye","Nächstes Ziel"));
+  tx.appendChild(el("b",null,g.title));tx.appendChild(el("span","ng-sub",g.sub));
+  var bar=el("div","pbar"),bi=el("i");bi.style.width=Math.max(4,Math.round(g.p*100))+"%";bar.appendChild(bi);tx.appendChild(bar);
+  box.appendChild(tx);
+  var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);box.appendChild(ch);
+  box.setAttribute("aria-label","Nächstes Ziel: "+g.title+". "+g.sub);
+  box.onclick=function(){
+    if(g.kind==="rank")sheetRankLadder(exRank(g.ex),"Rangleiter · "+g.ex.n,exRankHint(g.ex,exRank(g.ex)),g.ex);
+    else if(g.kind==="medal"){vtOpen("tro");vtDetail(g.m.id,g.i);}
+    else{vtOpen("bad");vtSetSheet(g.i);}
+  };
 }
