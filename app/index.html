@@ -14,12 +14,14 @@
 -->
 <title>Formwert</title>
 <!-- Schriften liegen lokal (fonts/): Laden von Google-Servern gibt die IP-Adresse weiter. -->
+<script>/* Erscheinungsbild vor dem ersten Zeichnen setzen - sonst blitzt beim Start kurz das helle Design auf. Standard ist dunkel. */try{var fwTh=localStorage.getItem("fw-theme")||"dark";if(fwTh==="dark"||fwTh==="light")document.documentElement.setAttribute("data-theme",fwTh);}catch(e){document.documentElement.setAttribute("data-theme","dark");}</script>
 <script src="fonts/schriften.js"></script>
 <link rel="stylesheet" href="css/1-basis.css">
 <link rel="stylesheet" href="css/2-designsystem.css">
 <link rel="stylesheet" href="css/3-seiten.css">
 <link rel="stylesheet" href="css/4-anpassungen.css">
 <link rel="stylesheet" href="css/5-vitrine.css">
+<link rel="stylesheet" href="css/6-neues-design.css">
 <div class="wrap">
   <div class="appbar">
     <div>
@@ -28,11 +30,13 @@
     </div>
     <span class="sync"><span class="dot" id="syncdot"></span><span id="synctxt">verbinde</span></span>
     <button class="iconbtn appbar-gear" id="btn-newex" type="button" aria-label="Neue Übung" hidden></button>
+    <button class="iconbtn appbar-search" id="tab-entdecken" type="button" aria-label="Übungen entdecken" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
     <button class="iconbtn appbar-gear" id="btn-settings" type="button" aria-label="Einstellungen"></button>
   </div>
 
   <!-- ===== HEUTE ===== -->
   <section id="p-heute">
+    <div class="heute-karte" id="heute-karte"></div>
     <div class="hero" id="hero">
       <div class="hero-top">
         <div class="hero-main">
@@ -118,9 +122,6 @@
     </div>
     <details class="infobox"><summary>Rechenweg</summary><div><p class="formula" id="formulabox"></p></div></details>
 
-    <h2 class="sec"><span class="sec-t">Erfolge</span> <span id="erf-sum"></span></h2>
-    <div class="card erf-card" id="erfolge"></div>
-
     <h2 class="sec"><span class="sec-t">Bereiche</span> <span>Anteil am Formwert</span></h2>
     <div class="wgroup">
       <div class="card flush" id="sk-kraft"></div>
@@ -142,6 +143,16 @@
     <h2 class="sec">Einstellungen</h2>
     <div class="card flush" id="settings"></div>
     <div style="padding:0 4px"><button class="btn ghost block" id="btn-redo" style="margin-top:4px">Assessment neu machen</button></div>
+  </section>
+
+  <!-- ===== RÄNGE ===== -->
+  <section id="p-raenge" hidden>
+    <div id="rg-hero"></div>
+    <h2 class="sec"><span class="sec-t">Deine Rangkarten</span> <span id="rg-sum"></span></h2>
+    <div class="rg-grid" id="rg-grid"></div>
+    <div id="rg-offen"></div>
+    <h2 class="sec"><span class="sec-t">Erfolge</span> <span id="erf-sum"></span></h2>
+    <div class="card erf-card" id="erfolge"></div>
   </section>
 
   <!-- ===== TRAINING ===== -->
@@ -168,21 +179,23 @@
   </section>
 </div>
 
+<button class="wo-mini" id="wo-mini" type="button" hidden></button>
+
 <button class="fab" id="fab" aria-label="Eintragen">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </button>
 
 <nav class="bottom" role="tablist">
   <button id="tab-heute" role="tab" aria-selected="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Heute</button>
-  <button id="tab-entdecken" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Entdecken</button>
-  <button id="tab-training" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M3 8v8M21 8v8M6 12h12"/></svg>Training</button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="4"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.4" fill="currentColor"/></svg><span>Heute</span></button>
   <button id="tab-koerper" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.5"/><path d="M12 7.5v7M12 7.5 6 10M12 7.5 18 10M12 14.5 9 21M12 14.5 15 21"/></svg>Körper</button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.6" r="2.3"/><path d="M5 8.5c2.3.9 4.6 1.3 7 1.3s4.7-.4 7-1.3M12 9.8v5.2M12 15l-3 6.5M12 15l3 6.5"/></svg><span>Körper</span></button>
+  <button id="tab-training" class="nav-start" role="tab" aria-selected="false" aria-label="Training">
+    <i class="nav-start-k"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg></i><span>Training</span></button>
+  <button id="tab-raenge" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l7.5 3v6.1c0 4.4-3.1 7.7-7.5 9.3-4.4-1.6-7.5-4.9-7.5-9.3V5.8z"/><path d="M12 7.6l1.4 2.8 3.1.4-2.3 2.1.6 3-2.8-1.5-2.8 1.5.6-3-2.3-2.1 3.1-.4z"/></svg><span>Ränge</span></button>
   <button id="tab-werte" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Werte</button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c1.4-3.6 4.2-5.3 7.5-5.3s6.1 1.7 7.5 5.3"/></svg><span>Du</span></button>
 </nav>
 
 <div class="scrim" id="scrim"></div>
@@ -225,6 +238,7 @@
 <script src="assets/medal-manifest.js"></script>
 <script src="js/app/15f-vitrine.js"></script>
 <script src="js/app/15g-vitrine-hud.js"></script>
+<script src="js/app/15h-neues-design.js"></script>
 <script src="js/app/16-app-start.js"></script>
 
 </body></html>

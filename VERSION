@@ -1,5 +1,5 @@
-Version 479+ (Artifact-Version 1790674799-42e2)
-Stand: 2026-09-29
-Aenderung: Abgleich mit Live-Artifact - u. a. Erholungsansicht im Koerper-Tab, neue Farbskala Trainingsvolumen, 8 neue Varianten-Rangleitern, Vorlagen fuer Einheiten, Schliessen-Knopf in Sheets
+Version 522 (Artifact-Version 1790883478-bf1f)
+Stand: 2026-10-01
+Aenderung: Koerper: Muskelauswahl als Ring oben links auf der Buehne; Training: naechste Einheit als eigener Abschnitt "Als Naechstes" ganz oben
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
-Hinweis: app/ entspricht exakt dem Live-Stand vom 29.09.2026 ca. 11:45. formwert_app.html und quelltext/ sind veraltet.
+Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
