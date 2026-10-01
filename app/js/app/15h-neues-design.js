@@ -742,6 +742,54 @@ function fwPlanSections(sw,list){
   }
 }
 
+/* ================= Training-Tab: Heute eingetragen, Ausdauer & Mobilität, Verlauf =================
+   Ausdauer, Mobilität und der Tagesverlauf gehören zum Training, nicht auf "Heute". Oben eine
+   Zusammenfassung des Tages (Kraft, Ausdauer, Mobilität) mit "+ Satz", darunter zwei Kacheln mit
+   Wochenziel-Ring und "Eintragen", unten der Verlauf - das ist die bisherige Tagesliste von
+   "Heute" (renderToday), hierher verschoben; die Notiz entfällt. */
+var FW_HEART="M3 12h4l2.5-6 4 12 2.5-6H21",FW_STRETCH="M12 4.6a1.8 1.8 0 1 0 0 .01M5 9.5l7 1.5 7-1.5M12 11v4.5M12 15.5l-4 5M12 15.5l4 5";
+function fwTrainExtras(){
+  var sw=$("start-wrap");if(!sw||!state.profile)return;
+  var d=state.days[TODAY]||emptyDay(),g=state.profile.goals||{},w=weekStats(TODAY);
+  // 1) Heute eingetragen
+  var t=$("fw-today");if(!t){t=el("section","fw-today");t.id="fw-today";sw.appendChild(t);}
+  t.innerHTML="";
+  var nSets=(d.sets||[]).filter(function(s){var e=exById(s.ex);return !e||!e.mob;}).length;
+  var cMin=Math.round((d.cardio||[]).reduce(function(a,c){return a+(c.min||0);},0)),mMin=Math.round(mobDay(d).min);
+  var hd=el("div","fw-today-h"),tx=el("div");tx.appendChild(el("span","fw-hc-eye","Heute eingetragen"));
+  tx.appendChild(el("b",null,(nSets||cMin||mMin)?"Gut dabei":"Noch nichts – leg los"));hd.appendChild(tx);
+  var add=el("button","fw-today-add");add.type="button";add.innerHTML=svgIcon("M12 5v14M5 12h14",2.4);add.appendChild(document.createTextNode("Satz"));
+  add.onclick=function(){sheetAddSet(null);};hd.appendChild(add);t.appendChild(hd);
+  var grid=el("div","fw-today-g");
+  [["Kraft",nSets+(nSets===1?" Satz":" Sätze")],["Ausdauer",cMin+" min"],["Mobilität",mMin+" min"]].forEach(function(o){
+    var k=el("div","fw-ws");k.appendChild(el("span",null,o[0]));k.appendChild(el("b","num",o[1]));grid.appendChild(k);});
+  t.appendChild(grid);
+  // 2) Ausdauer & Mobilität
+  var x=$("fw-extra");if(!x){x=el("div","fw-extra");x.id="fw-extra";sw.appendChild(x);}
+  x.innerHTML="";x.appendChild(el("h2","fw-extra-h","Ausdauer & Mobilität"));
+  var row=el("div","fw-extra-g");
+  [["Ausdauer","Laufen, Rad, Rudern",Math.round(w.cardio),g.cardio||0," min","--yellow",FW_HEART,function(){sheetCardio();}],
+   ["Mobilität","Dehnen, Hüfte, Schulter",w.mob,g.mob||0,(g.mob===1?" Einheit":" Einheiten"),"--good",FW_STRETCH,function(){sheetMob();}]].forEach(function(o){
+    var c=el("div","fw-xt");c.style.setProperty("--xc","var("+o[5]+")");
+    var top=el("div","fw-xt-top"),ic=el("span","fw-xt-ic");ic.innerHTML=svgIcon(o[6],2.2);top.appendChild(ic);
+    var tt=el("div","fw-xt-t");tt.appendChild(el("b",null,o[0]));tt.appendChild(el("span",null,o[1]));top.appendChild(tt);c.appendChild(top);
+    var p=o[3]?clamp(o[2]/o[3],0,1):0,mid=el("div","fw-xt-mid"),rg=el("div","fw-ring");rg.style.setProperty("--p",Math.round(p*100)+"%");rg.style.setProperty("--rc","var("+o[5]+")");
+    rg.appendChild(el("b",null,Math.round(p*100)+"%"));mid.appendChild(rg);
+    var val=o[0]==="Mobilität"?fmtMobUnits(o[2]):String(o[2]);
+    var lb=el("span","fw-xt-l");lb.appendChild(document.createTextNode(val+" / "+o[3]+o[4]));lb.appendChild(el("small",null,"diese Woche"));mid.appendChild(lb);c.appendChild(mid);
+    var b=el("button","fw-xt-b");b.type="button";b.innerHTML=svgIcon("M12 5v14M5 12h14",2.4);b.appendChild(document.createTextNode("Eintragen"));b.onclick=o[7];c.appendChild(b);
+    row.appendChild(c);});
+  x.appendChild(row);
+  // 3) Verlauf: die Tagesliste von "Heute" wandert einmalig hierher
+  var v=$("fw-verlauf"),tl=$("todaylist");
+  if(!v){v=el("div","fw-verlauf");v.id="fw-verlauf";v.appendChild(el("h2","fw-extra-h",""));sw.appendChild(v);}
+  v.firstChild.textContent=heuteDate===TODAY?"Verlauf heute":"Verlauf · "+deDate(heuteDate);
+  if(tl&&tl.parentNode!==v){var oh=tl.previousElementSibling;if(oh&&oh.querySelector&&oh.querySelector("#todaylabel"))oh.classList.add("fw-oldtodayh");v.appendChild(tl);}
+}
+(function(){
+  var o=renderToday;renderToday=function(){o();try{fwTrainExtras();}catch(e){}};
+})();
+
 /* ================= Training-Tab: Starten zuerst =================
    Wer den Tab öffnet, will meistens loslegen. Deshalb stehen ganz oben das freie Training und
    daneben "Neue Einheit" / "Aus Vorlage", erst darunter die Liste der eigenen Einheiten.
@@ -767,10 +815,14 @@ function fwPlanSections(sw,list){
     top.hidden=!top.children.length;
     try{fwPlanSections(sw,list);}catch(e){}
     // Reihenfolge oben: Übungssuche, freies Training, Neue Einheit / Vorlage.
-    var sb=$("fw-exsearch"),anchor=sb||null;
-    if(sb&&sw.firstChild!==sb)sw.insertBefore(sb,sw.firstChild);
-    if(free){sw.insertBefore(free,anchor?anchor.nextSibling:sw.firstChild);anchor=free;}
-    sw.insertBefore(top,anchor?anchor.nextSibling:sw.firstChild);
+    // Reihenfolge wie im Entwurf: Suche, Heute eingetragen, freies Training, Ausdauer & Mobilität,
+    // Mein Plan (Überschrift, Liste, Weitere), Neue Einheit / Vorlage, Verlauf.
+    try{fwTrainExtras();}catch(e){}
+    var sb=$("fw-exsearch"),anchor=null;
+    function put(n){if(!n)return;sw.insertBefore(n,anchor?anchor.nextSibling:sw.firstChild);anchor=n;}
+    put(sb);put($("fw-today"));put(free);put($("fw-extra"));
+    var tail=$("fw-more")||list;if(tail&&tail.parentNode===sw)sw.insertBefore(top,tail.nextSibling);else sw.appendChild(top);
+    var v=$("fw-verlauf");if(v)sw.appendChild(v);
   };
 })();
 
@@ -932,6 +984,6 @@ function fwHeadAction(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Heute eingetragen":"Logged today","Gut dabei":"Nice work","Noch nichts – leg los":"Nothing yet – get going","Ausdauer & Mobilität":"Cardio & mobility","Eintragen":"Log","diese Woche":"this week","Verlauf heute":"Today's log","Kraft":"Strength","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();

@@ -458,3 +458,35 @@ body[data-tab="tab-heute"] .fw-hact,body:not([data-tab]) .fw-hact{display:none}
 .fw-plan-h{margin:8px 2px 0;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .fw-plan-add{flex:none;min-height:36px;padding:6px 14px;border:0;border-radius:var(--r-pill);background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule-2);font:inherit;font-size:13px;font-weight:600;color:var(--accent-strong);cursor:pointer}
 .fw-plan-rm{color:var(--ink-3)}
+
+/* ---------- Training: Heute eingetragen, Ausdauer & Mobilität, Verlauf ---------- */
+#p-heute .fw-oldtodayh{display:none!important}
+.fw-today{margin:0 0 12px;padding:14px;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh)}
+.fw-today-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.fw-today-h b{display:block;font-family:var(--f-cond);font-size:18px;margin-top:1px}
+.fw-today-add{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:var(--r-pill);background:var(--surface-2);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.fw-today-add svg{width:16px;height:16px}
+.fw-today-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fw-extra{margin:16px 0 4px}
+.fw-extra-h{margin:0 0 10px;font-family:var(--f-cond);font-weight:700;font-size:22px;color:var(--ink)}
+.fw-extra-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fw-xt{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:22px;background:var(--surface);box-shadow:var(--card-sh);min-width:0}
+.fw-xt-top{display:flex;align-items:center;gap:10px;min-width:0}
+.fw-xt-ic{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--xc);background:color-mix(in srgb,var(--xc) 16%,transparent)}
+.fw-xt-ic svg{width:20px;height:20px}
+.fw-xt-t{min-width:0;display:flex;flex-direction:column}
+.fw-xt-t b{font-family:var(--f-cond);font-size:16px}
+.fw-xt-t span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-xt-mid{display:flex;align-items:center;gap:10px}
+.fw-xt .fw-ring{width:50px;height:50px;background:radial-gradient(closest-side,var(--surface) 76%,transparent 78%),conic-gradient(var(--rc) 0 var(--p),var(--rule) var(--p) 100%)}
+.fw-xt .fw-ring b{font-size:13px}
+.fw-xt-l{display:flex;flex-direction:column;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.fw-xt-l small{font-size:11.5px;color:var(--ink-3)}
+.fw-xt-b{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border:0;border-radius:var(--r-pill);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  color:var(--xc);background:color-mix(in srgb,var(--xc) 14%,transparent)}
+.fw-xt-b svg{width:16px;height:16px}
+.fw-verlauf{margin-top:22px}
+.fw-verlauf .dsec-note{display:none!important}
+/* Leere Bereiche (noch nichts eingetragen) im Verlauf ausblenden - dafür gibt es oben die Kacheln. */
+.fw-verlauf .dsec:has(.estate),.fw-verlauf .dsec-inline:not(.on){display:none}
+.fw-verlauf .daylist:not(:has(.dsec:not(:has(.estate)):not(.dsec-note):not(.dsec-inline:not(.on))))::before{content:"Noch nichts eingetragen.";display:block;padding:14px 4px;font-size:13.5px;color:var(--ink-3)}
