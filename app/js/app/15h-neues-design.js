@@ -1197,6 +1197,9 @@ function fwSelCard(){
 function fwMuscleExercises(fk,m){
   var em=(EMPH[fk]||[]).map(exById).filter(Boolean);
   var list=em.length?em:EX.filter(function(e){return e.t!=="cardio"&&!e.mob&&((e.p||[]).indexOf(m.id)>=0);});
+  // Übungen mit Bewegungsbild zuerst - wie sie ausgeführt werden, ist hier das Wichtigste.
+  function clip(e){return !e.custom&&typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[e.id]?1:0;}
+  list=list.map(function(e,i){return {e:e,i:i};}).sort(function(a,b){return (clip(b.e)-clip(a.e))||(a.i-b.i);}).map(function(o){return o.e;});
   return list.slice(0,8);
 }
 (function(){
@@ -1241,9 +1244,16 @@ function fwMuscleExercises(fk,m){
       var row=el("div","fw-md-exs"),figs=[];
       exs.forEach(function(ex){
         var t=el("button","fw-md-ex");t.type="button";
-        var pic=el("span","fw-md-pic"),sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
-        sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",m.view==="back"?"back":"front");
-        pic.appendChild(sv);t.appendChild(pic);figs.push(sv);
+        var pic=el("span","fw-md-pic");
+        function fig(){var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+          sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",m.view==="back"?"back":"front");
+          pic.appendChild(sv);return sv;}
+        var cl=!ex.custom&&typeof FW_ANIM_CLIP!=="undefined"&&FW_ANIM_CLIP[ex.id];
+        if(cl){var im=el("img");im.src="assets/posen/"+cl+".webp";im.alt="";im.loading="lazy";im.decoding="async";pic.appendChild(im);pic.classList.add("pose");
+          im.onerror=function(){im.remove();pic.classList.remove("pose");try{fillExFig(fig());}catch(e){}};
+          var pl=el("i","fw-md-play");pl.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.4C8.9 3.9 8 4.4 8 5.2z" fill="currentColor"/></svg>';t.appendChild(pl);}
+        else figs.push(fig());
+        t.appendChild(pic);
         t.appendChild(el("span","fw-md-exn",ex.n));
         t.onclick=function(ev){ev.stopPropagation();sheetExerciseDetail(ex);};
         row.appendChild(t);});

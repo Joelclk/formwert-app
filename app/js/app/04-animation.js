@@ -27,7 +27,9 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"shrug",pullover:"pullover",
   rot_internal:"rotint",mob_bandpullapart:"reversefly",
   /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
-  squat:"squat",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
+  /* Kniebeuge Langhantel: eigener Clip squat_lh (01.10.2026) mit Stange auf dem Rücken, Füße ausgedreht; Front-, Goblet-,
+     Körpergewichts-Kniebeuge, Hackenschmidt und Beinpresse zeigen vorerst die alte Bewegung ohne Stange */
+  squat:"squat_lh",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
   deadlift:"deadlift",deadlift_sumo:"deadlift",
   /* Rumänisches Kreuzheben: Hüftbeuge mit fast gestreckten Knien (bis 28.09.2026 als „deadlift“ gezeigt) */
   deadlift_rdl:"rdl",goodmorning:"rdl",deadlift_sl:"rdl",
@@ -40,7 +42,7 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"h
   mob_shouldercar:"shouldercar",mob_armcircles:"armcircle"};
 /* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
    werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
-var FW_ANIM_CAP_BEINE={squat:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1,bench_lh:1,bench_kh:1,incline_lh:1,incline_kh:1};
+var FW_ANIM_CAP_BEINE={squat:1,squat_lh:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1,bench_lh:1,bench_kh:1,incline_lh:1,incline_kh:1};
 /* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
    die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
 var FW_ANIM_MODELL={};   // alle Clips im Ganzkörper-Modell; "bein" (anim-modell-bein.js) wird nicht mehr genutzt

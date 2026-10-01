@@ -1,5 +1,5 @@
-Version 523 (Artifact-Version 1790891808-482f)
-Stand: 2026-10-01
-Aenderung: Einzelmuskel-Detail neu: Zahl + Status, Zonen-Balken (Min/Ziel/Max), Erholung als Akku, Uebungen als antippbare Kacheln, Korridor eingeklappt
+Version 525 (Artifact-Version 1790892911-3f2a)
+Stand: 2026-10-02
+Aenderung: Muskel-Detail zeigt Bewegungsbilder der Uebungen (mit Play-Zeichen, Uebungen mit Bild zuerst); enthaelt Live-Stand Version 524 der anderen Sitzung (Kniebeuge Langhantel squat_lh)
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.

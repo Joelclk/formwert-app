@@ -769,3 +769,10 @@ body[data-tab="tab-koerper"] .fw-hact{display:none}
 .fw-sel-st.z0{background:var(--warn-soft);color:var(--warn)}
 .fw-sel-st.z1{background:var(--good-soft);color:var(--good)}
 .fw-sel-st.z2{background:var(--bad-soft);color:var(--bad)}
+/* Bewegungsbild in den Übungskacheln des Muskel-Details, mit kleinem Play-Zeichen: Antippen zeigt den Ablauf. */
+.fw-md-ex{position:relative}
+.fw-md-pic.pose{background:radial-gradient(85% 75% at 50% 45%,color-mix(in srgb,var(--accent) 16%,var(--surface)) 0%,var(--surface) 78%)}
+.fw-md-pic img{width:100%;height:100%;object-fit:contain;padding:6px}
+.fw-md-play{position:absolute;z-index:1;top:14px;right:14px;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:var(--accent);color:var(--accent-ink);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.fw-md-play svg{width:12px;height:12px;margin-left:1px}
