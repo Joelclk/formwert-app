@@ -1188,6 +1188,77 @@ function fwSelCard(){
   };
 })();
 
+/* ================= Einzelmuskel-Detail neu =================
+   Vorher: Fachbegriff als Überschrift, Erholung mit zwei Erklärsätzen, drei Korridor-Kästen,
+   ein Absatz "Was noch mehr bringt", Beispiel-Übungen als Text und die Korridor-Einstellung mit
+   Hinweistext - alles untereinander. Jetzt: Name, eine Zahl mit Status, ein Balken mit Zonen,
+   die Erholung als Akku, die passenden Übungen als antippbare Kacheln. Die Korridor-Einstellung
+   liegt eingeklappt unter "Ziel anpassen". */
+function fwMuscleExercises(fk,m){
+  var em=(EMPH[fk]||[]).map(exById).filter(Boolean);
+  var list=em.length?em:EX.filter(function(e){return e.t!=="cardio"&&!e.mob&&((e.p||[]).indexOf(m.id)>=0);});
+  return list.slice(0,8);
+}
+(function(){
+  var orig=muscleDetail;
+  muscleDetail=function(fk,ms,compact){
+    var f=FINE[fk],m=f&&muscleById(f.g);
+    if(!m)return orig(fk,ms,compact);
+    var wrap=el("div","mdetailblock fw-md"),c=corr(m),v=Math.round((ms[m.id]||0)*10)/10,z=zoneOf(v,m);
+    // Kopf
+    var hd=el("div","fw-md-h");hd.appendChild(el("b",null,f.de));hd.appendChild(el("span",null,f.la));wrap.appendChild(hd);
+    // Diese Woche: Zahl, Status, Zonen-Balken
+    var wk=el("div","fw-md-sec");
+    var top=el("div","fw-md-wk");
+    var n=el("div","fw-md-n");n.appendChild(el("b","num",fmtNum(v)));n.appendChild(el("span",null,"Sätze · 7 Tage"));top.appendChild(n);
+    var st=el("span","fw-sel-st z"+z);st.appendChild(el("i"));st.appendChild(document.createTextNode(zoneLabel(z)));top.appendChild(st);
+    wk.appendChild(top);
+    var mx=Math.max(c.mrv*1.25,v*1.05,1),pc=function(x){return clamp(x/mx*100,0,100)+"%";};
+    var bar=el("div","fw-md-bar");
+    var zl=el("i","zl");zl.style.width=pc(c.mev);bar.appendChild(zl);
+    var zo=el("i","zo");zo.style.left=pc(c.mev);zo.style.width="calc("+pc(c.mrv)+" - "+pc(c.mev)+")";bar.appendChild(zo);
+    var zh=el("i","zh");zh.style.left=pc(c.mrv);zh.style.right="0";bar.appendChild(zh);
+    var tk=el("u");tk.style.left=pc(c.mav);bar.appendChild(tk);
+    var mk=el("em","z"+z);mk.style.left=pc(v);bar.appendChild(mk);
+    wk.appendChild(bar);
+    var lb=el("div","fw-md-lb");
+    [[c.mev,"Min "+c.mev],[c.mav,"Ziel "+c.mav],[c.mrv,"Max "+c.mrv]].forEach(function(o){var s2=el("span",null,o[1]);s2.style.left=pc(o[0]);lb.appendChild(s2);});
+    wk.appendChild(lb);
+    wrap.appendChild(wk);
+    // Erholung als Akku mit zehn Strichen
+    var rv=recoveryOf(m),pct=rv?Math.round(rv.pct):100,full=pct>=100;
+    var rc=el("div","fw-md-sec fw-md-rec"+(full?" full":""));
+    var rl=el("div","fw-md-rl");rl.appendChild(el("span","fw-md-lab","Erholung"));
+    rl.appendChild(el("b",null,full?"Bereit":"in "+Math.max(1,Math.round(rv.left))+" Std."));rc.appendChild(rl);
+    var bat=el("div","fw-md-bat");for(var i=0;i<10;i++){var seg=el("i");if(i<Math.round(pct/10))seg.className="on";bat.appendChild(seg);}
+    rc.appendChild(bat);
+    rc.appendChild(el("span","fw-md-sub",rv?"zuletzt "+humanSince(rv.h)+" belastet":"länger nicht belastet"));
+    wrap.appendChild(rc);
+    // Übungen als Kacheln - antippen öffnet die Übung mit Bewegungsablauf
+    var exs=fwMuscleExercises(fk,m);
+    if(exs.length){
+      var es=el("div","fw-md-sec");es.appendChild(el("span","fw-md-lab","Übungen dafür"));
+      var row=el("div","fw-md-exs"),figs=[];
+      exs.forEach(function(ex){
+        var t=el("button","fw-md-ex");t.type="button";
+        var pic=el("span","fw-md-pic"),sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+        sv.setAttribute("viewBox",figViewBoxTight());sv.setAttribute("data-ex",ex.id);sv.setAttribute("data-view",m.view==="back"?"back":"front");
+        pic.appendChild(sv);t.appendChild(pic);figs.push(sv);
+        t.appendChild(el("span","fw-md-exn",ex.n));
+        t.onclick=function(ev){ev.stopPropagation();sheetExerciseDetail(ex);};
+        row.appendChild(t);});
+      es.appendChild(row);wrap.appendChild(es);
+      requestAnimationFrame(function(){figs.forEach(function(sv){try{fillExFig(sv);}catch(e){}});});
+    }
+    // Ziel anpassen - eingeklappt
+    var dt=document.createElement("details");dt.className="fw-md-adj";
+    var sm=document.createElement("summary");sm.textContent=volFactor(m.id)!==1?"Ziel anpassen · angepasst":"Ziel anpassen";dt.appendChild(sm);
+    try{dt.appendChild(volField(m));}catch(e){}
+    wrap.appendChild(dt);
+    return wrap;
+  };
+})();
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;

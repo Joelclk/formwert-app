@@ -1,5 +1,5 @@
-Version 522 (Artifact-Version 1790883478-bf1f)
+Version 523 (Artifact-Version 1790891808-482f)
 Stand: 2026-10-01
-Aenderung: Koerper: Muskelauswahl als Ring oben links auf der Buehne; Training: naechste Einheit als eigener Abschnitt "Als Naechstes" ganz oben
+Aenderung: Einzelmuskel-Detail neu: Zahl + Status, Zonen-Balken (Min/Ziel/Max), Erholung als Akku, Uebungen als antippbare Kacheln, Korridor eingeklappt
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
