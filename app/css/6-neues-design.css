@@ -90,14 +90,14 @@ nav.bottom .nav-start[aria-selected="true"] .nav-start-k{box-shadow:inset 0 1px 
   box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 22%,transparent),var(--card-sh)}
 .hk-top{display:flex;gap:8px;align-items:stretch;min-height:236px}
 .hk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.hk-eye{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
+.hk-eye{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-strong)}
 .heute-karte.calm .hk-eye,.heute-karte.done .hk-eye{color:var(--good)}
 .heute-karte.live .hk-eye{display:inline-flex;align-items:center;gap:7px}
 .heute-karte.live .hk-eye::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:fwPulse 1.4s ease-in-out infinite}
-.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:27px;line-height:1.05;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
-.hk-sub{font-size:13.5px;color:var(--ink-2)}
+.hk-title{margin:0;font-family:var(--f-cond);font-weight:700;font-size:31px;line-height:1.02;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
+.hk-sub{font-size:14.5px;color:var(--ink-2)}
 .hk-time{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
-.hk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hk-chips{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:10px}
 .hk-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-strong)}
 /* Große Figur rechts über die ganze Höhe des Textes - wie im Startbild der Vorschau. */
 .hk-fig{flex:none;width:118px;height:248px;margin:-10px -10px -8px 0;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 35%,transparent))}
@@ -337,8 +337,8 @@ body:not([data-tab="tab-training"]):not([data-tab="tab-entdecken"]) .appbar-sear
 
 /* ---------- Heute wie in der Vorschau ---------- */
 #p-heute #hero,#p-heute .weekcard,#p-heute h2.sec:has(+ .weekcard){display:none!important}
-.hk-rec{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px 4px 8px;border-radius:var(--r-pill)}
-.hk-rec svg{width:14px;height:14px}
+.hk-rec{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;padding:7px 14px 7px 10px;border-radius:var(--r-pill)}
+.hk-rec svg{width:17px;height:17px}
 .hk-rec.ok{background:var(--good-soft);color:var(--good)}
 .hk-rec.wait{background:var(--warn-soft);color:var(--warn)}
 .fw-hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
@@ -406,3 +406,8 @@ body.fw-go-on.wo-live #session-wrap>.card.flush{margin-bottom:80px}
 .wo-pagehead .main span{margin-top:3px}
 .fw-wo-tools{display:flex;justify-content:flex-end;gap:2px;margin:-4px -6px 0}
 .fw-wo-tools .iconbtn{min-width:38px;min-height:38px;padding:8px;color:var(--ink-3)}
+
+/* Figur hervorheben: heller Lichtkegel hinter der Figur, damit sie auf dem dunklen Grund steht. */
+.hk-fig{position:relative;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--accent) 45%,transparent))}
+.hk-fig::before{content:"";position:absolute;inset:8% -10% 14%;border-radius:50%;z-index:-1;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 30%,transparent),transparent)}

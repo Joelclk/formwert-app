@@ -131,7 +131,7 @@ function renderHeuteKarte(){
       var regs=fwRegionsOf(r.items);
       title=regs.length?regs.join(", "):r.name;
       var nSets=r.items.reduce(function(a,i){return a+(i.sets||0);},0);
-      sub=r.items.length+" Übungen · "+nSets+" Sätze · ca. "+fwRoutineMinutes(r)+" min";
+      sub=r.items.length+" Übungen · "+nSets+" Sätze · ca.\u00a0"+fwRoutineMinutes(r)+"\u00a0min";
       chips=fwRecoveryChips(r.items);
       var fo=routineFocus(r.items);
       if(fo.max>0){fig=document.createElementNS("http://www.w3.org/2000/svg","svg");fig.setAttribute("viewBox","0 0 800 1500");fig._sets=fo.sets;}
