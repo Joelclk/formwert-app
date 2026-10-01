@@ -292,8 +292,7 @@ function fwHeuteCards(){
   var wr=el("div","fw-hc-wrow"),ring=el("div","fw-ring");ring.style.setProperty("--p",Math.round(p*100)+"%");
   ring.appendChild(el("b",null,w.train+"/"+gd));wr.appendChild(ring);
   wr.appendChild(el("span",null,"Trainings­tage geschafft"));b.appendChild(wr);
-  var extra=[];if(g.mob)extra.push("Mobilität "+fmtMobUnits(w.mob)+"/"+g.mob);if(g.cardio)extra.push("Ausdauer "+Math.round(w.cardio)+"/"+g.cardio+" min");
-  if(extra.length)b.appendChild(el("span","fw-hc-sub",extra.join(" · ")));
+  // Ausdauer und Mobilität stehen im Training-Tab - hier nur die Trainingstage, wie in der Vorschau.
   box.appendChild(b);
   // "Nächstes Ziel" direkt darunter
   var ng=$("nextgoal");if(ng&&ng.previousElementSibling!==box)box.parentNode.insertBefore(ng,box.nextSibling);

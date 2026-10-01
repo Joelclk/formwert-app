@@ -491,14 +491,17 @@ body[data-tab="tab-heute"] .fw-hact,body:not([data-tab]) .fw-hact{display:none}
 .fw-verlauf .dsec:has(.estate),.fw-verlauf .dsec-inline:not(.on){display:none}
 .fw-verlauf .daylist:not(:has(.dsec:not(:has(.estate)):not(.dsec-note):not(.dsec-inline:not(.on))))::before{content:"Noch nichts eingetragen.";display:block;padding:14px 4px;font-size:13.5px;color:var(--ink-3)}
 
-/* ---------- Heute ohne Scrollen ----------
-   Der Seitenabstand unten war für die alte Tagesliste bemessen (Leiste + 40 px). Auf "Heute"
-   reicht Platz für die schwebende Leiste - passt alles auf den Bildschirm, scrollt nichts mehr.
-   Auf sehr kleinen Handys darf es weiter scrollen, statt etwas abzuschneiden. */
-body[data-tab="tab-heute"] .wrap{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--nav-gap) + var(--nav-bar) + 10px)}
-body[data-tab="tab-heute"]{overscroll-behavior-y:none}
-html:has(body[data-tab="tab-heute"]){overscroll-behavior-y:none}
-
+/* ---------- Heute ist eine feste Seite ohne Scrollen (wie in der Vorschau) ---------- */
+body[data-tab="tab-heute"]{overflow:hidden;overscroll-behavior:none}
+html:has(body[data-tab="tab-heute"]){overflow:hidden;overscroll-behavior:none}
+body[data-tab="tab-heute"] .wrap{height:100dvh;overflow:hidden;box-sizing:border-box;padding-bottom:0}
+/* Nächstes Ziel kompakter, damit alles auf den festen Bildschirm passt. */
+#p-heute .nextgoal{padding:10px 14px;gap:10px;border-radius:20px}
+#p-heute .nextgoal .ng-ic{width:40px;height:42px}
+#p-heute .nextgoal .ng-eye{font-size:10.5px}
+#p-heute .nextgoal b{font-size:15px;line-height:1.2}
+#p-heute .nextgoal .ng-sub{font-size:12.5px}
+#p-heute .nextgoal .pbar{margin-top:4px;height:4px}
 /* ---------- Plus-Knopf rechts unten entfällt ----------
    Alles, was er bot, hat jetzt einen festen Platz: Training starten über den runden Knopf in der
    Leiste, Satz / Ausdauer / Mobilität nachtragen im Training-Tab. */
