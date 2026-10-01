@@ -1,5 +1,5 @@
-Version 511 (Artifact-Version 1790848923-a660)
+Version 513 (Artifact-Version 1790851151-4a6b)
 Stand: 2026-10-01
-Aenderung: Koerper neu - Figur gross ohne Rahmen, Auswahl-Schild auf der Figur, Regionen als Kacheln, doppelter Rang-Knopf entfernt
+Aenderung: Entwurf 2 live - Heute mit drei Ringen (Training, Ausdauer, Mobilitaet) und Formwert-Zeile; Koerper als Buehne mit Volumen/Erholung/Rang, Umdrehen und Zoom (3D-Betrachter: fw3d-view, fw3d-zoom), Glas-Schild mit Muskelbild, Regionskarten zum Wischen
 Artifact: https://claude.ai/artifact/2VEGYVStFNcZbz8fUsgXg5
 Hinweis: app/ entspricht exakt dem Live-Stand. formwert_app.html und quelltext/ sind veraltet.
