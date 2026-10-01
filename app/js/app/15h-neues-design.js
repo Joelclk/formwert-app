@@ -266,7 +266,11 @@ function renderHeuteKarte(){
    nächsten Stufe), rechts die Woche als Ring. Darunter die bestehende "Nächstes Ziel"-Karte.
    Die große Formwert-Karte mit Ring und Teilwerten und der Wochenkalender-Block entfallen auf
    "Heute" - die Teilwerte stehen ausführlich in "Du", die Woche steht oben als Leiste. */
-var FW_LEVELS=[30,50,70,85,100];
+var FW_LEVELS=[30,50,70,85,100],FW_LEVEL_NAMES={30:"Solide Basis",50:"Gute Form",70:"Starke Form",85:"Topform"};
+function fwRingEl(p,col,inner){
+  var r=el("div","fw-ring");r.style.setProperty("--p",Math.round(clamp(p,0,1)*100)+"%");r.style.setProperty("--rc",col);
+  if(typeof inner==="string")r.appendChild(el("b",null,inner));else r.appendChild(inner);return r;
+}
 function fwHeuteCards(){
   var sec=$("p-heute");if(!sec||!state.profile)return;
   var box=$("fw-hcards");
@@ -274,27 +278,27 @@ function fwHeuteCards(){
   box.innerHTML="";
   var c=heuteDate===TODAY&&lastC?lastC:compute(heuteDate),v=Math.round(c.fitness||0);
   var prev=0;try{prev=Math.round(compute(shiftDays(heuteDate,-14)).fitness||0);}catch(e){}
-  var df=v-prev;
-  // Formwert
-  var a=el("button","fw-hc fw-hc-fit");a.type="button";a.setAttribute("aria-label","Dein Formwert "+v+" von 100, Details in Du");
-  a.appendChild(el("span","fw-hc-eye","Dein Formwert"));
-  var row=el("div","fw-hc-val");row.appendChild(el("b","num",String(v)));
-  if(df)row.appendChild(el("span","fw-hc-tr "+(df>0?"up":"down"),(df>0?"▲ ":"▼ ")+Math.abs(df)));
-  a.appendChild(row);a.appendChild(fwTicks(v/100,18));
+  var df=v-prev,w=weekStats(heuteDate),g=state.profile.goals||{};
+  // Drei Ringe: Trainingstage, Ausdauer, Mobilität - antippen öffnet das Eintragen.
+  var row=el("div","fw-rings");
+  function tile(p,col,inner,label,fn){var t=el("button","fw-rt");t.type="button";t.appendChild(fwRingEl(p,col,inner));t.appendChild(el("span",null,label));t.onclick=fn;row.appendChild(t);}
+  var gd=g.days||0;tile(gd?w.train/gd:0,"var(--accent)",w.train+"/"+gd,"Training",function(){selectTab("tab-training");window.scrollTo(0,0);});
+  var ic1=el("i");ic1.innerHTML=svgIcon(FW_HEART,2.2);
+  tile(g.cardio?w.cardio/g.cardio:0,"var(--yellow)",ic1,Math.round(w.cardio)+" / "+(g.cardio||0)+" min",function(){sheetCardio();});
+  var ic2=el("i");ic2.innerHTML=svgIcon(FW_STRETCH,2.2);
+  tile(g.mob?w.mob/g.mob:0,"var(--good)",ic2,fmtMobUnits(w.mob)+" / "+(g.mob||0)+" Mobil.",function(){sheetMob();});
+  box.appendChild(row);
+  // Formwert als breite Zeile
+  var a=el("button","fw-fwrow");a.type="button";a.setAttribute("aria-label","Dein Formwert "+v+" von 100, Details in Du");
+  var big=el("div","fw-fwrow-v");big.appendChild(el("b","num",String(v)));
+  if(df)big.appendChild(el("span","fw-hc-tr "+(df>0?"up":"down"),(df>0?"▲":"▼")+Math.abs(df)));a.appendChild(big);
+  var tx=el("div","fw-fwrow-t");tx.appendChild(el("span","fw-hc-eye","Dein Formwert · "+fitLevel(v)));
+  tx.appendChild(fwTicks(v/100,22));
   var nx=FW_LEVELS.filter(function(x){return x>v;})[0];
-  a.appendChild(el("span","fw-hc-sub",nx?(nx-v)+(nx-v===1?" Punkt":" Punkte")+" bis "+nx:"Topform erreicht"));
+  tx.appendChild(el("span","fw-hc-sub",nx?(nx-v)+(nx-v===1?" Punkt":" Punkte")+" bis „"+(FW_LEVEL_NAMES[nx]||nx)+"“":"Topform erreicht"));
+  a.appendChild(tx);var ch=el("span","chev");ch.innerHTML=svgIcon(IC_CHEV);a.appendChild(ch);
   a.onclick=function(){selectTab("tab-werte");window.scrollTo(0,0);};
   box.appendChild(a);
-  // Woche
-  var w=weekStats(heuteDate),g=state.profile.goals||{},gd=g.days||0,p=gd?clamp(w.train/gd,0,1):0;
-  var b=el("div","fw-hc fw-hc-week");
-  b.appendChild(el("span","fw-hc-eye","Diese Woche"));
-  var wr=el("div","fw-hc-wrow"),ring=el("div","fw-ring");ring.style.setProperty("--p",Math.round(p*100)+"%");
-  ring.appendChild(el("b",null,w.train+"/"+gd));wr.appendChild(ring);
-  wr.appendChild(el("span",null,"Trainings­tage geschafft"));b.appendChild(wr);
-  // Ausdauer und Mobilität stehen im Training-Tab - hier nur die Trainingstage, wie in der Vorschau.
-  box.appendChild(b);
-  // "Nächstes Ziel" direkt darunter
   var ng=$("nextgoal");if(ng&&ng.previousElementSibling!==box)box.parentNode.insertBefore(ng,box.nextSibling);
 }
 (function(){
@@ -464,6 +468,7 @@ function fwMuscleRanks(){
     // Kurzinfo zur Auswahl ("Brust · 0 Sätze …") liegt als Schild auf der Figur statt als eigener
     // Kasten darüber - so bekommt die Figur den Platz.
     var co=$("callout"),b3=$("body3d");if(co&&b3&&co.parentNode!==b3)b3.appendChild(co);
+    try{fwBodyStage();}catch(e){}
     // Ohne Auswahl zeigt der Detailkasten nur den Tipp, der schon unten in der Figur steht - dann weg damit.
     var md=$("mdetail");if(md)md.classList.toggle("fw-empty",!selFine&&!(selSet&&selSet.length));
   };
@@ -979,6 +984,62 @@ function fwHeadAction(){
   b.classList.toggle("on",tab==="tab-koerper"&&bodyMode==="rank");
 }
 
+/* ================= Körper als Bühne =================
+   Die Figur steht fest in der Mitte einer großen dunklen Fläche. Darauf liegen: oben links der
+   Umschalter Volumen / Erholung / Rang, rechts Umdrehen und Zoom, unten das Glas-Schild zum
+   gewählten Muskel (Bild, Name, Sätze, Skala, Rangwappen). Die Regionen darunter sind Karten zum
+   Wischen mit großem Bild; die Muskeln einer Region klappen darunter in voller Breite auf. */
+function fw3dSend(msg){var f=$("body3d-frame");if(f&&f.contentWindow)try{f.contentWindow.postMessage(msg,"*");}catch(e){}}
+function fwBodyStage(){
+  var b3=$("body3d"),bar=$("bodymode");if(!b3)return;
+  if(bar&&bar.parentNode!==b3){b3.appendChild(bar);}
+  if(bar&&!bar.querySelector('[data-m="rank"]')){
+    var rb=el("button",null,"Rang");rb.type="button";rb.setAttribute("data-m","rank");rb.setAttribute("aria-selected",String(bodyMode==="rank"));
+    rb.onclick=function(){if(bodyMode==="rank")return;bodyMode="rank";renderBodySel();};bar.appendChild(rb);
+    var vb=bar.querySelector('[data-m="vol"]');if(vb)vb.textContent="Volumen";
+  }
+  // Detailkasten der gewählten Region unter die Regionskarten, in voller Breite.
+  var md=$("mdetail"),ml=$("mlist");if(md&&ml&&md.previousElementSibling!==ml)ml.parentNode.insertBefore(md,ml.nextSibling);
+  var h2=ml&&ml.parentNode.querySelector("h2.sec");if(h2&&h2.firstChild&&h2.firstChild.nodeType===3)h2.firstChild.textContent="Nach Region ";
+  if(!$("fw-stage-btns")){
+    var sb=el("div","fw-stage-btns");sb.id="fw-stage-btns";
+    [["Umdrehen","M20 12a8 8 0 1 1-2.3-5.6M20 4v4.5h-4.5",function(){fw3dSend({type:"fw3d-view",toggle:true});}],
+     ["Vergrößern","M12 5v14M5 12h14",function(){fw3dSend({type:"fw3d-zoom",factor:0.78});}],
+     ["Verkleinern","M5 12h14",function(){fw3dSend({type:"fw3d-zoom",factor:1.28});}]].forEach(function(o){
+      var k=el("button","fw-sbtn");k.type="button";k.setAttribute("aria-label",o[0]);k.innerHTML=svgIcon(o[1],2);k.onclick=o[2];sb.appendChild(k);});
+    b3.appendChild(sb);
+  }
+  // Glas-Schild: Bild des Muskels, Skala mit Marker, Rangwappen.
+  var co=$("callout");if(!co||!lastC)return;
+  var f=effFine()&&FINE[effFine()],m=f&&muscleById(f.g);
+  var old=co.querySelector(".fw-co-x");if(old)old.remove();
+  if(!f||!m||co.querySelector(".co-hint"))return;
+  var x=el("div","fw-co-x"),pic=el("div","fw-co-pic");pic.setAttribute("aria-hidden","true");
+  var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");pic.appendChild(sv);
+  var sets={};sets[f.g]=1;requestAnimationFrame(function(){try{drawMini(sv,m.view==="back"?"back":"front",sets);}catch(e){}});
+  x.appendChild(pic);
+  var v=lastC.ms[f.g]||0,cm=corr(m),sc=el("div","fw-co-scale"),mk=el("i");mk.style.left=clamp(volLegendPos(v,m),0,100)+"%";sc.appendChild(mk);
+  var right=el("div","fw-co-r");right.appendChild(el("span","fw-co-goal",Math.round(v*10)/10+" Sätze · Ziel "+cm.mav));right.appendChild(sc);x.appendChild(right);
+  var rk=null;try{rk=fwMuscleRanks()[f.g];}catch(e){}
+  if(rk){var cr=el("span","fw-co-crest");cr.innerHTML=rankBadge(rk,34);cr.title=rk.name;x.appendChild(cr);}
+  co.appendChild(x);
+}
+(function(){
+  // Muskelzeilen einer aufgeklappten Region unter die Kartenreihe legen (volle Breite).
+  var o=renderMuscleList;
+  renderMuscleList=function(ms){
+    o(ms);
+    var box=$("mlist");if(!box)return;
+    // Die Muskelzeilen zeigt der Detailkasten (#mdetail) unter den Karten - hier bleiben nur die Karten.
+    Array.prototype.slice.call(box.querySelectorAll(".row.sub,.row.sub2,.row.mrow")).forEach(function(r){r.remove();});
+    // Zur aufgeklappten Region scrollen, damit die Karte links steht.
+    var on=box.querySelector(".row.tap .chev svg path[d^='M5 9']");var card=on&&on.closest(".row");
+    if(card)try{box.scrollTo({left:card.offsetLeft-16,behavior:"smooth"});}catch(e){}
+    var h=$("mlisthead");if(h)h.textContent="wischen · antippen zeigt die Muskeln";
+    var sec=box.parentNode.querySelector("h2.sec");if(sec)sec.firstChild.textContent="Nach Region ";
+  };
+})();
+
 /* Englische Beschriftungen der neuen Teile (Übersetzung über den Text, siehe 11-sprache.js). */
 (function(){
   if(typeof UI_EN!=="object")return;
@@ -988,6 +1049,6 @@ function fwHeadAction(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Heute eingetragen":"Logged today","Gut dabei":"Nice work","Noch nichts – leg los":"Nothing yet – get going","Ausdauer & Mobilität":"Cardio & mobility","Eintragen":"Log","diese Woche":"this week","Verlauf heute":"Today's log","Kraft":"Strength","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Umdrehen":"Flip","Vergrößern":"Zoom in","Verkleinern":"Zoom out","Nach Region ":"By region ","wischen · antippen zeigt die Muskeln":"swipe · tap shows the muscles","Mobil.":"mobility","Heute eingetragen":"Logged today","Gut dabei":"Nice work","Noch nichts – leg los":"Nothing yet – get going","Ausdauer & Mobilität":"Cardio & mobility","Eintragen":"Log","diese Woche":"this week","Verlauf heute":"Today's log","Kraft":"Strength","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
