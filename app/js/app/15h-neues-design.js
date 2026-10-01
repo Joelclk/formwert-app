@@ -162,8 +162,10 @@ function sheetPlan(){
     function draw(){
       list.innerHTML="";
       var all=sel.concat(routineIds().filter(function(id){return sel.indexOf(id)<0;}));
-      all.forEach(function(id){
+      all.forEach(function(id,ai){
         var r=state.routines[id];if(!r)return;var k=sel.indexOf(id),on=k>=0;
+        if(ai===0&&on)list.appendChild(el("div","fw-plan-h","Im Plan · in dieser Reihenfolge"));
+        if(!on&&(ai===0||sel.indexOf(all[ai-1])>=0))list.appendChild(el("div","fw-plan-h","Nicht im Plan"));
         var row=el("div","fw-plan-row"+(on?" on":""));
         var tg=el("button","fw-plan-tg");tg.type="button";tg.setAttribute("aria-pressed",String(on));
         tg.innerHTML=on?'<b>'+(k+1)+'</b>':svgIcon("M12 5v14M5 12h14",2.2);
@@ -176,7 +178,11 @@ function sheetPlan(){
           up.onclick=function(){var t=sel[k-1];sel[k-1]=id;sel[k]=t;draw();};
           var dn=el("button","iconbtn");dn.type="button";dn.setAttribute("aria-label",r.name+" nach unten");dn.innerHTML=svgIcon("M12 5v14M5 12l7 7 7-7",2);dn.disabled=k===sel.length-1;
           dn.onclick=function(){var t=sel[k+1];sel[k+1]=id;sel[k]=t;draw();};
-          row.appendChild(up);row.appendChild(dn);
+          var rm=el("button","iconbtn fw-plan-rm");rm.type="button";rm.setAttribute("aria-label",r.name+" aus dem Plan nehmen");rm.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.2);
+          rm.onclick=function(){sel.splice(k,1);draw();};
+          row.appendChild(up);row.appendChild(dn);row.appendChild(rm);
+        }else{
+          var ad=el("button","fw-plan-add","Aufnehmen");ad.type="button";ad.onclick=function(){sel.push(id);draw();};row.appendChild(ad);
         }
         list.appendChild(row);
       });
@@ -706,9 +712,21 @@ function fwPlanSections(sw,list){
     if(sug.length>1){
       var h=el("div","fw-planhint");h.id="fw-planhint";
       h.appendChild(el("b",null,"Leg deinen Plan fest"));
-      h.appendChild(el("span",null,"Vorschlag aus den letzten 4 Wochen: "+sug.map(function(id){return state.routines[id].name;}).join(" → ")));
-      var row=el("div","fw-planhint-btns"),ok=el("button","btn primary small","Übernehmen"),ed=el("button","btn ghost small","Anpassen");
-      ok.onclick=function(){fwSetPlan(sug);toast("Plan gespeichert");};ed.onclick=sheetPlan;
+      h.appendChild(el("span",null,"Vorschlag aus den letzten 4 Wochen – tipp an, was nicht in den Plan soll:"));
+      // Jede vorgeschlagene Einheit als Schalter: angetippt fliegt sie raus (z. B. eine seltene Reha-Einheit).
+      var pick=sug.slice(),chips=el("div","fw-planchips");
+      sug.forEach(function(id){
+        var c=el("button","fw-planchip on");c.type="button";c.setAttribute("aria-pressed","true");
+        c.innerHTML=svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6);c.appendChild(document.createTextNode(state.routines[id].name));
+        c.onclick=function(){var k=pick.indexOf(id),on=k<0;if(on)pick.push(id);else pick.splice(k,1);
+          pick.sort(function(a,b){return sug.indexOf(a)-sug.indexOf(b);});
+          c.classList.toggle("on",on);c.setAttribute("aria-pressed",String(on));
+          c.innerHTML=on?svgIcon("M5 12.5l4.5 4.5L19 7.5",2.6):svgIcon("M6 6l12 12M18 6L6 18",2.4);c.appendChild(document.createTextNode(state.routines[id].name));
+          ok.disabled=!pick.length;};
+        chips.appendChild(c);});
+      h.appendChild(chips);
+      var row=el("div","fw-planhint-btns"),ok=el("button","btn primary small","Übernehmen"),ed=el("button","btn ghost small","Mehr anpassen");
+      ok.onclick=function(){fwSetPlan(pick);toast("Plan gespeichert");};ed.onclick=sheetPlan;
       row.appendChild(ok);row.appendChild(ed);h.appendChild(row);
       list.parentNode.insertBefore(h,list);
     }
@@ -917,6 +935,6 @@ function fwHeadAction(){
     "Training starten":"Start workout","Zeit fürs Training":"Time to train","Wochenziel erreicht":"Weekly goal reached",
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
-    "Übungen entdecken":"Explore exercises","Rang":"Rank","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+    "Übungen entdecken":"Explore exercises","Rang":"Rank","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
