@@ -693,31 +693,28 @@ body[data-tab="tab-koerper"] .fw-hact{display:none}
 .fw-te-set i{display:flex;color:var(--ink-3)}.fw-te-set i svg{width:13px;height:13px}
 .fw-te-set:active{opacity:.7}
 /* "Als Nächstes" als kleines Schild über dem Namen der Einheit, nicht mehr über der Figur. */
-.rc-item .rc-last .rs-next{position:static;display:inline-flex;align-items:center;vertical-align:1px;margin:0 8px 0 0;padding:2px 8px;font-size:10px;letter-spacing:.05em}
 
-/* ---------- Körper: Auswahl-Karte unter der Figur (statt Schild auf der Figur) ---------- */
+/* ---------- Körper: Auswahl als Ring oben links auf der Bühne ----------
+   Die Bühne ist in beiden Erscheinungsbildern dunkel, deshalb feste helle Schrift wie bei den Knöpfen rechts. */
 #p-koerper #callout{display:none!important}
-.fw-sel{margin:-2px 0 6px;padding:14px 14px 16px;border-radius:24px;background:var(--surface);
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 7%,transparent),var(--card-sh);animation:fwRise .35s var(--ease) both}
-.fw-sel[hidden]{display:none}
-.fw-sel-top{display:flex;align-items:center;gap:12px}
-.fw-sel-pic{flex:none;width:52px;height:60px;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(80% 70% at 50% 35%,color-mix(in srgb,var(--accent) 14%,var(--surface-2)) 0%,var(--surface-2) 75%)}
-.fw-sel-pic svg{width:100%;height:100%;transform:scale(1.9);transform-origin:50% 26%}
-.fw-sel-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
-.fw-sel-t b{font-family:var(--f-cond);font-size:21px;line-height:1.1;font-weight:700;color:var(--ink)}
-.fw-sel-note{font-size:12.5px;color:var(--ink-3)}
-.fw-sel-st{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 8px;border-radius:var(--r-pill);font-size:12px;font-weight:600}
-.fw-sel-st i{width:7px;height:7px;border-radius:50%;background:currentColor}
-.fw-sel-st.z0{background:var(--warn-soft);color:var(--warn)}
-.fw-sel-st.z1{background:var(--good-soft);color:var(--good)}
-.fw-sel-st.z2{background:var(--bad-soft);color:var(--bad)}
-.fw-sel-crest{flex:none;width:38px;height:38px}.fw-sel-crest svg{width:38px;height:38px;overflow:visible}
-.fw-sel-x{flex:none;align-self:flex-start;display:flex;align-items:center;justify-content:center;width:34px;height:34px;margin:-4px -4px 0 0;
-  border:0;border-radius:50%;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
-.fw-sel-x svg{width:15px;height:15px}
-.fw-sel-num{display:flex;align-items:baseline;gap:8px;margin:14px 2px 8px}
-.fw-sel-num b{font-family:var(--f-cond);font-size:30px;line-height:1;font-weight:700;color:var(--ink)}
-.fw-sel-num span{font-size:13px;color:var(--ink-2)}
-.fw-sel-scale{margin:0 2px}
-.fw-sel-scale i{box-shadow:0 0 0 2px var(--surface)}
+.fw-selring{position:absolute;z-index:4;top:14px;left:14px;display:flex;flex-direction:column;align-items:center;gap:6px;max-width:112px;
+  padding:10px 10px 9px;border-radius:22px;cursor:pointer;color:#f3efe8;
+  background:rgba(20,19,17,.66);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08);
+  animation:fwRise .3s var(--ease) both}
+.fw-selring[hidden]{display:none}
+.fw-selring-r{--rc:#8a8f98;display:grid;place-items:center;width:66px;height:66px;border-radius:50%;
+  background:radial-gradient(closest-side,#16191e 78%,transparent 80%),conic-gradient(var(--rc) 0 var(--p),color-mix(in srgb,var(--rc) 24%,rgba(255,255,255,.06)) var(--p) 100%)}
+.fw-selring-r.z0{--rc:var(--yellow)}
+.fw-selring-r.z1{--rc:var(--good)}
+.fw-selring-r.z2{--rc:var(--red)}
+.fw-selring-r b{font-family:var(--f-cond);font-weight:700;font-size:22px;line-height:1;color:#f3efe8}
+.fw-selring-r small{font-size:12px;font-weight:600;color:rgba(243,239,232,.55)}
+.fw-selring-n{font-family:var(--f-cond);font-size:14px;font-weight:600;line-height:1.15;text-align:center;overflow-wrap:anywhere}
+.fw-selring-x{position:absolute;top:-6px;right:-6px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  background:#2a2a28;color:rgba(243,239,232,.8);box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+.fw-selring-x svg{width:11px;height:11px}
+
+/* ---------- Training: Abschnitt "Als Nächstes" über der Liste ---------- */
+.fw-nextbox{margin-bottom:6px}
+.fw-nextbox .fw-next-h .sec-t{color:var(--accent-strong)}
+.fw-nextbox .rc-item{margin:0}

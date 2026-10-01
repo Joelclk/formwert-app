@@ -764,9 +764,7 @@ function fwRichRoutineCards(list){
     },{passive:true});
     wrap.appendChild(strip);if(dots.children.length>1)wrap.appendChild(dots);
     card.insertBefore(wrap,card.firstChild);
-    // "Als Nächstes" sitzt vorn in der Zeile "Zuletzt vor …" - nicht auf der Figur und ohne eigene Zeile.
-    if(card.classList.contains("rc-next")){var lt=card.querySelector(".rc-last"),nb=el("span","rs-next","Als Nächstes");
-      if(lt)lt.insertBefore(nb,lt.firstChild);else wrap.appendChild(nb);}
+
   });
   if(draws.length)requestAnimationFrame(function(){draws.forEach(function(o){try{drawMini(o.sv,o.v,o.sets);}catch(e){}});});
 }
@@ -948,8 +946,24 @@ function fwTrainExtras(){
     put(sb);put($("fw-today"));put(free);put($("fw-extra"));
     var tail=$("fw-more")||list;if(tail&&tail.parentNode===sw)sw.insertBefore(top,tail.nextSibling);else sw.appendChild(top);
     var v=$("fw-verlauf");if(v)sw.appendChild(v);
+    try{fwNextSection(sw,list);}catch(e){}
   };
 })();
+/* Die nächste Einheit steht als eigener Abschnitt über der Liste, mit Überschrift "Als Nächstes".
+   Kein Schild auf der Karte mehr - das verdeckte die Figur oder kostete eine eigene Zeile.
+   Darunter heißt die Liste "Weitere im Plan". */
+function fwNextSection(sw,list){
+  var box=$("fw-nextbox");if(box)box.remove();
+  var cnt=$("routine-count"),hh=cnt&&cnt.closest("h2");if(!hh||rcSort)return;
+  var nx=list.querySelector(".rc-item.rc-next");if(!nx)return;
+  box=el("section","fw-nextbox");box.id="fw-nextbox";
+  var h=el("h2","sec rc-head fw-next-h");h.appendChild(el("span","sec-t","Als Nächstes"));box.appendChild(h);
+  box.appendChild(nx);
+  hh.parentNode.insertBefore(box,hh);
+  var t=hh.querySelector(".sec-t"),plan=fwPlanIds();
+  if(t)t.textContent=plan.length?"Weitere im Plan":"Weitere Einheiten";
+  var left=list.querySelectorAll(".rc-item").length;if(cnt)cnt.textContent=left?String(left):"";
+}
 
 /* ================= Kopfzeile: Serie und Konto =================
    Wie in der Design-Vorschau: über dem Titel das Datum als kleine Überzeile, rechts die Serie
@@ -1129,48 +1143,34 @@ function fwBodyStage(){
     b3.appendChild(sb);
   }
 }
-/* Auswahl-Karte zwischen Figur und Regionen. Vorher lag ein Glas-Schild mit Fachbegriff, Prozent,
-   Zone und Betonung in einer Zeile auf der Figur und verdeckte sie. Jetzt steht darunter eine
-   eigene Karte mit nur dem Nötigen: Name, Status, Sätze gegen Ziel, Skala - und ein X zum Abwählen. */
+/* Muskelauswahl als kleiner Ring oben links auf der Bühne: in der Mitte "Sätze / Ziel", die
+   Ringfarbe zeigt den Stand (gelb zu wenig, grün im Ziel, rot zu viel), darunter nur der Name.
+   Vorher ein Schild mit Fachbegriff, Prozent, Zone und Betonung, das die Figur verdeckte. */
 function fwSelCard(){
   var b3=$("body3d");if(!b3||!lastC)return;
-  var box=$("fw-sel");
-  if(!box){box=el("div","fw-sel");box.id="fw-sel";}
-  if(box.previousElementSibling!==b3)b3.parentNode.insertBefore(box,b3.nextSibling);
+  var old=$("fw-sel");if(old&&old.parentNode!==b3){old.remove();old=null;}
+  var box=old;if(!box){box=el("div","fw-selring");box.id="fw-sel";b3.appendChild(box);}
   box.innerHTML="";
   var f=selFine&&FINE[selFine],ms=lastC.ms||{};
   if(!f&&!(selSet&&selSet.length)){box.hidden=true;return;}
   box.hidden=false;
-  var top=el("div","fw-sel-top"),tx=el("div","fw-sel-t"),pic=null,status=null,z=-1;
-  if(f){
-    var m=muscleById(f.g);
-    pic=el("div","fw-sel-pic");pic.setAttribute("aria-hidden","true");
-    var sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("viewBox","0 0 800 1500");pic.appendChild(sv);
-    if(m){var st={};st[f.g]=1;requestAnimationFrame(function(){try{drawMini(sv,m.view==="back"?"back":"front",st);}catch(e){}});}
-    tx.appendChild(el("b",null,f.de));
-    if(m){var v=Math.round((ms[f.g]||0)*10)/10;z=zoneOf(v,m);status=zoneLabel(z);}
-    else tx.appendChild(el("span","fw-sel-note","Wird im Training nicht eigens gezählt"));
-  }else{
+  var name=f?f.de:(selLabel||"Auswahl"),inner=null,p=0,z=-1;
+  var m=f&&muscleById(f.g);
+  if(m){var v=Math.round((ms[f.g]||0)*10)/10,cm=corr(m);z=zoneOf(v,m);p=cm.mav?v/cm.mav:0;
+    inner=el("b","num");inner.appendChild(document.createTextNode(fmtNum(v)));inner.appendChild(el("small",null,"/"+cm.mav));}
+  else if(!f){
     var ids=[];selSet.forEach(function(k){var g=FINE[k]&&FINE[k].g;if(g&&ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
-    tx.appendChild(el("b",null,selLabel||"Auswahl"));
     if(ids.length){var ok=0;ids.forEach(function(id){if(zoneOf(ms[id]||0,muscleById(id))===1)ok++;});
-      z=ok===ids.length?1:0;status=ok+" von "+ids.length+" im Ziel";}
-    else tx.appendChild(el("span","fw-sel-note","Wird im Training nicht eigens gezählt"));
+      z=ok===ids.length?1:0;p=ok/ids.length;inner=el("b","num");inner.appendChild(document.createTextNode(String(ok)));inner.appendChild(el("small",null,"/"+ids.length));}
   }
-  if(status){var p=el("span","fw-sel-st z"+z);p.appendChild(el("i"));p.appendChild(document.createTextNode(status));tx.appendChild(p);}
-  if(pic)top.appendChild(pic);top.appendChild(tx);
-  var rk=null;if(f)try{rk=fwMuscleRanks()[f.g];}catch(e){}
-  if(rk){var cr=el("span","fw-sel-crest");cr.innerHTML=rankBadge(rk,38);cr.title=rk.name;top.appendChild(cr);}
-  var x=el("button","fw-sel-x");x.type="button";x.setAttribute("aria-label","Auswahl aufheben");x.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.2);
-  x.onclick=function(){selReset();selSet=null;selFine=null;selLabel=null;selTapKey=null;renderBodySel();try{renderRegionChips();}catch(e){}};
-  top.appendChild(x);box.appendChild(top);
-  // Zahl und Skala nur beim einzelnen gezählten Muskel.
-  var mm=f&&muscleById(f.g);
-  if(mm){
-    var val=Math.round((ms[f.g]||0)*10)/10,cm=corr(mm),row=el("div","fw-sel-num");
-    row.appendChild(el("b","num",fmtNum(val)));row.appendChild(el("span",null,"von "+cm.mav+" Sätzen · 7 Tage"));box.appendChild(row);
-    var sc=el("div","fw-co-scale fw-sel-scale"),mk=el("i");mk.style.left=clamp(volLegendPos(val,mm),0,100)+"%";sc.appendChild(mk);box.appendChild(sc);
-  }
+  var ring=el("div","fw-selring-r z"+z);ring.style.setProperty("--p",Math.round(clamp(p,0,1)*100)+"%");
+  if(inner)ring.appendChild(inner);else{var q=el("b",null,"–");ring.appendChild(q);}
+  box.appendChild(ring);
+  var lb=el("span","fw-selring-n",name);box.appendChild(lb);
+  box.setAttribute("role","button");box.tabIndex=0;
+  box.setAttribute("aria-label",name+(inner?": "+inner.textContent.replace("/"," von ")+(f?" Sätze":" im Ziel"):"")+". Antippen hebt die Auswahl auf.");
+  var x=el("i","fw-selring-x");x.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.6);box.appendChild(x);
+  box.onclick=function(){selReset();selSet=null;selFine=null;selLabel=null;selTapKey=null;renderBodySel();try{renderRegionChips();}catch(e){}};
 }
 (function(){
   // Muskelzeilen einer aufgeklappten Region unter die Kartenreihe legen (volle Breite).
