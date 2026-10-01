@@ -3,3 +3,7 @@
 __pycache__/
 node_modules/
 package-lock.json
+
+# Lokale Sicherungen und Sperrdateien
+*.vorher-daten
+.claude/scheduled_tasks.lock
