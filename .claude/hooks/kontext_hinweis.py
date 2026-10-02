@@ -58,7 +58,7 @@ def main():
             'additionalContext': (
                 'Hinweis Kontingent: Das Gespräch hat ~%d.000 Tokens. Sag Joel am Anfang deiner Antwort in einem Satz, '
                 'dass jetzt ein guter Zeitpunkt für eine neue Sitzung ist, sobald die laufende Aufgabe abgeschlossen ist. '
-                'Biete an, vorher den Stand in Memory/Plan festzuhalten (Übergabe in wenigen Zeilen). '
+                'Biete an, mit /fertig abzuschließen (Stand auf die To-Do-Liste, Commit, Übergabe) und danach mit /start neu zu beginnen. '
                 'Die aktuelle Bitte trotzdem normal bearbeiten.' % (n // 1000))
         }
     }, ensure_ascii=False))

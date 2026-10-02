@@ -128,3 +128,20 @@ Clip gilt für 6 Übungen: `squat`, `squat_front`, `squat_goblet`, `squat_bw`,
 - Beinpresse und Hackenschmidt zeigen eine freie Kniebeuge; dafür bräuchte es eigene Clips.
 
 **Neubau (01.10.2026, 13:30):** läuft in der Sitzung „Körper und Bewegungen“ mit `kniebeuge.py` als eigene Aktion `squat_lh` (Langhantel, High Bar). Die alte `squat` bleibt für Goblet, ohne Gewicht und Beinpresse. Die Messung oben ist dorthin weitergegeben. Nach dem Bau mit `AKT=squat_lh kniebeuge_pruefen.py` prüfen.
+
+## Prüfung `squat_lh` (Stand Blend 01.10.2026 23:40)
+
+`arm-rig-165-kniebeuge-lh.blend`, gemessen mit `kniebeuge_pruefen.py`:
+
+| Prüfpunkt | alter `squat` | `squat_lh` |
+|---|---|---|
+| Lücke Knie/Hüfte (normiert), Becken nach hinten bis Bild 13 | 23 %, 0 cm | 19 %, 1,0 cm – noch knieführend |
+| Stange über der Fußmitte | 3–13 cm dahinter | 2,1–2,6 cm davor, fast konstant ✓ |
+| Schwerpunkt Körper (grob, ohne Stange) | Spanne 10,5 cm | Spanne 8,9 cm |
+| Knie vor der Zehenspitze unten | 3,0 cm | 6,5 cm ✓ |
+| Sprunggelenk-Höhe | 1,2 mm | 0,2 mm ✓ |
+| Rumpf unten / Änderung im 1. Drittel hoch | 25,5° / −12,4° | 33,3° / 0,0° ✓ |
+| Tiefe Hüftgelenk zum Kniegelenk | +1,5 cm | −2,8 cm ✓ |
+| ab / auf (Bilder), gespiegelt | 48 / 47, ja | 55 / 40, nein ✓ |
+
+Offen: Zu Beginn des Absenkens führen die Knie noch etwas (Becken nach 0,5 s erst 1 cm hinten).

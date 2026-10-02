@@ -1,15 +1,25 @@
-# Wissenssammlung aus Videos
+# Wissen
+
+Fachwissen und Entscheidungen, die länger gelten als eine Sitzung. Vor Arbeit an einem Thema
+hier nachsehen. Aufgaben und deren Stand gehören nicht hierher, sondern auf die To-Do-Liste.
+
+## Übungen und Körper
+
+- `kniebeuge.md` – Technik der Kniebeuge, Messung der Clips `squat` und `squat_lh`.
+- `3d-menschmodell-konzept.md` – Konzept zum 3D-Menschmodell.
+
+## Design und Werkzeuge
+
+- `design-werkzeuge.md` – Agenten/Skills/Plugins für Design und UX-Review, bewertet (01.10.2026).
+
+## Arbeitsweise und Videos
 
 Joel schickt Videos (Instagram, YouTube). Claude wertet sie aus und hält hier fest,
-was davon für uns brauchbar ist. Ziel: Wissen nachträglich anwenden können, ohne die
-Videos noch einmal ansehen zu müssen.
-
-## Dateien
+was davon für uns brauchbar ist, damit es sich später anwenden lässt.
 
 - `videos.md` – jedes Video in einer Zeile: Quelle, Thema, Kern, Bewertung, Stand.
 - `erkenntnisse.md` – das Gelernte nach Themen gebündelt, mit konkreten Schritten für uns.
 - `kontingent-2026-10-01.md` – Auswertung, wohin das Claude-Kontingent geht.
-- `design-werkzeuge.md` – Agenten/Skills/Plugins für Design und UX-Review, bewertet (01.10.2026).
 
 ## Ablauf für neue Videos
 

@@ -1,6 +1,6 @@
 ---
 name: werkzeug-helfer
-description: Für mechanische Aufgaben im Formwert-Repo, bei denen nur ein kurzes Ergebnis zurückkommen soll – Dateien durchsuchen, Skripte aus werkzeug/ ausführen (ruck_messen.py, patch_anwenden.py --probe, kontingent_auswerten.py, Syntaxprüfung mit node --check), Blender-Skripte im Hintergrund laufen lassen und nur Kennzahlen melden. Nicht für Entscheidungen, Design, 3D-Gestaltung, Zusammenführen oder Veröffentlichen.
+description: Für mechanische Aufgaben im Formwert-Repo, bei denen nur ein kurzes Ergebnis zurückkommen soll – Dateien durchsuchen, Skripte aus werkzeug/ ausführen (ruck_messen.py, patch_uebertragen.py --probe, kontingent_auswerten.py, Syntaxprüfung mit node --check), Blender-Skripte im Hintergrund laufen lassen und nur Kennzahlen melden. Nicht für Entscheidungen, Design, 3D-Gestaltung, Zusammenführen oder Veröffentlichen.
 model: sonnet
 tools: Bash, Read, Grep, Glob
 ---
