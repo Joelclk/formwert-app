@@ -110,6 +110,15 @@
       "port": 8956
     },
     {
+      "name": "fw-pilotentest",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/joelcelik/fw-pilotentest && exec python3 srv.py 8967"
+      ],
+      "port": 8967
+    },
+    {
       "name": "fw-schraegtest",
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": [
@@ -117,6 +126,24 @@
         "cd /Users/joelcelik/fw-schraegtest && exec python3 srv.py 8960"
       ],
       "port": 8960
+    },
+    {
+      "name": "fw-hantel",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/aea02876-2644-4e7c-9017-5bb40de34789/scratchpad/test' && exec python3 -m http.server 8962"
+      ],
+      "port": 8962
+    },
+    {
+      "name": "fw-hantel-posen",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/aea02876-2644-4e7c-9017-5bb40de34789/scratchpad/posenapp' && exec python3 srv.py 8963"
+      ],
+      "port": 8963
     }
   ]
 }
