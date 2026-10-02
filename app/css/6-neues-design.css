@@ -583,11 +583,15 @@ body[data-tab="tab-heute"] .wrap{padding-bottom:calc(env(safe-area-inset-bottom,
 /* ---------- Körper ---------- */
 body[data-tab="tab-koerper"] .fw-hact{display:none}
 #p-koerper #regionchips,#p-koerper .vollegend,#p-koerper #reclegend,#p-koerper #rklegend{display:none!important}
-#p-koerper .body3d{position:relative;height:clamp(420px,calc(100dvh - 300px),560px);border-radius:32px;margin:0 0 14px;
-  background:radial-gradient(70% 55% at 50% 42%,var(--surface-2) 0%,color-mix(in srgb,var(--ground) 70%,#000) 75%);
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent),0 30px 60px -30px rgba(0,0,0,.95)}
-#p-koerper .body3d iframe{height:100%;background:transparent}
+/* Keine eigene Fläche: die Figur steht direkt auf dem App-Hintergrund (der Betrachter zeichnet durchsichtig),
+   so gibt es keine sichtbare Kante zwischen Bühne und Seite. */
+#p-koerper .body3d{position:relative;height:clamp(420px,calc(100dvh - 300px),560px);border-radius:0;margin:0 0 14px;
+  background:transparent;box-shadow:none}
+#p-koerper .body3d iframe{height:100%;background:transparent;
+  /* Ohne Kasten würde die Figur beim Hoch-/Runterschieben an einer harten Linie abgeschnitten - so läuft sie weich aus. */
+  -webkit-mask-image:linear-gradient(transparent,#000 28px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(transparent,#000 28px,#000 calc(100% - 28px),transparent)}
 #p-koerper .body3d-hint{display:none}
+#p-koerper .body3d-loading{color:var(--ink-3)}
 #p-koerper #bodymode{margin:0 0 10px;padding:4px;gap:4px;border-radius:var(--r-pill);background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule)}
 #p-koerper #bodymode button{height:36px;min-height:0;font-family:var(--f-body);font-size:13.5px;color:var(--ink-3);background:transparent;box-shadow:none}
 #p-koerper #bodymode button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
@@ -596,6 +600,12 @@ body[data-tab="tab-koerper"] .fw-hact{display:none}
   background:rgba(20,19,17,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 .fw-sbtn svg{width:18px;height:18px}
 .fw-sbtn:active{transform:scale(.94)}
+.fw-pan{--t:.5;position:relative;width:40px;height:132px;border-radius:20px;cursor:ns-resize;touch-action:none;
+  background:rgba(20,19,17,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.fw-pan::before{content:"";position:absolute;left:50%;top:14px;bottom:14px;width:3px;margin-left:-1.5px;border-radius:2px;background:rgba(243,239,232,.22)}
+.fw-pan-k{position:absolute;left:50%;top:calc(14px + (1 - var(--t)) * (100% - 28px));width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;
+  background:#f3efe8;box-shadow:0 2px 6px rgba(0,0,0,.4);pointer-events:none}
+.fw-pan:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #p-koerper .body3d #callout{top:auto;left:14px;right:14px;bottom:14px;max-width:none;padding:12px 14px;border-radius:20px;
   background:rgba(20,19,17,.78);box-shadow:0 0 0 1px rgba(255,255,255,.1);display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
 #p-koerper .body3d #callout b{order:1}
