@@ -331,4 +331,6 @@ window.addEventListener("message",function(ev){
   }
   else if(d.type==="fw3d-colors-applied"){fw3dRevealFrame();}
   else if(d.type==="fw3d-select"){fw3dHandleSelect(d.name);}
+  // Mausrad neben der Figur: der Betrachter reicht es durch, damit die Seite scrollt statt zu zoomen.
+  else if(d.type==="fw3d-wheel"&&typeof d.dy==="number"&&isFinite(d.dy)){window.scrollBy(0,d.dy);}
 });
