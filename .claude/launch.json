@@ -144,6 +144,24 @@
         "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/aea02876-2644-4e7c-9017-5bb40de34789/scratchpad/posenapp' && exec python3 srv.py 8963"
       ],
       "port": 8963
+    },
+    {
+      "name": "fw-kabelturm",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/ebb2a301-6a36-4108-8807-9a8581cadd4d/scratchpad/turm' && exec python3 -m http.server 8970"
+      ],
+      "port": 8970
+    },
+    {
+      "name": "fw-kabel-posen",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/private/tmp/claude-501/-Users-joelcelik-Documents-GitHub-formwert-app/ebb2a301-6a36-4108-8807-9a8581cadd4d/scratchpad/posen' && exec python3 srv.py 8971"
+      ],
+      "port": 8971
     }
   ]
 }

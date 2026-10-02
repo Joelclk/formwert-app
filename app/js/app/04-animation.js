@@ -15,17 +15,20 @@
    (bench_db) auf der Bank mit zwei Kurzhanteln (bench_kh). Maschinendrücken und Liegestütze behalten den allgemeinen
    Drückclip "bench" - Bank und Hanteln wären dort falsch. Schrägbankdrücken (bench_inc, bench_inc_db) liegt seit
    30.09.2026 auf der Schrägbank (incline_lh, incline_kh); Liegestütze mit erhöhten Füßen behalten "incline". */
-var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"curl",curl_hammer:"hammer",tri_push:"pushdown",
-  tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"lateral",
+/* Kabelzug-Übungen (02.10.2026): eigene Clips k_… mit Kabelturm, Seil und Griff; die Bewegung kommt aus dem
+   Hantel-Clip gleichen Namens (FWT in anim-viewer.js). Liegende Curls, Crunch und Hüftbeugen am Kabel haben noch keine
+   eigene Bewegung. */
+var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"k_curl",curl_hammer:"hammer",tri_push:"k_pushdown",
+  tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"k_lateral",
   frontraise:"frontraise",ohp:"press",ohp_db:"press",push_press:"press",arnold:"press",
   pike_pushup:"press",hspu:"press",bench:"bench_lh",bench_db:"bench_kh",machine_press:"bench",
   machine_press_lying:"bench",pushup:"bench",pushup_arch:"bench",bench_dec:"bench",bench_inc:"incline_lh",
-  bench_inc_db:"incline_kh",pushup_dec:"incline",fly_db:"fly",cable_fly:"fly",fly_machine:"fly",
-  reversefly:"reversefly",bandpullapart:"reversefly",facepull:"facepull",row_bb:"row",row_db:"row",
-  row_pendlay:"row",row_tbar:"row",row_cable:"row",row_machine:"row",row_inv:"row",row_band:"row",
-  latpull:"latpull",latpull_close:"latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
-  pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"shrug",pullover:"pullover",
-  rot_internal:"rotint",mob_bandpullapart:"reversefly",
+  bench_inc_db:"incline_kh",pushup_dec:"incline",fly_db:"fly",cable_fly:"k_fly",fly_machine:"fly",
+  reversefly:"reversefly",bandpullapart:"reversefly",facepull:"k_facepull",row_bb:"row",row_db:"row",
+  row_pendlay:"row",row_tbar:"row",row_cable:"k_row",row_machine:"row",row_inv:"row",row_band:"row",
+  latpull:"k_latpull",latpull_close:"k_latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
+  pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"k_shrug",pullover:"pullover",
+  rot_internal:"k_rotint",mob_bandpullapart:"reversefly",
   /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
   /* Kniebeuge Langhantel: eigener Clip squat_lh (01.10.2026) mit Stange auf dem Rücken, Füße ausgedreht; Front-, Goblet-,
      Körpergewichts-Kniebeuge, Hackenschmidt und Beinpresse zeigen vorerst die alte Bewegung ohne Stange */
