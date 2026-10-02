@@ -61,6 +61,8 @@ Regeln:
 - **Ausgaben klein halten:** Blender-Skripte geben nur Kennzahlen aus, der Rest geht in eine
   Datei. Text lesen statt Screenshots; Screenshots verkleinert (`scale` 0.5).
 - **Ergebnisse mit Zahlen melden** („41 von 41 Bildern ruckfrei“), nicht nur „erfolgreich“.
+- **Antworten an Joel kurz und einfach:** 2–4 Sätze in Alltagssprache, ohne Dateinamen und interne Kürzel.
+  Einzelheiten gehören in die To-Do-Liste oder die Übergabe, nicht in den Chat.
 - **Keine großen Plugin-Pakete installieren.** Einzelne Agenten oder Skills nur gezielt.
 
 ## 4. Veröffentlichen
