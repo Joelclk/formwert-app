@@ -1,3 +1,3 @@
-Version 531 (Artifact-Version 1790944989-46af)
+Version 532 (Artifact-Version 1790975592-aa0d)
 Stand: 2026-10-02
-Aenderung: Körper-Tab: Ring oben links zeigt je Ansicht die passende Info (Volumen: Sätze/Ziel, Erholung: Restzeit/Haken, Rang: Rangwappen); Reiter "Rang" bleibt markiert. Enthält den Live-Stand von 15h-neues-design.js/6-neues-design.css mit dem Blickhöhen-Regler einer anderen Sitzung.
+Aenderung: Kabelturm im 3D-Bewegungsablauf für neun Kabelzug-Übungen (Trizepsdrücken, Kabel-Curls, Face Pulls, Rudern, Latzug + eng, Fliegende, Seitheben, Schulterheben, Innenrotation): Turm mit Steckgewicht, Schwenkrolle, Stange/Seil/Einzelgriffe; neue Clips k_… und 9 Standbilder. Nur anim-viewer.js, 04-animation.js und Standbilder geändert.
