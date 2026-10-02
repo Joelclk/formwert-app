@@ -1136,12 +1136,41 @@ function fwBodyStage(){
     var sb=el("div","fw-stage-btns");sb.id="fw-stage-btns";
     [["Umdrehen","M20 12a8 8 0 1 1-2.3-5.6M20 4v4.5h-4.5",function(){fw3dSend({type:"fw3d-view",toggle:true});}],
      ["Vergrößern","M12 5v14M5 12h14",function(){fw3dSend({type:"fw3d-zoom",factor:0.78});}],
-     ["Verkleinern","M5 12h14",function(){fw3dSend({type:"fw3d-zoom",factor:1.28});}],
-     ["Nach oben","M12 19V5M5 12l7-7 7 7",function(){fw3dSend({type:"fw3d-pan",dy:1});}],
-     ["Nach unten","M12 5v14M5 12l7 7 7-7",function(){fw3dSend({type:"fw3d-pan",dy:-1});}]].forEach(function(o){
+     ["Verkleinern","M5 12h14",function(){fw3dSend({type:"fw3d-zoom",factor:1.28});}]].forEach(function(o){
       var k=el("button","fw-sbtn");k.type="button";k.setAttribute("aria-label",o[0]);k.innerHTML=svgIcon(o[1],2);k.onclick=o[2];sb.appendChild(k);});
+    sb.appendChild(fwPanSlider());
     b3.appendChild(sb);
   }
+}
+/* Senkrechter Regler statt zwei Pfeilen: oben = Kopf, unten = Füße. Ein Regler zeigt auf einen
+   Blick, wo man gerade ist, und man kommt mit einer Bewegung ans Ziel statt mit vielen Tipps.
+   Der Betrachter meldet seine Position zurück (fw3d-pan-pos), damit der Knopf mitläuft, wenn auf
+   der Figur selbst geschoben oder zu einem Muskel geschwenkt wird. */
+var fwPanT=0.5,fwPanDrag=false;
+function fwPanSlider(){
+  var w=el("div","fw-pan");w.id="fw-pan";w.tabIndex=0;w.setAttribute("role","slider");
+  w.setAttribute("aria-label","Blickhöhe: oben Kopf, unten Füße");w.setAttribute("aria-orientation","vertical");
+  w.setAttribute("aria-valuemin","0");w.setAttribute("aria-valuemax","100");
+  w.appendChild(el("i","fw-pan-k"));
+  function setT(t,send){
+    fwPanT=clamp(t,0,1);w.style.setProperty("--t",String(fwPanT));
+    w.setAttribute("aria-valuenow",String(Math.round(fwPanT*100)));
+    w.setAttribute("aria-valuetext",fwPanT>0.8?"Kopf":fwPanT<0.2?"Füße":fwPanT>0.5?"Oberkörper":"Beine");
+    if(send)fw3dSend({type:"fw3d-pan-to",t:fwPanT});
+  }
+  function fromY(y){var r=w.getBoundingClientRect(),pad=14;return 1-(y-r.top-pad)/Math.max(1,r.height-2*pad);}
+  w.addEventListener("pointerdown",function(e){fwPanDrag=true;try{w.setPointerCapture(e.pointerId);}catch(_){}setT(fromY(e.clientY),true);e.preventDefault();});
+  w.addEventListener("pointermove",function(e){if(fwPanDrag)setT(fromY(e.clientY),true);});
+  function end(){fwPanDrag=false;}
+  w.addEventListener("pointerup",end);w.addEventListener("pointercancel",end);
+  w.addEventListener("keydown",function(e){
+    var k=e.key,d=k==="ArrowUp"||k==="ArrowRight"?0.1:k==="ArrowDown"||k==="ArrowLeft"?-0.1:0;
+    if(k==="Home")return setT(0,true);if(k==="End")return setT(1,true);
+    if(d){e.preventDefault();setT(fwPanT+d,true);}
+  });
+  w.fwSet=function(t){if(!fwPanDrag)setT(t,false);};
+  setT(fwPanT,false);
+  return w;
 }
 /* Muskelauswahl als kleiner Ring oben links auf der Bühne: in der Mitte "Sätze / Ziel", die
    Ringfarbe zeigt den Stand (gelb zu wenig, grün im Ziel, rot zu viel), darunter nur der Name.
