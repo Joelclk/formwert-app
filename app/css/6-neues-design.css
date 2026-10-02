@@ -713,6 +713,13 @@ body[data-tab="tab-koerper"] .fw-hact{display:none}
 .fw-selring-x{position:absolute;top:-6px;right:-6px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
   background:#2a2a28;color:rgba(243,239,232,.8);box-shadow:0 0 0 1px rgba(255,255,255,.1)}
 .fw-selring-x svg{width:11px;height:11px}
+/* Erholung und Rang: Haken, Restzeit oder Rangwappen in der Mitte, darunter eine kleine Zeile. */
+.fw-selring-ok{display:grid;place-items:center;color:var(--rc)}
+.fw-selring-r small.u{margin-left:2px}
+.fw-selring-ok svg{width:26px;height:26px}
+.fw-selring-bd{display:grid;place-items:center;width:48px;height:48px}
+.fw-selring-bd svg{display:block;width:48px;height:48px}
+.fw-selring-s{margin-top:-3px;font-size:12px;font-weight:600;line-height:1.15;text-align:center;color:rgba(243,239,232,.62)}
 
 /* ---------- Training: Abschnitt "Als Nächstes" über der Liste ---------- */
 .fw-nextbox{margin-bottom:6px}

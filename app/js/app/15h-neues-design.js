@@ -1156,6 +1156,8 @@ function fwSelCard(){
   box.hidden=false;
   var name=f?f.de:(selLabel||"Auswahl"),inner=null,p=0,z=-1;
   var m=f&&muscleById(f.g);
+  // Erholung und Rang zeigen im Ring ihre eigene Information - Sätze/Ziel passt nur zur Volumen-Ansicht.
+  if(bodyMode==="rec"||bodyMode==="rank"){fwSelRingAlt(box,name,f,m);return;}
   if(m){var v=Math.round((ms[f.g]||0)*10)/10,cm=corr(m);z=zoneOf(v,m);p=cm.mav?v/cm.mav:0;
     inner=el("b","num");inner.appendChild(document.createTextNode(fmtNum(v)));inner.appendChild(el("small",null,"/"+cm.mav));}
   else if(!f){
@@ -1169,6 +1171,43 @@ function fwSelCard(){
   var lb=el("span","fw-selring-n",name);box.appendChild(lb);
   box.setAttribute("role","button");box.tabIndex=0;
   box.setAttribute("aria-label",name+(inner?": "+inner.textContent.replace("/"," von ")+(f?" Sätze":" im Ziel"):"")+". Antippen hebt die Auswahl auf.");
+  var x=el("i","fw-selring-x");x.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.6);box.appendChild(x);
+  box.onclick=function(){selReset();selSet=null;selFine=null;selLabel=null;selTapKey=null;renderBodySel();try{renderRegionChips();}catch(e){}};
+}
+/* Ring in den Ansichten Erholung und Rang. Bei einer ganzen Region zählt in der Erholung der
+   langsamste Muskel (die Region ist erst bereit, wenn alle es sind) und beim Rang der beste
+   Hauptmuskel - genauso, wie die Figur daneben eingefärbt ist. */
+function fwSelRingAlt(box,name,f,m){
+  var ids=[];
+  if(m)ids=[m.id];
+  else if(!f&&selSet)selSet.forEach(function(k){var g=FINE[k]&&FINE[k].g;if(g&&ids.indexOf(g)<0&&muscleById(g))ids.push(g);});
+  var ring=el("div","fw-selring-r"),sub="",aria=name;
+  if(bodyMode==="rec"){
+    var worst=null,seen=false;
+    ids.forEach(function(id){var rv=recoveryOf(muscleById(id));if(rv)seen=true;if(rv&&(!worst||rv.left>worst.left))worst=rv;});
+    var pct=worst?worst.pct:100,ready=!worst||worst.pct>=100;
+    ring.style.setProperty("--rc",recColorOf(ready?null:worst));
+    ring.style.setProperty("--p",Math.round(clamp(pct,0,100))+"%");
+    if(ready){var ok=el("b","fw-selring-ok");ok.innerHTML=svgIcon("M5 12.5l4.5 4.5L19 7.5",2.8);ring.appendChild(ok);
+      sub=seen?"bereit":"länger nicht belastet";aria+=": erholt, bereit";}
+    else{var hl=Math.max(1,Math.round(worst.left)),b=el("b","num");
+      // Ab zwei Tagen in Tagen - "53 Std." muss man erst umrechnen.
+      if(hl>=48){b.appendChild(document.createTextNode(String(Math.round(hl/24))));b.appendChild(el("small","u","Tg."));}
+      else{b.appendChild(document.createTextNode(String(hl)));b.appendChild(el("small","u","Std."));}
+      ring.appendChild(b);sub=Math.round(pct)+" % erholt";aria+=": "+sub+", bereit in "+hl+" Stunden";}
+  }else{
+    var mr=fwMuscleRanks(),rk=null;
+    ids.forEach(function(id){var r=mr[id];if(r&&(!rk||r.score>rk.score))rk=r;});
+    if(rk){ring.classList.add("rk");ring.style.setProperty("--rc",fwRankColor(rk));ring.style.setProperty("--p",Math.round(rk.pct*100)+"%");
+      var bd=el("span","fw-selring-bd");bd.innerHTML=rankBadge(rk,48);ring.appendChild(bd);
+      sub=rk.name;aria+=": Rang "+rk.name;}
+    else{ring.style.setProperty("--p","0%");ring.appendChild(el("b",null,"–"));sub="ohne Rang";aria+=": noch ohne Rang";}
+  }
+  box.appendChild(ring);
+  box.appendChild(el("span","fw-selring-n",name));
+  if(sub)box.appendChild(el("span","fw-selring-s",sub));
+  box.setAttribute("role","button");box.tabIndex=0;
+  box.setAttribute("aria-label",aria+". Antippen hebt die Auswahl auf.");
   var x=el("i","fw-selring-x");x.innerHTML=svgIcon("M6 6l12 12M18 6L6 18",2.6);box.appendChild(x);
   box.onclick=function(){selReset();selSet=null;selFine=null;selLabel=null;selTapKey=null;renderBodySel();try{renderRegionChips();}catch(e){}};
 }
@@ -1279,5 +1318,8 @@ function fwMuscleExercises(fk,m){
     "Training erledigt":"Workout done","Noch ein paar Minuten Mobilität":"A few minutes of mobility","Mobilität eintragen":"Log mobility",
     "Alles erledigt":"All done","Stark gemacht heute":"Great work today","Höchster Rang erreicht":"Highest rank reached",
     "Übungen entdecken":"Explore exercises","Rang":"Rank","Umdrehen":"Flip","Nach oben":"Up","Nach unten":"Down","Vergrößern":"Zoom in","Verkleinern":"Zoom out","Nach Region ":"By region ","wischen · antippen zeigt die Muskeln":"swipe · tap shows the muscles","Mobil.":"mobility","Heute eingetragen":"Logged today","Gut dabei":"Nice work","Noch nichts – leg los":"Nothing yet – get going","Ausdauer & Mobilität":"Cardio & mobility","Eintragen":"Log","diese Woche":"this week","Verlauf heute":"Today's log","Kraft":"Strength","Aufnehmen":"Add","Mehr anpassen":"Adjust more","Im Plan · in dieser Reihenfolge":"In plan · in this order","Nicht im Plan":"Not in plan","Mein Plan":"My plan","Plan bearbeiten":"Edit plan","Plan festlegen":"Set plan","Weitere Einheiten":"More sessions","Übung suchen":"Search exercises","Plan":"Plan","Vitrine":"Trophy case","Plan speichern":"Save plan","Leg deinen Plan fest":"Set your plan","Übernehmen":"Use it","Anpassen":"Adjust","Überspringen – nächste Einheit im Plan":"Skip – next session in plan","Ränge auf dem Körper":"Ranks on the body","Fertig":"Done","Sätze":"Sets","Nächste Übung":"Next exercise","Training einklappen":"Minimize workout","Dein Formwert":"Your Formwert","Diese Woche":"This week","Trainings­tage geschafft":"training days done","Topform erreicht":"Top form reached","Konto und Einstellungen":"Account and settings","Ruhe":"Rest","Das trainierst du":"What you train","Ränge auf dem Körper":"Ranks on the body","Was steht an?":"What's next?","Frei trainieren":"Train freely","Deine Einheiten":"Your sessions","Als Nächstes":"Up next","Schnell eintragen":"Quick log","nachtragen":"log later","Notiz":"Note","bearbeiten":"edit","Wie lief der Tag?":"How was the day?","heute erledigt ✓":"done today ✓","Leer starten – Übungen fügst du unterwegs hinzu":"Start empty – add exercises as you go","Volumen":"Volume","Rang je Muskel":"Rank per muscle","beste Übung als Hauptmuskel":"best exercise as primary muscle","ohne Rang":"no rank","Zusatztraining oder Erholung":"Extra session or recovery"};
+  // Ring auf dem Körper in den Ansichten Erholung und Rang
+  add["länger nicht belastet"]="not trained lately";add["Std."]="h";add["Tg."]="d";
+  if(typeof UI_RX==="object")UI_RX.push([/^(\d+) % erholt$/g,"$1 % recovered"]);
   for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
 })();
