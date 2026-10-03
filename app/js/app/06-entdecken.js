@@ -674,10 +674,11 @@ function renderSkills(c,pk){
   var box=$("skills");box.innerHTML="";
   var det={
     kraft:(c.cats||[]).filter(function(ct){return !!ct.top;}).length+" von "+(c.cats||[]).length+" Bereichen gemessen · "+c.recs.length+" Übungen gewertet",
-    konst:c.trainDays+" Trainingstage in "+c.win+" Tagen · Ziel "+Math.round(state.profile.goals.days*c.win/7),
+    // Seit 03.10. zählen Tage nach Alter gewichtet (FADE) - daher Kommazahlen und "gewertet".
+    konst:fmtMobUnits(c.trainDays)+" gewertete Trainingstage · Ziel "+Math.round(state.profile.goals.days*c.win/7)+" · ältere zählen weniger",
     deckung:CORE_MUSCLES.filter(function(id){return (c.ms[id]||0)>=corr(muscleById(id)).mev;}).length+" von "+CORE_MUSCLES.length+" Muskelgruppen über dem Minimum",
-    ausdauer:Math.round(c.cm.raw)+" Minuten in "+c.win+" Tagen"+(c.vo2!=null?" · VO2max ≈ "+Math.round(c.vo2):""),
-    mob:fmtMobUnits(c.mobDays)+" Einheiten ("+Math.round(c.mobMin||0)+" min) in "+c.win+" Tagen · Ziel "+Math.round(state.profile.goals.mob*c.win/7)
+    ausdauer:Math.round(c.cm.raw)+" gewertete Minuten"+(c.vo2!=null?" · VO2max ≈ "+Math.round(c.vo2):""),
+    mob:fmtMobUnits(c.mobDays)+" gewertete Einheiten ("+Math.round(c.mobMin||0)+" min) · Ziel "+Math.round(state.profile.goals.mob*c.win/7)
   };
   // Fehlt ein Wert, steht dort, mit welcher Handlung er zum ersten Mal berechenbar wird -
   // statt einer leeren Null, die nichts erklärt.
@@ -714,10 +715,32 @@ function renderSkills(c,pk){
   var sv=$("wsumval");
   if(sv){
     sv.innerHTML='<span class="num">'+c.fitness+'</span><i>/ 100</i>';
-    var prev=compute(shiftDays(TODAY,-14)).fitness,df=c.fitness-prev,tr=$("wsumtrend");
+    var pc=compute(shiftDays(TODAY,-14)),prev=pc.fitness,df=c.fitness-prev,tr=$("wsumtrend");
     if(tr){tr.className="trend "+(df>1?"up":df<-1?"down":"");
       tr.textContent=(df>0?"▲ +"+df:df<0?"▼ "+Math.abs(df):"▬ stabil")+" in 14 Tagen";}
+    renderChangeWhy(c,pc,sv);
   }
+}
+/* Unter der Formwert-Zahl: woher die Veränderung der letzten 14 Tage kommt, aufgeteilt nach
+   Bereichen. Vorher stand dort nur "+16 in 14 Tagen" - man musste raten, ob das Kraft oder
+   bloß ein paar Trainingstage mehr waren. Antippen springt zum Bereich. */
+function renderChangeWhy(c,pc,sv){
+  var top=sv&&sv.closest(".wsum-top");if(!top)return;
+  var box=$("wsumwhy");
+  if(!box){box=el("div","wsum-why");box.id="wsumwhy";top.parentNode.insertBefore(box,top.nextSibling);}
+  box.innerHTML="";
+  var parts=fwChangeParts(c,pc);
+  if(!parts.length){box.appendChild(el("span","wsum-why-l","Seit 14 Tagen in allen Bereichen gleich"));return;}
+  box.appendChild(el("span","wsum-why-l","Woher:"));
+  parts.forEach(function(p){
+    var b=el("button","wsum-why-p "+(p.pts>0?"up":"down"));b.type="button";
+    var i=el("i");i.style.background=p.color;b.appendChild(i);
+    b.appendChild(el("b","num",(p.pts>0?"+":"−")+Math.abs(p.pts)));
+    b.appendChild(el("span",null,p.name));
+    b.setAttribute("aria-label",p.name+" "+(p.pts>0?"plus ":"minus ")+Math.abs(p.pts)+" Punkte");
+    b.onclick=function(){var s=$("sk-"+p.key);if(s)s.scrollIntoView({behavior:"smooth",block:"center"});};
+    box.appendChild(b);
+  });
 }
 // Alle bewertbaren Übungen eines Kraft-Bereichs – auch die, die noch nie geloggt wurden.
 function exsOfCat(catId){

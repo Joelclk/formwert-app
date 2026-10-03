@@ -506,3 +506,24 @@ UI_RX.push([/ · Bewegung$/g," · Movement"]);
 /* Nachtrag Uebersetzung: Mobilität über 10 min zählt anteilig weiter (mobUnitsFromMin, 02-berechnung.js). */
 UI_RX.push([/^✓ ([\d,]+) Einheiten · Tageshöchstwert$/g,"✓ $1 sessions · daily maximum"]);
 UI_RX.push([/^✓ ([\d,]+) Einheiten$/g,"✓ $1 sessions"]);
+/* Nachtrag Uebersetzung: Formwert-Analyse (03.10.) - Herkunft der Veränderung, Kraftkurve,
+   sanft auslaufendes Zeitfenster (gewichtete Tage mit Komma). */
+(function(){
+  var add={"Woher:":"From:","Seit 14 Tagen in allen Bereichen gleich":"Same in every area for 14 days",
+    "Beste Haltezeit je Trainingstag · Hintergrund: Rangstufen für dein Profil":"Best hold time per training day · background: rank tiers for your profile",
+    "Meiste Wiederholungen je Trainingstag · Hintergrund: Rangstufen für dein Profil":"Most reps per training day · background: rank tiers for your profile"};
+  for(var k in add)if(!UI_EN[k])UI_EN[k]=add[k];
+})();
+UI_RX.unshift([/(\d+),(\d) von (\d+) Trainingstagen/g,"$1.$2 of $3 training days"]);
+UI_RX.push([/^([\d,]+) gewertete Trainingstage · Ziel (\d+) · ältere zählen weniger$/g,function(m,a,b){return a.replace(",",".")+" weighted training days · goal "+b+" · older ones count less";}]);
+UI_RX.push([/^(\d+) gewertete Minuten/g,"$1 weighted minutes"]);
+UI_RX.push([/^([\d,]+) gewertete Einheiten \((\d+) min\) · Ziel (\d+)$/g,function(m,a,b,c){return a.replace(",",".")+" weighted sessions ("+b+" min) · goal "+c;}]);
+UI_RX.push([/^Geschätztes Einer-Maximum je Trainingstag( \(beide Seiten zusammen\)| \(inkl\. Körpergewicht\))? · Hintergrund: Rangstufen für dein Profil$/g,function(m,z){
+  return "Estimated one-rep max per training day"+({" (beide Seiten zusammen)":" (both sides combined)"," (inkl. Körpergewicht)":" (incl. body weight)"}[z||""]||"")+" · background: rank tiers for your profile";}]);
+UI_RX.push([/Maximalkraft    Ø der (\d+) Kraft-Bereiche, je Bereich Ø der Übungen\n(\s+)Bestwert 90 T voll, danach 30 T auslaufend/g,"Max strength    avg of $1 strength areas, per area avg of exercises\n$2best value full for 90 d, then fades over 30 d"]);
+UI_RX.push([/Konstanz        Trainingstage ÷ (\d+) \(Ziel × (\d+) T ÷ 7\)/g,"Consistency     training days ÷ $1 (goal × $2 d ÷ 7)"]);
+UI_RX.push([/Muskelabdeckung Ø Sätze je Muskel gegen MEV\/MAV \(4 T voll,\n(\s+)dann 1 Woche auslaufend = 1 Woche\)/g,"Muscle coverage avg sets per muscle vs MEV/MAV (4 d full,\n$1then fading over 1 week = 1 week)"]);
+UI_RX.push([/Mobilität       Einheiten ÷ (\d+)/g,"Mobility        sessions ÷ $1"]);
+UI_RX.push([/Zeitfenster     Tage zählen 3 Wochen voll und laufen danach\n(\s+)über 3 Wochen aus – kein Sprung, wenn ein\n(\s+)Training aus dem Fenster fällt/g,"Time window     days count fully for 3 weeks, then fade\n$1over 3 weeks – no jump when a workout\n$2drops out of the window"]);
+// Zeile unter der Kraftkurve: "23.09. · 59,5 kg … · Diamant I"
+UI_RX.push([/ · (Holz|Silber|Diamant|Legende)( I{1,3})?$/g,function(m,t,d){return " · "+({Holz:"Wood",Silber:"Silver",Diamant:"Diamond",Legende:"Legend"}[t])+(d||"");}]);

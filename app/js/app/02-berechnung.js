@@ -277,18 +277,21 @@ function capSession(s){
   if(u<=_sessU)return SESS_FLAT+SESS_TAU*(1-Math.exp(-u/SESS_TAU));
   return _sessE+SESS_FLOOR*(u-_sessU);
 }
-function muscleSets(asOf,win){
-  var from=shiftDays(asOf,-(win-1)),out={},m;
+// fade (optional, nur der Formwert): Tage zählen nach ihrem Alter weniger statt hart abzubrechen.
+// Ohne fade bleibt es das harte Wochenfenster, das Körper-Tab und Routinen brauchen.
+function muscleSets(asOf,win,fade){
+  var from=shiftDays(asOf,-((fade?fadeHorizon(fade):win)-1)),out={},m;
   MUSCLES.forEach(function(mm){out[mm.id]=0;});
   for(var d in state.days){
     if(d<from||d>asOf)continue;
+    var fw=fade?fadeWeight(daysBetween(d,asOf),fade):1;if(fw<=0)continue;
     var day={};
     (state.days[d].sets||[]).forEach(function(s){
       var ex=exById(s.ex);if(!ex||ex.mob)return;
       var w=exSetWeights(ex),f=rirFactor(s.rir);
       for(var k in w)if(out[k]!=null)day[k]=(day[k]||0)+w[k]*f;
     });
-    for(m in day)out[m]+=capSession(day[m]);
+    for(m in day)out[m]+=capSession(day[m])*fw;
   }
   return out;
 }
@@ -416,6 +419,32 @@ function windowDays(asOf){
   var st=(state.profile&&state.profile.startedAt)||asOf;
   return clamp(daysBetween(st,asOf)+1,7,WIN_STATE);
 }
+/* Sanftes Auslaufen statt harter Fenstergrenze (Entscheidung Joel, 03.10.2026: Variante
+   "sanft ausblenden"). Vorher fiel ein Training an Tag 31 (bzw. Kraft an Tag 91, Muskelvolumen
+   an Tag 8) schlagartig aus der Rechnung, und der Formwert sprang über Nacht, ohne dass etwas
+   passiert war. Jetzt zählt ein Tag bis "full" Tage voll und verliert danach über "fade" Tage
+   gleichmäßig an Gewicht.
+   - state: Konstanz, Mobilität, Ausdauer – 3 Wochen voll, dann 3 Wochen auslaufen. Wirksame
+     Fensterlänge ≈ 32 Tage, also praktisch so streng wie die alten 30.
+   - body: Muskelvolumen – 4 Tage voll, dann über eine Woche auslaufen. Summe der Gewichte = 7,
+     das Ergebnis bleibt "Sätze pro Woche" und ist direkt mit Minimum/Optimum vergleichbar.
+   - strength: Kraft – 90 Tage voll wie bisher, danach 30 Tage auslaufen. Was heute zählt, zählt
+     weiter; ein alter Bestwert verschwindet nur nicht mehr an einem einzigen Tag. */
+var FADE={state:{full:21,fade:21},body:{full:3,fade:7},strength:{full:89,fade:30}};
+function fadeWeight(age,f){
+  if(age<0)return 0;
+  if(age<=f.full)return 1;
+  return clamp((f.full+f.fade-age)/f.fade,0,1);
+}
+function fadeHorizon(f){return f.full+f.fade;}
+/* Wirksame Fensterlänge in Tagen (Summe der Gewichte), für neue Nutzer ab dem Starttag –
+   sonst würde in der ersten Woche ein halbes Ziel als Versagen zählen. Mindestens 7 wie bisher. */
+function fadeWindow(asOf,f){
+  var st=(state.profile&&state.profile.startedAt)||asOf;
+  var n=Math.min(Math.max(0,daysBetween(st,asOf)),fadeHorizon(f)-1),s=0;
+  for(var a=0;a<=n;a++)s+=fadeWeight(a,f);
+  return Math.max(7,s);
+}
 
 /* ================= Ausdauer ================= */
 function vo2Estimate(p){
@@ -434,13 +463,14 @@ function vo2Percentile(v,p){
   for(var i=0;i<row.length-1;i++)if(v<=row[i+1])return pc[i]+(pc[i+1]-pc[i])*(v-row[i])/(row[i+1]-row[i]);
   return clamp(95+(v-row[4])/row[4]*20,95,100);
 }
-function cardioMinutes(asOf,win){
-  var from=shiftDays(asOf,-(win-1)),eq=0,raw=0;
+function cardioMinutes(asOf,win,fade){
+  var from=shiftDays(asOf,-((fade?fadeHorizon(fade):win)-1)),eq=0,raw=0;
   for(var d in state.days){
     if(d<from||d>asOf)continue;
+    var fw=fade?fadeWeight(daysBetween(d,asOf),fade):1;if(fw<=0)continue;
     (state.days[d].cardio||[]).forEach(function(c){
       var ex=exById(c.ex),f=INTENS[(ex&&ex.intens)||"mittel"]||1;
-      eq+=(c.min||0)*f;raw+=(c.min||0);
+      eq+=(c.min||0)*f*fw;raw+=(c.min||0)*fw;
     });
   }
   return {eq:eq,raw:raw};
@@ -491,26 +521,43 @@ function isTrainDay(dd){
 }
 function fmtMobUnits(u){return String(Math.round(u*10)/10).replace(".",",");}
 
+/* Woher eine Veränderung kommt: Anteil jedes Bereichs an der Differenz zweier Formwerte, in
+   ganzen Punkten. Gerundet wird nach größtem Rest, damit die Teile genau die angezeigte
+   Gesamtveränderung ergeben ("+16 = +9 Kraft +5 Konstanz +2 Mobilität") statt um einen Punkt
+   danebenzuliegen. */
+function fwChangeParts(c,prev){
+  var raw=SKILLDEF.map(function(sd){return {key:sd.key,name:sd.name,color:sd.color,v:sd.w*((c[sd.key]||0)-(prev[sd.key]||0))};});
+  var total=(c.fitness||0)-(prev.fitness||0),sum=0;
+  raw.forEach(function(r){r.pts=r.v<0?-Math.floor(-r.v):Math.floor(r.v);sum+=r.pts;});
+  var rest=total-sum,dir=rest>0?1:-1;
+  raw.slice().sort(function(a,b){return dir>0?(b.v-b.pts)-(a.v-a.pts):(a.v-a.pts)-(b.v-b.pts);})
+    .forEach(function(r){if(rest!==0){r.pts+=dir;rest-=dir;}});
+  return raw.filter(function(r){return r.pts!==0;}).sort(function(a,b){return Math.abs(b.pts)-Math.abs(a.pts);});
+}
+
 /* ================= Formwert ================= */
 function compute(asOf){
-  var p=state.profile,win=windowDays(asOf),f=win/7;
-  var from=shiftDays(asOf,-(win-1)),trainDays=0,mobDays=0,mobMin=0;
+  // Trainingstage, Mobilität und Ausdauer zählen nach Alter gewichtet (FADE.state); win ist die
+  // wirksame Fensterlänge, daran misst sich das Ziel (Ziel pro Woche × win/7).
+  var p=state.profile,win=fadeWindow(asOf,FADE.state),f=win/7;
+  var from=shiftDays(asOf,-(fadeHorizon(FADE.state)-1)),trainDays=0,mobDays=0,mobMin=0;
   for(var d in state.days){
     if(d<from||d>asOf)continue;
-    var dd=state.days[d],md=mobDay(dd);
-    if(isTrainDay(dd))trainDays++;
-    mobDays+=md.units;mobMin+=md.min;
+    var dd=state.days[d],md=mobDay(dd),fw=fadeWeight(daysBetween(d,asOf),FADE.state);
+    if(fw<=0)continue;
+    if(isTrainDay(dd))trainDays+=fw;
+    mobDays+=md.units*fw;mobMin+=md.min*fw;
   }
   var konst=p.goals.days>0?clamp(trainDays/(p.goals.days*f)*100,0,100):0;
   var mob=p.goals.mob>0?clamp(mobDays/(p.goals.mob*f)*100,0,100):100;
-  var ms=muscleSets(asOf,WIN_BODY),sum=0;
+  var ms=muscleSets(asOf,WIN_BODY,FADE.body),sum=0;
   CORE_MUSCLES.forEach(function(id){sum+=muscleScore(ms[id]||0,muscleById(id));});
   var deckung=sum/CORE_MUSCLES.length;
   // Kraftwertung nach Bereichen (Brust, Rücken, …): jede Übung mit hinterlegtem Kraftstandard
   // zählt mit, sobald sie im Kraftfenster geloggt wurde. Pro Bereich zählt der beste Wert –
   // eine zusätzlich ausgeführte Übung kann einen Bereich also anheben, aber nie abwerten.
   var recs=[],unrated=[],seenEx={};
-  var fromS=shiftDays(asOf,-(WIN_STRENGTH-1));
+  var fromS=shiftDays(asOf,-(fadeHorizon(FADE.strength)-1));
     // Ein Durchgang sammelt alle Saetze je Uebung, danach wird jede Uebung einmal bewertet
   // (Reihenfolge wie bisher: nach erstem Auftreten).
   var pools={},order=[];
@@ -527,8 +574,14 @@ function compute(asOf){
     var cid=catOfEx(ex);if(!cid)return;
     seenEx[exid]=true;
     if(!ex.std){unrated.push({ex:ex,cat:cid});return;}
-    var r=bestFor(exid,asOf,WIN_STRENGTH,pools[exid]),g=r.best!=null?grade(ex,r.best):null;
-    recs.push({ex:ex,best:r.best,bestSet:r.bestSet,last:r.last,grade:g,score:g?g.score:0,cat:cid});
+    // Angezeigt (best/grade) wird weiter der Bestwert; für den Formwert zählt der beste Satz
+    // nach Abzug des Alters (FADE.strength) - ein alter Bestwert läuft so langsam aus.
+    var pool=pools[exid],r=bestFor(exid,asOf,WIN_STRENGTH,pool),g=r.best!=null?grade(ex,r.best):null,fs=0;
+    var byVal={};
+    pool.forEach(function(it){var fw=fadeWeight(daysBetween(it.d,asOf),FADE.strength);if(fw<=0)return;
+      var v=setValue(ex,it.s);if(byVal[it.d]==null||v>byVal[it.d])byVal[it.d]=v;});
+    for(var bd in byVal){var gg=grade(ex,byVal[bd]);if(gg){var sv=gg.score*fadeWeight(daysBetween(bd,asOf),FADE.strength);if(sv>fs)fs=sv;}}
+    recs.push({ex:ex,best:r.best,bestSet:r.bestSet,last:r.last,grade:g,score:fs,cat:cid});
   });
   recs.sort(function(a,b){return b.score-a.score;});
   // Pro Bereich zählt jetzt der Durchschnitt ALLER dort geloggten, bewertbaren Übungen (nicht
@@ -545,7 +598,7 @@ function compute(asOf){
   });
   var ks=0;cats.forEach(function(ct){ks+=ct.score;});
   var kraft=cats.length?ks/cats.length:0;
-  var cm=cardioMinutes(asOf,win);
+  var cm=cardioMinutes(asOf,win,FADE.state);
   var who=p.goals.cardio>0?clamp(cm.eq/(p.goals.cardio*f)*100,0,100):100;
   var vo2=vo2Estimate(),vp=vo2Percentile(vo2);
   var ausdauer=vp!=null?0.5*who+0.5*vp:who;

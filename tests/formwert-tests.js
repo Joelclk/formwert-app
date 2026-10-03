@@ -270,6 +270,30 @@ async function main() {
     await s.ctx.close();
   });
 
+  // 11b) Formwert ohne Sprünge: Zwei dichte Trainingswochen, danach Pause. Alte Trainings laufen
+  //      sanft aus (FADE, seit 03.10.) – vorher fiel der Formwert an einem Tag um bis zu 10 Punkte
+  //      und die Kraft um 35, nur weil ein Training aus dem 30- bzw. 90-Tage-Fenster rutschte.
+  await test("Formwert ohne Sprünge", async () => {
+    const s = await seite({});
+    const r = await s.page.evaluate(() => {
+      const T = "2026-06-01", days = {};
+      state.profile.startedAt = "2026-01-01"; state.profile.goals = { days: 3, mob: 2, cardio: 60 };
+      for (let i = 0; i < 14; i++) days[shiftDays(T, i)] = { sets: [{ ex: "bench", kg: 90, reps: 5 }, { ex: "squat", kg: 120, reps: 5 }, { ex: "row_bb", kg: 80, reps: 8 }],
+        cardio: [{ ex: "run", min: 30 }], workouts: [], mobility: true, rest: false, note: "" };
+      state.days = days;
+      const K = ["fitness", "kraft", "konst", "deckung", "ausdauer", "mob"], worst = {}; let prev = null;
+      for (let k = 13; k < 140; k++) { const c = compute(shiftDays(T, k)), v = K.map(x => c[x]);
+        if (prev) K.forEach((x, i) => { worst[x] = Math.max(worst[x] || 0, prev[i] - v[i]); }); prev = v; }
+      return { worst, ende: prev };
+    });
+    pruefe(r.worst.fitness <= 4, "Formwert fällt an einem Tag um " + r.worst.fitness);
+    pruefe(r.worst.kraft <= 3, "Kraft fällt an einem Tag um " + r.worst.kraft.toFixed(1));
+    // Nach Ablauf aller Fenster (Kraft 90 + 30 Tage) zählt das alte Training gar nicht mehr.
+    pruefe(r.ende[1] === 0 && r.ende[2] === 0 && r.ende[3] === 0, "nach 4 Monaten Pause noch Kraft/Konstanz/Abdeckung " + r.ende.slice(1, 4).join("/"));
+    pruefe(!s.fehler.length, s.fehler.slice(0, 3).join(" | "));
+    await s.ctx.close();
+  });
+
   // 12) Sicherheit: Backup nur, wenn es wirklich ein Formwert-Backup ist (vorher Sicherungskopie),
   //     kein HTML aus gespeicherten Daten, CSV ohne ausführbare Formeln.
   await test("Sicherheit: Backup, HTML, CSV", async () => {

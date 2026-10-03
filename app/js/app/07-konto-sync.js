@@ -160,11 +160,12 @@ function renderFormula(c){
   var p=state.profile;
   $("formulabox").textContent=
    "Formwert = 30 % Maximalkraft\n         + 25 % Konstanz\n         + 20 % Muskelabdeckung\n         + 15 % Ausdauer\n         + 10 % Mobilität\n\n"+
-   "Maximalkraft    Ø der "+KRAFT_CATS.length+" Kraft-Bereiche (90 T)\n                je Bereich zählt die stärkste Übung\n"+
-   "Konstanz        Trainingstage "+c.win+" T ÷ "+Math.round(p.goals.days*c.win/7)+"\n"+
-   "Muskelabdeckung Ø Sätze je Muskel gegen MEV/MAV (7 T)\n"+
+   "Maximalkraft    Ø der "+KRAFT_CATS.length+" Kraft-Bereiche, je Bereich Ø der Übungen\n                Bestwert 90 T voll, danach 30 T auslaufend\n"+
+   "Konstanz        Trainingstage ÷ "+Math.round(p.goals.days*c.win/7)+" (Ziel × "+Math.round(c.win)+" T ÷ 7)\n"+
+   "Muskelabdeckung Ø Sätze je Muskel gegen MEV/MAV (4 T voll,\n                dann 1 Woche auslaufend = 1 Woche)\n"+
    "Ausdauer        WHO-Minuten + VO2max-Perzentil\n"+
-   "Mobilität       Einheiten "+c.win+" T ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, darüber zählt\n                jede Minute halb, max. "+MOB_DAY_MAX+" pro Tag\n\n"+
+   "Mobilität       Einheiten ÷ "+Math.round(p.goals.mob*c.win/7)+"\n                1 Einheit = "+MOB_UNIT_MIN+" min am Tag, darüber zählt\n                jede Minute halb, max. "+MOB_DAY_MAX+" pro Tag\n\n"+
+   "Zeitfenster     Tage zählen 3 Wochen voll und laufen danach\n                über 3 Wochen aus – kein Sprung, wenn ein\n                Training aus dem Fenster fällt\n\n"+
    "1RM   Epley (1–3 Wdh) · Brzycki (4–6) · Wathen (7–15, bei Klimmzug/\n      Dips bis 40 Wdh.), weich gemischt, aus dem besten Satz\n\n"+
    "Figur: react-native-body-highlighter (MIT)\n\n"+"jetzt  "+Math.round(c.kraft)+" / "+Math.round(c.konst)+" / "+Math.round(c.deckung)+" / "+Math.round(c.ausdauer)+" / "+Math.round(c.mob)+"   →   "+c.fitness;
 }

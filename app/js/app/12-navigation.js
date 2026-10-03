@@ -113,7 +113,7 @@ function renderHero(c,pk){
   tr.textContent=(df>0?"▲ +"+df:df<0?"▼ "+Math.abs(df):"▬ stabil")+" in 14 Tagen";
   var lv=$("fitlevel");if(lv)lv.textContent=fitLevel(c.fitness);
   var below=CORE_MUSCLES.filter(function(id){return (c.ms[id]||0)<corr(muscleById(id)).mev;}).length,note=[];
-  note.push(c.trainDays+" von "+Math.round(state.profile.goals.days*c.win/7)+" Trainingstagen");
+  note.push(fmtMobUnits(c.trainDays)+" von "+Math.round(state.profile.goals.days*c.win/7)+" Trainingstagen");
   if(below)note.push(below+" Muskelgruppen unter Minimum");
   if(pk.fitness-c.fitness>2)note.push(Math.round(pk.fitness-c.fitness)+" unter Bestform");
   $("fitnote").textContent=note.join(" · ");

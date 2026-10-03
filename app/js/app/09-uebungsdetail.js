@@ -294,6 +294,69 @@ function svgLineChart(points){
   wrap.appendChild(lab);
   return wrap;
 }
+/* Kraftkurve: Tagesbestwert (bei Gewicht das geschätzte Einer-Maximum) über der Zeit, dahinter
+   die Rangstufen als farbige Bänder - man sieht, in welcher Stufe man steht und wie weit es bis
+   zur nächsten ist. Die x-Achse folgt dem Datum (nicht der Reihenfolge), damit Pausen als Lücke
+   erkennbar bleiben. Die Bänder hängen am aktuellen Profil (Körpergewicht, Alter). */
+function exRankBands(ex){
+  if(!ex||!ex.std)return null;
+  var out=[];
+  for(var t=0;t<7;t++){
+    var lo=valueForScore(ex,t*300/RANK_N),hi=t<6?valueForScore(ex,(t+1)*300/RANK_N):null;
+    if(lo==null||!isFinite(lo))return null;
+    var subs=[];if(t<6)for(var k=1;k<3;k++)subs.push(valueForScore(ex,(t*3+k)*100/RANK_N));
+    out.push({t:RANK_TIERS[t],lo:t===0?0:lo,hi:hi,subs:subs});
+  }
+  return out;
+}
+function svgStrengthChart(ex,points){
+  var bands=exRankBands(ex);
+  if(!bands||points.length<2)return svgLineChart(points);
+  var NS="http://www.w3.org/2000/svg",w=320,h=170,pl=4,pr=58,pt=8,pb=8;
+  var vals=points.map(function(p){return p.val;});
+  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
+  // Bereich: alle Punkte plus der Anfang der nächsthöheren Stufe über dem Bestwert (das Ziel).
+  var next=null;bands.forEach(function(b){if(next==null&&b.lo>maxV)next=b.lo;});
+  var top=Math.max(maxV,next!=null?next*1.03:maxV*1.08),bot=Math.max(0,minV-(top-minV)*0.12);
+  if(top-bot<1e-6)top=bot+1;
+  var d0=points[0].date,span=Math.max(1,daysBetween(d0,points[points.length-1].date));
+  function X(p){return pl+daysBetween(d0,p.date)/span*(w-pl-pr);}
+  function Y(v){return pt+(1-(v-bot)/(top-bot))*(h-pt-pb);}
+  var svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox","0 0 "+w+" "+h);svg.setAttribute("class","kc-svg");
+  svg.setAttribute("role","img");
+  function mk(tag,a){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e;}
+  var cur=rankFromScore((grade(ex,points[points.length-1].val)||{}).score);
+  bands.forEach(function(b,i){
+    var lo=Math.max(b.lo,bot),hi=Math.min(b.hi==null?top:b.hi,top);if(hi<=lo)return;
+    var col=b.t.leg?"#C04C9A":b.t.m,y1=Y(hi),y2=Y(lo);
+    mk("rect",{x:pl,y:y1,width:w-pl-pr,height:Math.max(0,y2-y1),fill:col,"fill-opacity":cur&&cur.tier===i?0.28:0.14});
+    // Unterstufen I–III als feine Linien, damit der Abstand zur nächsten Stufe lesbar wird.
+    b.subs.forEach(function(sv){if(sv>bot&&sv<top)mk("line",{x1:pl,x2:w-pr,y1:Y(sv),y2:Y(sv),stroke:col,"stroke-opacity":.45,"stroke-width":1,"stroke-dasharray":"2 4"});});
+    if(y2-y1>=11){var tx=mk("text",{x:w-pr+6,y:(y1+y2)/2+3.5,"class":"kc-band-l"});tx.textContent=b.t.n;}
+  });
+  var d="M"+points.map(function(p){return X(p).toFixed(1)+","+Y(p.val).toFixed(1);}).join(" L");
+  mk("path",{d:d,"class":"kc-line"});
+  points.forEach(function(p,i){mk("circle",{cx:X(p),cy:Y(p.val),r:i===points.length-1?4.5:2.6,"class":"kc-dot"+(i===points.length-1?" last":"")});});
+  var lastP=points[points.length-1];
+  svg.setAttribute("aria-label","Kraftkurve "+ex.n+": zuletzt "+fmtBestVal(ex,lastP.val,lastP.set)+(cur?", Rang "+cur.name:""));
+  var wrap=el("div","kc-wrap");wrap.appendChild(svg);
+  // Antippen/Überfahren: nächster Trainingstag mit Wert und Rang.
+  var tip=el("div","kc-tip note");tip.style.margin="4px 0 0";
+  function show(p){var g=grade(ex,p.val),rk=g?rankFromScore(g.score):null;
+    tip.textContent=shortDate(p.date)+" · "+fmtBestVal(ex,p.val,p.set)+(rk?" · "+rk.name:"");}
+  function pick(ev){var r=svg.getBoundingClientRect();if(!r.width)return;
+    var cx=((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left)/r.width*w,best=null,bd=1e9;
+    points.forEach(function(p){var dd=Math.abs(X(p)-cx);if(dd<bd){bd=dd;best=p;}});if(best)show(best);}
+  svg.addEventListener("pointermove",pick);svg.addEventListener("click",pick);
+  show(lastP);
+  var ax=el("div","kc-axis");ax.style.paddingRight=(pr/w*100)+"%";
+  ax.appendChild(el("span",null,shortDate(points[0].date)));ax.appendChild(el("span",null,shortDate(lastP.date)));
+  wrap.appendChild(ax);wrap.appendChild(tip);
+  var cap=ex.t==="load"?"Geschätztes Einer-Maximum je Trainingstag"+(ex.wt==="side"?" (beide Seiten zusammen)":ex.wt==="body"?" (inkl. Körpergewicht)":""):ex.t==="sec"?"Beste Haltezeit je Trainingstag":"Meiste Wiederholungen je Trainingstag";
+  wrap.appendChild(el("p","note",cap+" · Hintergrund: Rangstufen für dein Profil"));
+  return wrap;
+}
 function exDetailProgress(ex){
   var wrap=el("div"),pts=exBestByDay(ex);
   if(!pts.length){wrap.appendChild(el("p","note","Noch keine Sätze für diese Übung eingetragen."));return wrap;}
@@ -302,7 +365,7 @@ function exDetailProgress(ex){
   head.appendChild(el("b",null,fmtBestVal(ex,last.val,last.set)));
   head.appendChild(el("span",null,"Letzter Bestwert · "+deDate(last.date)));
   wrap.appendChild(head);
-  wrap.appendChild(svgLineChart(pts));
+  wrap.appendChild(ex.std?svgStrengthChart(ex,pts):svgLineChart(pts));
   // Vergleich mit dem ältesten Wert, der mindestens ~3 Wochen zurückliegt – zeigt die Richtung,
   // ohne bei sehr dichtem Training nur den direkten Vorwert zu vergleichen.
   var cmpIdx=-1;
