@@ -1,3 +1,3 @@
-Version 532 (Artifact-Version 1790975592-aa0d)
-Stand: 2026-10-02
-Aenderung: Kabelturm im 3D-Bewegungsablauf für neun Kabelzug-Übungen (Trizepsdrücken, Kabel-Curls, Face Pulls, Rudern, Latzug + eng, Fliegende, Seitheben, Schulterheben, Innenrotation): Turm mit Steckgewicht, Schwenkrolle, Stange/Seil/Einzelgriffe; neue Clips k_… und 9 Standbilder. Nur anim-viewer.js, 04-animation.js und Standbilder geändert.
+Version 533 (Artifact-Version 1791020704-6c63)
+Stand: 2026-10-03
+Aenderung: Neues Modell k170c im 3D-Bewegungsablauf: verbesserter Bizeps (Köpfe kreuzen sich nicht mehr, kaum noch im Knochen) in allen 36 Clips; Trizeps lang/seitlich und Delta seitlich/hinten als Faser-Piloten, außer in overhead, reversefly, facepull, fly, kickback (dort wie bisher). Nur anim-modell.js geändert (13,07 MB statt 12,0 MB).
