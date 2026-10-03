@@ -14,6 +14,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const zlib = require("zlib");
 
 const APP = path.join(__dirname, "..", "app");
 const TYPEN = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".webp": "image/webp",
@@ -341,6 +342,30 @@ async function main() {
     });
     pruefe(r.offenWaehrend && !r.offenDanach, "Offen-Markierung falsch: " + JSON.stringify(r));
     pruefe(!r.profilGeschrieben && r.profilJetzt, "Profil zu früh/nicht geschrieben: " + JSON.stringify(r));
+    await s.ctx.close();
+  });
+
+  // 14) Bewegungsablauf: Jeder zugeordnete Clip hat ein Standbild, und jede Geräte-Variante (k_… Kabelturm,
+  //     kh_… Kurzhanteln im Stand) ist dem Betrachter bekannt. Sonst zeigt er stillschweigend die erste Bewegung
+  //     des Modells – das passiert, wenn eine Sitzung nur eine der beiden Dateien veröffentlicht.
+  await test("Bewegungsablauf: Standbilder und Geräte-Clips vollständig", async () => {
+    const s = await seite({});
+    const clips = await s.page.evaluate(() => FW_ANIM_CLIP);
+    const js = fs.readFileSync(path.join(APP, "assets", "anim-viewer.js"), "utf8");
+    const html = zlib.gunzipSync(Buffer.from(/FW_ANIM_V\s*=\s*"([^"]+)"/.exec(js)[1], "base64")).toString("utf8");
+    const liste = /(\[[^\]]+\])\.forEach\(function\(c\)\{\s*FWK\["kh_"\+c\]/.exec(html);
+    const kh = liste ? JSON.parse(liste[1]) : [];
+    const fehlt = [];
+    for (const id of Object.keys(clips)) {
+      const c = clips[id];
+      if (!fs.existsSync(path.join(APP, "assets", "posen", c + ".webp"))) fehlt.push("Standbild " + c + ".webp");
+      if (c.startsWith("kh_") && !kh.includes(c.slice(3))) fehlt.push("Betrachter kennt " + c + " nicht");
+      if (c.startsWith("k_") && !new RegExp("\\b" + c + ":\\{anim:").test(html)) fehlt.push("Betrachter kennt " + c + " nicht");
+    }
+    pruefe(!fehlt.length, "Es fehlt: " + fehlt.join(", "));
+    // Kurzhanteln nur dort, wo die Übung welche hat: dieselbe Bewegung mit der Langhantel bleibt ohne.
+    pruefe(clips.curl_db === "kh_curl" && clips.curl_bb === "curl" && clips.ohp_db === "kh_press" && clips.ohp === "press",
+      "Kurzhantel-Zuordnung falsch: " + [clips.curl_db, clips.curl_bb, clips.ohp_db, clips.ohp].join("/"));
     await s.ctx.close();
   });
 

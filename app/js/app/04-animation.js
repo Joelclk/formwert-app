@@ -18,16 +18,20 @@
 /* Kabelzug-Übungen (02.10.2026): eigene Clips k_… mit Kabelturm, Seil und Griff; die Bewegung kommt aus dem
    Hantel-Clip gleichen Namens (FWT in anim-viewer.js). Liegende Curls, Crunch und Hüftbeugen am Kabel haben noch keine
    eigene Bewegung. */
-var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"k_curl",curl_hammer:"hammer",tri_push:"k_pushdown",
-  tri_kick:"kickback",tri_over:"overhead",tri_skull:"skull",lateral:"lateral",lateral_cable:"k_lateral",
-  frontraise:"frontraise",ohp:"press",ohp_db:"press",push_press:"press",arnold:"press",
+/* Kurzhantel-Übungen im Stand (03.10.2026): eigene Clips kh_… zeigen die Bewegung des gleichnamigen Clips mit einer
+   Kurzhantel je Hand (FWK in anim-viewer.js) – vorher liefen sie mit leeren Fäusten. Langhantel- und Maschinenübungen
+   mit derselben Bewegung bleiben beim alten Clip. Fliegende, Überzüge, Trizeps über Kopf und Goblet-Kniebeuge noch
+   ohne Hantel: dort treffen sich die Hände oder halten eine Hantel gemeinsam, das braucht eigene Bewegungen. */
+var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"kh_curl",curl_cable:"k_curl",curl_hammer:"kh_hammer",tri_push:"k_pushdown",
+  tri_kick:"kh_kickback",tri_over:"overhead",tri_skull:"skull",lateral:"kh_lateral",lateral_cable:"k_lateral",
+  frontraise:"kh_frontraise",ohp:"press",ohp_db:"kh_press",push_press:"press",arnold:"kh_press",
   pike_pushup:"press",hspu:"press",bench:"bench_lh",bench_db:"bench_kh",machine_press:"bench",
   machine_press_lying:"bench",pushup:"bench",pushup_arch:"bench",bench_dec:"bench",bench_inc:"incline_lh",
   bench_inc_db:"incline_kh",pushup_dec:"incline",fly_db:"fly",cable_fly:"k_fly",fly_machine:"fly",
-  reversefly:"reversefly",bandpullapart:"reversefly",facepull:"k_facepull",row_bb:"row",row_db:"row",
+  reversefly:"reversefly",bandpullapart:"reversefly",facepull:"k_facepull",row_bb:"row",row_db:"kh_row",
   row_pendlay:"row",row_tbar:"row",row_cable:"k_row",row_machine:"row",row_inv:"row",row_band:"row",
   latpull:"k_latpull",latpull_close:"k_latpull",pullup:"latpull",chinup:"latpull",pullup_wide:"latpull",
-  pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"shrug",shrug_cable:"k_shrug",pullover:"pullover",
+  pullup_weight:"latpull",pullup_neg:"latpull",shrug:"shrug",shrug_db:"kh_shrug",shrug_cable:"k_shrug",pullover:"pullover",
   rot_internal:"k_rotint",mob_bandpullapart:"reversefly",
   /* Beine und Rumpf (Ganzkörper-Modell, Schritt E): ein Clip je Bewegungsmuster */
   /* Kniebeuge Langhantel: eigener Clip squat_lh (01.10.2026) mit Stange auf dem Rücken, Füße ausgedreht; Front-, Goblet-,
@@ -35,7 +39,7 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"k_curl",curl_hammer:
   squat:"squat_lh",squat_front:"squat",squat_goblet:"squat",squat_bw:"squat",hacksquat:"squat",legpress:"squat",
   deadlift:"deadlift",deadlift_sumo:"deadlift",
   /* Rumänisches Kreuzheben: Hüftbeuge mit fast gestreckten Knien (bis 28.09.2026 als „deadlift“ gezeigt) */
-  deadlift_rdl:"rdl",goodmorning:"rdl",deadlift_sl:"rdl",
+  deadlift_rdl:"rdl",goodmorning:"rdl",deadlift_sl:"kh_rdl",
   /* Hüftkreisen im Stand: Ganzkörper-Modell, weil Becken und Rumpf mitgehen */
   mob_hip:"hipcircle",
   calf_stand:"calfraise",calf_bw:"calfraise",
@@ -45,7 +49,7 @@ var FW_ANIM_CLIP={curl_bb:"curl",curl_db:"curl",curl_cable:"k_curl",curl_hammer:
   mob_shouldercar:"shouldercar",mob_armcircles:"armcircle"};
 /* Bildunterschrift im ersten Modell: Es zeigt inzwischen den ganzen Körper mit beiden Seiten. Beinübungen
    werden als ganzer Körper beschrieben, die Arm-Clips als Oberkörper. */
-var FW_ANIM_CAP_BEINE={squat:1,squat_lh:1,deadlift:1,rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1,bench_lh:1,bench_kh:1,incline_lh:1,incline_kh:1};
+var FW_ANIM_CAP_BEINE={squat:1,squat_lh:1,deadlift:1,rdl:1,kh_rdl:1,calfraise:1,hipcircle:1,hipcar:1,legcircle:1,gate:1,legswing:1,catcow:1,bench_lh:1,bench_kh:1,incline_lh:1,incline_kh:1};
 /* Welche Bewegung in welchem Modell steckt. Das erste Modell (anim-modell.js) ist das Ganzkörper-Modell;
    die Mobilitäts-Clips für Bein und Hüfte liegen getrennt in anim-modell-bein.js. */
 var FW_ANIM_MODELL={};   // alle Clips im Ganzkörper-Modell; "bein" (anim-modell-bein.js) wird nicht mehr genutzt
