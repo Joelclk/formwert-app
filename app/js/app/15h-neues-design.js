@@ -422,7 +422,7 @@ function fwMiniUpdate(){
 
 /* ================= Ränge-Tab =================
    Oben die Gesamtstärke, darunter eine Sammelkarte je Übung mit Rang – sortiert vom höchsten
-   Rang abwärts. Farbe der Karte = Farbe der Rangstufe; Antippen öffnet die Rangleiter. */
+   Rang abwärts. Farbe der Karte = Farbe der Rangstufe; Antippen öffnet die Übung. */
 function fwRankColor(rk){return rk.t.leg?"#C04C9A":rk.t.m;}
 function fwSetLabel(ex,s){
   if(!s)return "";
@@ -479,7 +479,9 @@ function renderRaenge(){
     c.appendChild(pills);
     var bar=el("div","rg-bar"),bi=el("i");bi.style.width=Math.round(rk.pct*100)+"%";bar.appendChild(bi);c.appendChild(bar);
     c.setAttribute("aria-label",ex.n+": "+rankLabel(rk));
-    c.onclick=function(){sheetRankLadder(exRank(ex),"Rangleiter · "+ex.n,exRankHint(ex,exRank(ex)),ex);};
+    // Antippen öffnet die ganze Übung (Bewegungsablauf, Verlauf, Rekorde) - die Rangleiter steckt
+    // dort in der Rangkarte, man verliert sie also nicht.
+    c.onclick=function(){sheetExerciseDetail(ex);};
     grid.appendChild(c);
   });
   // Grundübungen aus dem Profil ohne Rang: kurzer Hinweis, wie man ihn bekommt.
