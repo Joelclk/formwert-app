@@ -1,3 +1,3 @@
-Version 534 (Artifact-Version 1791021461-4507)
+Version 535 (Artifact-Version 1791026298-e884)
 Stand: 2026-10-03
-Aenderung: Ränge: Antippen einer Rangkarte öffnet die ganze Übung (statt nur der Rangleiter); Übungsseite zeigt "Noch kein Rang" nicht mehr unter einer vorhandenen Rangkarte.
+Aenderung: Bizeps im 3D-Bewegungsablauf ruhiger: die neue Bizeps-Verformung aus 533 wirkt nur noch zu 55 % (Joel: Bewegung war zu stark; beim Curl rutschte der Muskel im Schnitt 4–5 cm, jetzt 2–3 cm). Alle 36 Clips, nur anim-modell.js geändert. Trizeps und Schulter unverändert.
